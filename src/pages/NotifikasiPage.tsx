@@ -4,10 +4,11 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { formatRelativeTime } from '../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface NotifikasiPageProps {
   onBack?: () => void;
+  onNavigate?: (page: string) => void;
 }
 
 interface Notification {

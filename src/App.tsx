@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage';
 import { OTPVerificationPage } from './pages/OTPVerificationPage';
 import { ReguPage } from './pages/ReguPage';
 import { TemplatePesanPage } from './pages/TemplatePesanPage';
+import { NotifikasiPage } from './pages/NotifikasiPage';
 import { Toaster } from './components/ui/sonner';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -113,6 +114,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <TemplatePesanPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/notifikasi" 
+          element={
+            <ProtectedRoute>
+              <NotifikasiPage onNavigate={handleNavigation} />
             </ProtectedRoute>
           } 
         />
