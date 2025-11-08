@@ -20,7 +20,15 @@ interface Notification {
   isRead: boolean;
 }
 
-export function NotifikasiPage({ onBack }: NotifikasiPageProps) {
+export function NotifikasiPage({ onBack, onNavigate }: NotifikasiPageProps) {
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (onNavigate) {
+      onNavigate('dashboard');
+    }
+  };
+
   const [filter, setFilter] = useState<'semua' | 'belum-dibaca'>('semua');
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -127,12 +135,9 @@ export function NotifikasiPage({ onBack }: NotifikasiPageProps) {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
+          <Button variant="ghost" size="icon" onClick={handleBack} className="text-gray-700">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <div className="flex-1">
             <h2 className="text-white">Notifikasi</h2>
           </div>
