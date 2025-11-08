@@ -6,13 +6,16 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+
+type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'login' | 'regu' | 'notifikasi';
 
 interface TemplatePesanPageProps {
   onBack?: () => void;
+  onNavigate?: (page: NavigatePage) => void;
 }
 
-export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
+export function TemplatePesanPage({ onBack, onNavigate }: TemplatePesanPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'semua' | MessageTemplate['category']>('semua');
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
@@ -45,13 +48,25 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
     console.log('Send via WhatsApp:', content);
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+  
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (onNavigate) {
+      onNavigate('dashboard');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3 mb-6">
           <button 
-            onClick={onBack}
+            onClick={handleBack}
             className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
@@ -66,7 +81,7 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
             type="text"
             placeholder="Cari template..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
             className="pl-10 bg-white"
           />
         </div>

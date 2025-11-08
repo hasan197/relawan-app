@@ -7,14 +7,16 @@ import { TargetProgress } from '../components/TargetProgress';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { mockActivities, mockTarget } from '../lib/mockData';
 
+type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'regu' | 'notifikasi' | 'generator-resi';
+
 interface DashboardPageProps {
-  onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program') => void;
+  onNavigate?: (page: NavigatePage) => void;
 }
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
-  const [activeNav, setActiveNav] = useState<'dashboard' | 'donatur' | 'laporan' | 'profil'>('dashboard');
+  const [activeNav, setActiveNav] = useState<NavigatePage>('dashboard');
 
-  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
+  const handleNavigation = (item: NavigatePage) => {
     setActiveNav(item);
     onNavigate?.(item);
   };
@@ -44,7 +46,15 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       />
 
       <CategoryCards 
-        onCategoryClick={(id) => onNavigate?.('program')}
+        onCategoryClick={(id) => {
+          if (id === 'regu') {
+            onNavigate?.('regu');
+          } else if (id === 'template') {
+            onNavigate?.('template');
+          } else {
+            onNavigate?.('program');
+          }
+        }}
       />
 
       <BottomNavigation active={activeNav} onNavigate={handleNavigation} />

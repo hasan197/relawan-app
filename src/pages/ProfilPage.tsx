@@ -18,13 +18,22 @@ import {
   HelpCircle
 } from 'lucide-react';
 
+type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'login' | 'regu' | 'notifikasi';
+
 interface ProfilPageProps {
-  onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program') => void;
+  onNavigate?: (page: NavigatePage) => void;
 }
 
 export function ProfilPage({ onNavigate }: ProfilPageProps) {
-  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
-    onNavigate?.(item);
+  const handleNavigation = (page: string) => {
+    onNavigate?.(page as any);
+  };
+
+  const handleLogout = () => {
+    // Hapus token jika ada
+    localStorage.removeItem('token');
+    // Arahkan ke halaman login
+    onNavigate?.('login');
   };
 
   const menuSections = [
@@ -109,7 +118,10 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
         ))}
 
         {/* Logout Button */}
-        <button className="w-full p-4 flex items-center justify-center gap-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+        <button 
+          onClick={handleLogout}
+          className="w-full p-4 flex items-center justify-center gap-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+        >
           <LogOut className="h-5 w-5" />
           <span>Keluar</span>
         </button>
