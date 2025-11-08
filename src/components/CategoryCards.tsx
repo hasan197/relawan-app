@@ -51,20 +51,20 @@ interface CategoryCardsProps {
 
 export function CategoryCards({ onCategoryClick }: CategoryCardsProps) {
   return (
-    <div className="px-4 mb-6">
-      <h3 className="text-gray-900 mb-4">Shortcut</h3>
+    <div className="px-3 mb-4">
+      <h3 className="text-gray-900 text-sm font-medium mb-2">Shortcut</h3>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {categories.slice(0, 4).map((category) => (
           <button
             key={category.id}
             onClick={() => onCategoryClick?.(category.id)}
             className="w-full"
           >
-            <Card className={`bg-gradient-to-br ${category.color} border-none shadow-md hover:shadow-lg transition-shadow w-full p-4`}>
+            <Card className={`bg-gradient-to-br ${category.color} border-none shadow-sm hover:shadow transition-shadow w-full p-2 h-24`}>
               <div className="flex flex-col items-center justify-center h-full">
-                <div className="text-4xl mb-2">{category.icon}</div>
-                <p className={`text-sm font-medium ${category.textColor} text-center`}>{category.name}</p>
+                <div className="text-3xl mb-1">{category.icon}</div>
+                <p className={`text-xs font-medium ${category.textColor} text-center leading-tight`}>{category.name}</p>
               </div>
             </Card>
           </button>

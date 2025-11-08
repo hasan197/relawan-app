@@ -16,8 +16,8 @@ export function BottomNavigation({ active, onNavigate }: BottomNavigationProps) 
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 safe-area-bottom">
-      <div className="flex items-center justify-around max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] safe-area-bottom">
+      <div className="flex items-stretch max-w-md mx-auto h-14">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.id;
@@ -26,20 +26,17 @@ export function BottomNavigation({ active, onNavigate }: BottomNavigationProps) 
             <button
               key={item.id}
               onClick={() => onNavigate?.(item.id)}
-              className="flex flex-col items-center gap-1 py-2 px-4 min-w-[72px]"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                isActive ? 'text-primary-600' : 'text-gray-500'
+              }`}
+              aria-label={item.label}
             >
-              <div className={`p-2 rounded-full transition-colors ${
-                isActive 
-                  ? 'bg-primary-100' 
-                  : 'bg-transparent'
+              <div className={`p-1.5 rounded-lg transition-colors ${
+                isActive ? 'bg-primary-50' : 'bg-transparent'
               }`}>
-                <Icon className={`h-6 w-6 ${
-                  isActive 
-                    ? 'text-primary-600' 
-                    : 'text-gray-400'
-                }`} />
+                <Icon className={`h-5 w-5 ${isActive ? 'text-primary-600' : 'text-gray-500'}`} />
               </div>
-              <span className={isActive ? 'text-primary-600' : 'text-gray-500'}>
+              <span className="text-[10px] font-medium">
                 {item.label}
               </span>
             </button>

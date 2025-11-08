@@ -32,33 +32,31 @@ export function RecentActivities({ activities, onViewAll }: RecentActivitiesProp
   };
 
   return (
-    <Card className="mx-4 mb-6 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-gray-900">Aktivitas Terbaru</h3>
+    <Card className="mx-3 mb-4 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-gray-900 text-sm font-medium">Aktivitas Terbaru</h3>
       </div>
       
-      <div className="space-y-3">
-        {activities.slice(0, 3).map((activity) => {
+      <div className="space-y-2">
+        {activities.slice(0, 4).map((activity) => {
           const Icon = getIcon(activity.type);
           const iconColor = getIconColor(activity.type);
           
           return (
-            <div key={activity.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className={`p-2 rounded-full ${iconColor}`}>
-                <Icon className="h-4 w-4" />
+            <div key={activity.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm">
+              <div className={`p-1.5 rounded-full ${iconColor}`}>
+                <Icon className="h-3.5 w-3.5" />
               </div>
               
               <div className="flex-1 min-w-0">
-                <p className="text-gray-900 truncate">{activity.title}</p>
-                <p className="text-gray-500">{formatRelativeTime(activity.time)}</p>
+                <p className="text-gray-900 truncate text-sm">{activity.title}</p>
+                <p className="text-gray-500 text-xs">{formatRelativeTime(activity.time)}</p>
               </div>
               
               {activity.amount && (
-                <div className={activity.type === 'distribution' ? 'text-orange-600' : 'text-green-600'}>
-                  <p>
-                    {activity.type === 'distribution' ? '-' : '+'}
-                    {formatCurrency(activity.amount).replace('Rp', 'Rp ')}
-                  </p>
+                <div className={`text-xs whitespace-nowrap ${activity.type === 'distribution' ? 'text-orange-600' : 'text-green-600'}`}>
+                  {activity.type === 'distribution' ? '-' : '+'}
+                  {formatCurrency(activity.amount).replace('Rp', '')}
                 </div>
               )}
             </div>
@@ -68,10 +66,10 @@ export function RecentActivities({ activities, onViewAll }: RecentActivitiesProp
       
       <button 
         onClick={onViewAll}
-        className="w-full mt-4 flex items-center justify-center gap-2 py-2 text-primary-600 hover:text-primary-700 transition-colors"
+        className="w-full mt-2 flex items-center justify-center gap-1 py-1.5 text-primary-600 hover:text-primary-700 transition-colors text-sm"
       >
         <span>Lihat Semua</span>
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRight className="h-3.5 w-3.5" />
       </button>
     </Card>
   );

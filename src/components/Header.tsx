@@ -11,34 +11,36 @@ interface HeaderProps {
 
 export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
   return (
-    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-white">
+    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-3 py-4 rounded-b-2xl shadow-md">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-10 w-10 border-2 border-white">
             <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-            <AvatarFallback className="bg-primary-700 text-white">
+            <AvatarFallback className="bg-primary-600 text-white text-sm">
               {getInitials(currentUser.name)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-primary-50">Hi, {currentUser.name} 👋</p>
-            <p className="text-white mt-0.5">{currentUser.reguName}</p>
+            <p className="text-primary-50 text-sm">Hi, {currentUser.name.split(' ')[0]} 👋</p>
+            <p className="text-white/90 text-xs">{currentUser.reguName}</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button 
             onClick={onStatsClick}
-            className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Statistik"
           >
             <TrendingUp className="h-5 w-5 text-white" />
           </button>
           <button 
             onClick={onNotificationClick}
-            className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            className="p-1.5 hover:bg-white/20 rounded-full transition-colors relative"
+            aria-label="Notifikasi"
           >
             <Bell className="h-5 w-5 text-white" />
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white border-2 border-primary-500">
+            <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center p-0 bg-red-500 text-[10px] text-white border border-white">
               3
             </Badge>
           </button>
