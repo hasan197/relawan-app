@@ -5,7 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { formatCurrency, generateReceiptNumber } from '../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface GeneratorResiPageProps {
   onBack?: () => void;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { TotalDonationCard } from '../components/TotalDonationCard';
 import { RecentActivities } from '../components/RecentActivities';
@@ -6,6 +6,7 @@ import { CategoryCards } from '../components/CategoryCards';
 import { TargetProgress } from '../components/TargetProgress';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { mockActivities, mockTarget } from '../lib/mockData';
+import { toast } from 'sonner';
 
 type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'regu' | 'notifikasi' | 'generator-resi';
 
@@ -15,11 +16,16 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [activeNav, setActiveNav] = useState<NavigatePage>('dashboard');
+  const [isSalurkanInProgress, setIsSalurkanInProgress] = useState(false);
 
-  const handleNavigation = (item: NavigatePage) => {
+  const handleNavigation = useCallback((item: NavigatePage) => {
+    if (isSalurkanInProgress && item !== 'dashboard' && item !== 'generator-resi') {
+      toast.error('Harap selesaikan proses salurkan terlebih dahulu');
+      return;
+    }
     setActiveNav(item);
     onNavigate?.(item);
-  };
+  }, [isSalurkanInProgress, onNavigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -31,7 +37,10 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       <TotalDonationCard
         total={12450000}
         increase={450000}
-        onSalurkan={() => onNavigate?.('generator-resi')}
+        onSalurkan={() => {
+          setIsSalurkanInProgress(true);
+          onNavigate?.('generator-resi');
+        }}
         onTambahDonatur={() => handleNavigation('donatur')}
         onLaporan={() => handleNavigation('laporan')}
       />

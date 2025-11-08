@@ -11,6 +11,7 @@ import { TemplatePesanPage } from './pages/TemplatePesanPage';
 import { NotifikasiPage } from './pages/NotifikasiPage';
 import { ImportKontakPage } from './pages/ImportKontakPage';
 import { TambahProspekPage } from './pages/TambahProspekPage';
+import { GeneratorResiPage } from './pages/GeneratorResiPage';
 import { Toaster } from './components/ui/sonner';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -98,6 +99,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <ProfilPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/generator-resi" 
+          element={
+            <ProtectedRoute>
+              <GeneratorResiPage onBack={() => navigate('/dashboard')} />
             </ProtectedRoute>
           } 
         />
