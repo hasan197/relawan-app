@@ -140,12 +140,12 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
                   {mockLeaderboard.map((entry) => (
                     <div 
                       key={entry.relawanId}
-                      className={`flex items-center gap-3 p-3 rounded-lg ${
+                      className={`flex items-center justify-between p-3 rounded-lg ${
                         entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100' : 'bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="relative">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="relative shrink-0">
                           {entry.rank <= 3 && (
                             <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white z-10">
                               <Trophy className="h-3 w-3" />
@@ -161,17 +161,17 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-primary-100 text-primary-700 border-none">
+                            <Badge className="bg-primary-100 text-primary-700 border-none shrink-0">
                               #{entry.rank}
                             </Badge>
                             <h4 className="text-gray-900 truncate">{entry.relawanName}</h4>
                           </div>
-                          <p className="text-gray-500">{entry.muzakkiCount} muzakki</p>
+                          <p className="text-gray-500 text-sm">{entry.muzakkiCount} muzakki</p>
                         </div>
                       </div>
                       
-                      <div className="text-right">
-                        <p className="text-gray-900">{formatCurrency(entry.totalDonations)}</p>
+                      <div className="text-right pl-2 shrink-0">
+                        <p className="text-gray-900 font-medium text-sm whitespace-nowrap">{formatCurrency(entry.totalDonations)}</p>
                       </div>
                     </div>
                   ))}
