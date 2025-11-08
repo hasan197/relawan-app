@@ -4,10 +4,18 @@
   import path from 'path';
 
   export default defineConfig({
+    base: './', // Ensure relative paths are used
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      target: 'esnext'
+      target: 'esnext',
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/[name].[hash].js',
+          chunkFileNames: 'assets/[name].[hash].js',
+          assetFileNames: 'assets/[name].[hash].[ext]'
+        }
+      }
     },
     plugins: [react()],
     resolve: {
