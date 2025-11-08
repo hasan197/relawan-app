@@ -9,6 +9,8 @@ import { OTPVerificationPage } from './pages/OTPVerificationPage';
 import { ReguPage } from './pages/ReguPage';
 import { TemplatePesanPage } from './pages/TemplatePesanPage';
 import { NotifikasiPage } from './pages/NotifikasiPage';
+import { ImportKontakPage } from './pages/ImportKontakPage';
+import { TambahProspekPage } from './pages/TambahProspekPage';
 import { Toaster } from './components/ui/sonner';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -123,6 +125,24 @@ const App = () => {
           element={
             <ProtectedRoute>
               <NotifikasiPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/import-kontak" 
+          element={
+            <ProtectedRoute>
+              <ImportKontakPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/tambah-prospek" 
+          element={
+            <ProtectedRoute>
+              <TambahProspekPage onNavigate={handleNavigation} />
             </ProtectedRoute>
           } 
         />

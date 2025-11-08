@@ -4,10 +4,12 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { Label } from '../components/ui/label';
+import { toast } from 'sonner';
 
 interface ImportKontakPageProps {
   onBack?: () => void;
+  onNavigate?: (page: string) => void;
   onImport?: (contacts: any[]) => void;
 }
 
@@ -19,7 +21,15 @@ interface Contact {
   isDuplicate: boolean;
 }
 
-export function ImportKontakPage({ onBack, onImport }: ImportKontakPageProps) {
+export function ImportKontakPage({ onBack, onNavigate, onImport }: ImportKontakPageProps) {
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (onNavigate) {
+      onNavigate('dashboard');
+    }
+  };
+
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectAll, setSelectAll] = useState(true);
@@ -91,12 +101,9 @@ export function ImportKontakPage({ onBack, onImport }: ImportKontakPageProps) {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
+          <Button variant="ghost" size="icon" onClick={handleBack} className="text-gray-700">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <h2 className="text-white">Import Kontak</h2>
         </div>
       </div>
