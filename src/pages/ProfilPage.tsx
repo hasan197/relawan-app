@@ -18,7 +18,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'login' | 'regu' | 'notifikasi';
+type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'login' | 'regu' | 'notifikasi' | 'materi-promosi' | 'pengaturan' | 'import-kontak' | 'tambah-prospek' | 'generator-resi' | 'chat-regu' | 'register-success' | 'reminder-followup' | 'riwayat-aktivitas' | 'ucapan-terimakasih' | 'detail-program' | 'detail-prospek' | 'onboarding' | 'splash' | 'error';
 
 interface ProfilPageProps {
   onNavigate?: (page: NavigatePage) => void;
@@ -49,7 +49,7 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
       title: 'Konten',
       items: [
         { icon: FileText, label: 'Template Pesan', onClick: () => onNavigate?.('template') },
-        { icon: MessageSquare, label: 'Materi Promosi', onClick: () => console.log('Materi') },
+        { icon: MessageSquare, label: 'Materi Promosi', onClick: () => onNavigate?.('materi-promosi') },
       ]
     },
     {
@@ -58,7 +58,7 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
         { icon: Bell, label: 'Notifikasi', onClick: () => onNavigate?.('notifikasi') },
         { icon: Moon, label: 'Mode Gelap', onClick: () => console.log('Dark mode') },
         { icon: HelpCircle, label: 'Bantuan & FAQ', onClick: () => console.log('Bantuan') },
-        { icon: Settings, label: 'Pengaturan Lainnya', onClick: () => console.log('Settings') },
+        { icon: Settings, label: 'Pengaturan', onClick: () => onNavigate?.('pengaturan') },
       ]
     }
   ];
