@@ -12,6 +12,11 @@ import { NotifikasiPage } from './pages/NotifikasiPage';
 import { ImportKontakPage } from './pages/ImportKontakPage';
 import { TambahProspekPage } from './pages/TambahProspekPage';
 import { GeneratorResiPage } from './pages/GeneratorResiPage';
+import { ChatReguPage } from './pages/ChatReguPage';
+import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
+import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
+import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
+import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
 import { Toaster } from './components/ui/sonner';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -153,6 +158,52 @@ const App = () => {
           element={
             <ProtectedRoute>
               <TambahProspekPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* New Pages */}
+        <Route 
+          path="/chat-regu" 
+          element={
+            <ProtectedRoute>
+              <ChatReguPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/register-success" 
+          element={
+            <ProtectedRoute>
+              <RegisterSuccessPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/reminder-followup" 
+          element={
+            <ProtectedRoute>
+              <ReminderFollowUpPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/riwayat-aktivitas" 
+          element={
+            <ProtectedRoute>
+              <RiwayatAktivitasPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/ucapan-terimakasih" 
+          element={
+            <ProtectedRoute>
+              <UcapanTerimaKasihPage onNavigate={handleNavigation} />
             </ProtectedRoute>
           } 
         />
