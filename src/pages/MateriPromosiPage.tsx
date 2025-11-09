@@ -7,6 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
 
+// Fungsi untuk menampilkan notifikasi
+export const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  switch (type) {
+    case 'success':
+      toast.success(message);
+      break;
+    case 'error':
+      toast.error(message);
+      break;
+    default:
+      toast(message);
+  }
+};
+
 interface MateriPromosiPageProps {
   onBack?: () => void;
 }
