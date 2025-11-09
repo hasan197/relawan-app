@@ -126,9 +126,21 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
           <span>Keluar</span>
         </button>
 
-        <p className="text-center text-gray-400 mt-4 mb-4">
-          Versi 1.0.0
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-400">
+            Aplikasi Relawan ZISWAF
+          </p>
+          <div className="mt-1 text-xs text-gray-400">
+            <p>Versi {process.env.REACT_APP_VERSION || '1.0.0'}</p>
+            <p>Dibangun pada: {new Date(process.env.REACT_APP_BUILD_DATE || new Date().toISOString()).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+        </div>
       </div>
 
       <BottomNavigation active="profil" onNavigate={handleNavigation} />
