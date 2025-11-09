@@ -144,7 +144,17 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
         <div className="flex items-center gap-3 mb-6">
           <button 
             onClick={handleBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              minWidth: '44px', // Ukuran touch target minimal untuk aksesibilitas
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              zIndex: 10
+            }}
             aria-label="Kembali"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
