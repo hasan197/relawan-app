@@ -17,6 +17,15 @@ import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
 import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
 import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
 import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
+import { DetailProgramPage } from './pages/DetailProgramPage';
+import { DetailProspekPage } from './pages/DetailProspekPage';
+import { ErrorPage } from './pages/ErrorPage';
+import { MateriPromosiPage } from './pages/MateriPromosiPage';
+import { OnboardingPage } from './pages/OnboardingPage';
+import { PengaturanPage } from './pages/PengaturanPage';
+import { ProgramPage } from './pages/ProgramPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { SplashScreen } from './pages/SplashScreen';
 import { Toaster } from './components/ui/sonner';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -205,6 +214,84 @@ const App = () => {
             <ProtectedRoute>
               <UcapanTerimaKasihPage onNavigate={handleNavigation} />
             </ProtectedRoute>
+          } 
+        />
+
+        {/* Additional New Pages */}
+        <Route 
+          path="/detail-program/:id" 
+          element={
+            <ProtectedRoute>
+              <DetailProgramPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/detail-prospek/:id" 
+          element={
+            <ProtectedRoute>
+              <DetailProspekPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/materi-promosi" 
+          element={
+            <ProtectedRoute>
+              <MateriPromosiPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/onboarding" 
+          element={
+            <OnboardingPage onComplete={() => navigate('/dashboard')} />
+          } 
+        />
+
+        <Route 
+          path="/pengaturan" 
+          element={
+            <ProtectedRoute>
+              <PengaturanPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/program" 
+          element={
+            <ProtectedRoute>
+              <ProgramPage onNavigate={handleNavigation} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/register" 
+          element={
+            <RegisterPage onSuccess={() => navigate('/register-success')} />
+          } 
+        />
+
+        <Route 
+          path="/splash" 
+          element={
+            <SplashScreen onFinish={() => navigate('/onboarding')} />
+          } 
+        />
+
+        {/* Error Page */}
+        <Route 
+          path="/error" 
+          element={
+            <ErrorPage 
+              onRetry={() => window.location.reload()} 
+              onBack={() => navigate(-1)}
+            />
           } 
         />
 
