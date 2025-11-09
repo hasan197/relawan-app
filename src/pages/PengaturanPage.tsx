@@ -36,18 +36,27 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
     toast.error('Fitur hapus akun memerlukan konfirmasi admin');
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (window.history.length > 1) {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-6">
           <button 
-            onClick={onBack}
+            onClick={handleBack}
             className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            aria-label="Kembali"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <h2 className="text-white">Pengaturan</h2>
+          <h2 className="text-white text-xl font-semibold">Pengaturan</h2>
         </div>
       </div>
 
