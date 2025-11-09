@@ -131,8 +131,8 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
             Aplikasi Relawan ZISWAF
           </p>
           <div className="mt-1 text-xs text-gray-400">
-            <p>Versi {process.env.REACT_APP_VERSION || '1.0.0'}</p>
-            <p>Dibangun pada: {new Date(process.env.REACT_APP_BUILD_DATE || new Date().toISOString()).toLocaleDateString('id-ID', {
+            <p>Versi {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
+            <p>Dibangun pada: {new Date(import.meta.env.VITE_APP_BUILD_DATE || new Date().toISOString()).toLocaleDateString('id-ID', {
               day: '2-digit',
               month: 'long',
               year: 'numeric',
