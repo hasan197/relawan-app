@@ -95,6 +95,9 @@ storybook-static/
 # Turbo
 .turbo/
 
+# Local temp directory
+_temp/
+
 # macOS
 .DS_Store
 .AppleDouble
