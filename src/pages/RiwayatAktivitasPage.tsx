@@ -1,116 +1,65 @@
 import { useState } from 'react';
-import { ArrowLeft, Calendar, Users, Package, MessageCircle, Filter, Download } from 'lucide-react';
+import { ArrowLeft, Filter, DollarSign, MessageSquare, Send, Loader2 } from 'lucide-react';
 import { Card } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { formatRelativeTime, formatCurrency } from '../lib/utils';
-import { mockActivities } from '../lib/mockData';
+import { useAppContext } from '../contexts/AppContext';
+import { useStatistics } from '../hooks/useStatistics';
 
 interface RiwayatAktivitasPageProps {
   onBack?: () => void;
 }
 
 export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
-  const [filter, setFilter] = useState<'semua' | 'donation' | 'follow-up' | 'distribution'>('semua');
-  const [dateFilter, setDateFilter] = useState<'hari-ini' | 'minggu-ini' | 'bulan-ini' | 'semua'>('semua');
+  const { user } = useAppContext();
+  const { statistics, loading } = useStatistics(user?.id || null);
+  const [filterType, setFilterType] = useState<'all' | 'donation' | 'follow-up' | 'distribution'>('all');
 
-  // Extended mock data
-  const allActivities = [
-    ...mockActivities,
-    {
-      id: '5',
-      type: 'follow-up' as const,
-      title: 'Follow-up Siti Nurhaliza',
-      time: new Date('2025-11-04T15:00:00'),
-      relawanId: '1'
-    },
-    {
-      id: '6',
-      type: 'donation' as const,
-      title: 'Donasi dari Bapak Wijaya',
-      amount: 750000,
-      time: new Date('2025-11-03T10:00:00'),
-      relawanId: '1'
-    },
-    {
-      id: '7',
-      type: 'distribution' as const,
-      title: 'Penyaluran ke Yayasan Al-Hidayah',
-      amount: 1000000,
-      time: new Date('2025-11-02T14:00:00'),
-      relawanId: '1'
-    },
-    {
-      id: '8',
-      type: 'follow-up' as const,
-      title: 'Follow-up Muhammad Rizki',
-      time: new Date('2025-11-01T16:00:00'),
-      relawanId: '1'
-    }
-  ];
+  const activities = statistics?.recent_activities || [];
 
-  const filteredActivities = allActivities.filter(activity => {
-    const matchesType = filter === 'semua' || activity.type === filter;
-    
-    let matchesDate = true;
-    const now = new Date();
-    const activityDate = activity.time;
-    
-    if (dateFilter === 'hari-ini') {
-      matchesDate = activityDate.toDateString() === now.toDateString();
-    } else if (dateFilter === 'minggu-ini') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      matchesDate = activityDate >= weekAgo;
-    } else if (dateFilter === 'bulan-ini') {
-      matchesDate = activityDate.getMonth() === now.getMonth() && 
-                    activityDate.getFullYear() === now.getFullYear();
-    }
-    
-    return matchesType && matchesDate;
-  });
+  // Filter activities by type
+  const filteredActivities = filterType === 'all'
+    ? activities
+    : activities.filter(a => a.type === filterType);
 
-  const getIcon = (type: 'donation' | 'follow-up' | 'distribution') => {
+  const getActivityIcon = (type: string) => {
     switch (type) {
       case 'donation':
-        return Calendar;
+        return <DollarSign className="h-5 w-5 text-green-600" />;
       case 'follow-up':
-        return Users;
+        return <MessageSquare className="h-5 w-5 text-blue-600" />;
       case 'distribution':
-        return Package;
+        return <Send className="h-5 w-5 text-orange-600" />;
+      default:
+        return <DollarSign className="h-5 w-5 text-gray-600" />;
     }
   };
 
-  const getIconColor = (type: 'donation' | 'follow-up' | 'distribution') => {
+  const getActivityBgColor = (type: string) => {
     switch (type) {
       case 'donation':
-        return 'bg-green-100 text-green-600';
+        return 'bg-green-100';
       case 'follow-up':
-        return 'bg-blue-100 text-blue-600';
+        return 'bg-blue-100';
       case 'distribution':
-        return 'bg-orange-100 text-orange-600';
+        return 'bg-orange-100';
+      default:
+        return 'bg-gray-100';
     }
   };
 
-  const getTypeLabel = (type: 'donation' | 'follow-up' | 'distribution') => {
+  const getActivityLabel = (type: string) => {
     switch (type) {
       case 'donation':
         return 'Donasi';
       case 'follow-up':
-        return 'Follow-up';
+        return 'Follow Up';
       case 'distribution':
         return 'Penyaluran';
+      default:
+        return type;
     }
-  };
-
-  // Statistics
-  const stats = {
-    total: filteredActivities.length,
-    donations: filteredActivities.filter(a => a.type === 'donation').length,
-    followUps: filteredActivities.filter(a => a.type === 'follow-up').length,
-    distributions: filteredActivities.filter(a => a.type === 'distribution').length,
-    totalAmount: filteredActivities
-      .filter(a => a.amount)
-      .reduce((sum, a) => sum + (a.amount || 0), 0)
   };
 
   return (
@@ -124,134 +73,96 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <div className="flex-1">
+          <div>
             <h2 className="text-white">Riwayat Aktivitas</h2>
-            <p className="text-primary-100">
-              {stats.total} aktivitas tercatat
+            <p className="text-primary-100 text-sm">
+              {loading ? 'Memuat...' : `${filteredActivities.length} aktivitas`}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="bg-white/20 border-white/40 text-white hover:bg-white/30"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Ekspor
-          </Button>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'all', label: 'Semua', count: activities.length },
+            { id: 'donation', label: 'Donasi', count: activities.filter(a => a.type === 'donation').length },
+            { id: 'follow-up', label: 'Follow Up', count: activities.filter(a => a.type === 'follow-up').length },
+            { id: 'distribution', label: 'Penyaluran', count: activities.filter(a => a.type === 'distribution').length }
+          ].map(filter => (
+            <button
+              key={filter.id}
+              onClick={() => setFilterType(filter.id as any)}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                filterType === filter.id
+                  ? 'bg-white text-primary-600'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="px-4 -mt-4 pb-6">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <Card className="p-3 text-center">
-            <Calendar className="h-5 w-5 text-green-600 mx-auto mb-1" />
-            <p className="text-gray-500">Donasi</p>
-            <p className="text-gray-900">{stats.donations}</p>
-          </Card>
-          
-          <Card className="p-3 text-center">
-            <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-            <p className="text-gray-500">Follow-up</p>
-            <p className="text-gray-900">{stats.followUps}</p>
-          </Card>
-          
-          <Card className="p-3 text-center">
-            <Package className="h-5 w-5 text-orange-600 mx-auto mb-1" />
-            <p className="text-gray-500">Salur</p>
-            <p className="text-gray-900">{stats.distributions}</p>
-          </Card>
-        </div>
-
-        {/* Date Filter */}
-        <Card className="p-4 mb-4 shadow-card">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-gray-600" />
-            <h4 className="text-gray-900">Filter</h4>
+      {/* Activities List */}
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
           </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
-            {(['hari-ini', 'minggu-ini', 'bulan-ini', 'semua'] as const).map((date) => (
-              <button
-                key={date}
-                onClick={() => setDateFilter(date)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  dateFilter === date
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {date === 'hari-ini' ? 'Hari Ini' : date === 'minggu-ini' ? 'Minggu Ini' : date === 'bulan-ini' ? 'Bulan Ini' : 'Semua'}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {(['semua', 'donation', 'follow-up', 'distribution'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilter(type)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  filter === type
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {type === 'semua' ? 'Semua Tipe' : getTypeLabel(type)}
-              </button>
-            ))}
-          </div>
-        </Card>
-
-        {/* Activities List */}
-        <div className="space-y-3">
-          {filteredActivities.map((activity) => {
-            const Icon = getIcon(activity.type);
-            const iconColor = getIconColor(activity.type);
-            
-            return (
+        ) : filteredActivities.length === 0 ? (
+          <Card className="p-8 text-center">
+            <div className="text-gray-400 text-4xl mb-2">📋</div>
+            <p className="text-gray-600 mb-1">
+              {filterType === 'all' 
+                ? 'Belum ada aktivitas' 
+                : `Belum ada aktivitas ${getActivityLabel(filterType).toLowerCase()}`}
+            </p>
+            <p className="text-gray-400 text-sm">
+              Aktivitas Anda akan muncul di sini
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredActivities.map((activity) => (
               <Card key={activity.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-full ${iconColor} flex-shrink-0`}>
-                    <Icon className="h-5 w-5" />
+                  <div className={`p-3 rounded-full ${getActivityBgColor(activity.type)}`}>
+                    {getActivityIcon(activity.type)}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
-                      <h4 className="text-gray-900">{activity.title}</h4>
-                      <Badge className="bg-gray-100 text-gray-700 border-none">
-                        {getTypeLabel(activity.type)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-gray-500">
-                        {formatRelativeTime(activity.time)}
-                      </p>
+                      <div className="flex-1">
+                        <h3 className="text-gray-900 mb-1">{activity.title}</h3>
+                        {activity.muzakki_name && (
+                          <p className="text-gray-600 text-sm">{activity.muzakki_name}</p>
+                        )}
+                        {activity.category && (
+                          <Badge className="bg-gray-100 text-gray-700 border-none text-xs mt-1">
+                            {activity.category}
+                          </Badge>
+                        )}
+                      </div>
+                      
                       {activity.amount && (
-                        <p className={`${
-                          activity.type === 'distribution' 
-                            ? 'text-orange-600' 
-                            : 'text-green-600'
-                        }`}>
-                          {activity.type === 'distribution' ? '-' : '+'}
-                          {formatCurrency(activity.amount)}
-                        </p>
+                        <div className="text-right ml-3">
+                          <p className="text-green-600 font-medium">
+                            +{formatCurrency(activity.amount)}
+                          </p>
+                        </div>
                       )}
                     </div>
+                    
+                    <p className="text-gray-400 text-xs mt-2">
+                      {formatRelativeTime(activity.time)}
+                    </p>
                   </div>
                 </div>
               </Card>
-            );
-          })}
-
-          {filteredActivities.length === 0 && (
-            <div className="text-center py-12">
-              <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">Tidak ada aktivitas ditemukan</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,25 +1,13 @@
 import { useState } from 'react';
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  Target,
-  ArrowUp,
-  ArrowDown,
-  Plus,
-  Download,
-  Calendar,
-  Activity
-} from 'lucide-react';
+import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
+import { useAppContext } from '../../contexts/AppContext';
+import { useStatistics } from '../../hooks/useStatistics';
+import { formatCurrency, getInitials, formatRelativeTime } from '../../lib/utils';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Progress } from '../../components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
-import { useAppContext } from '../../contexts/AppContext';
-import { formatCurrency, getInitials, formatRelativeTime } from '../../lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface DesktopDashboardPageProps {
   onNavigate?: (page: string) => void;

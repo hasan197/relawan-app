@@ -130,6 +130,39 @@ export function useAuth() {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const userStr = localStorage.getItem('user');
+      
+      if (!token || !userStr) {
+        console.log('⚠️ No user to refresh');
+        return;
+      }
+
+      const currentUser = JSON.parse(userStr);
+      console.log('🔄 Refreshing user data for:', currentUser.phone);
+
+      // Get fresh user data from backend
+      const response = await apiCall(`/users/phone/${currentUser.phone}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.success && response.user) {
+        console.log('✅ User data refreshed:', response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+        return response.user;
+      }
+    } catch (error) {
+      console.error('❌ Refresh user error:', error);
+      throw error;
+    }
+  };
+
   return {
     user,
     loading,
@@ -138,6 +171,7 @@ export function useAuth() {
     sendOTP,
     verifyOTP,
     logout,
+    refreshUser,
     isAuthenticated: !!user
   };
 }

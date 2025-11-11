@@ -15,7 +15,10 @@ import {
   ChevronRight,
   Bell,
   Moon,
-  HelpCircle
+  HelpCircle,
+  QrCode,
+  Plus,
+  List
 } from 'lucide-react';
 
 interface ProfilPageProps {
@@ -44,6 +47,18 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
         { icon: Users, label: 'Regu Saya', onClick: () => onNavigate?.('regu'), value: user?.regu_id ? 'Regu ' + user.regu_id : 'Belum ditentukan' },
       ]
     },
+    // ✅ Only show "Regu & Kolaborasi" section if user is pembimbing or admin
+    ...(user?.role === 'admin' || user?.role === 'pembimbing' ? [{
+      title: 'Regu & Kolaborasi',
+      items: [
+        ...(user?.role === 'pembimbing' ? [
+          { icon: List, label: 'Kelola Semua Regu', onClick: () => onNavigate?.('my-regus'), badge: 'Pembimbing' },
+          { icon: Plus, label: 'Buat Regu Baru', onClick: () => onNavigate?.('create-regu'), badge: null }
+        ] : []),
+        { icon: QrCode, label: 'QR Code Regu', onClick: () => onNavigate?.('regu-qr-code'), badge: user?.regu_id ? 'Aktif' : null },
+        { icon: MessageSquare, label: 'Chat Regu', onClick: () => onNavigate?.('chat-regu') },
+      ]
+    }] : []),
     {
       title: 'Konten',
       items: [
@@ -106,6 +121,9 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
                   <div className="flex items-center gap-2">
                     {item.value && (
                       <span className="text-gray-500">{item.value}</span>
+                    )}
+                    {item.badge && (
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">{item.badge}</span>
                     )}
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </div>

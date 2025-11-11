@@ -1,28 +1,31 @@
 import { useState } from 'react';
-import { ArrowLeft, Phone, User, MapPin } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
+import { Button } from '../components/ui/button';
 import { toast } from 'sonner@2.0.3';
-import { mockRegus } from '../lib/mockData';
 import { useAuth } from '../hooks/useAuth';
+import { useAllRegus } from '../hooks/useRegu';
 
 interface RegisterPageProps {
   onBack?: () => void;
   onRegister?: () => void;
+  onNavigate?: (page: string) => void;
 }
 
-export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
+export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPageProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     city: '',
-    reguId: ''
+    regu: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [regusLoading, setRegusLoading] = useState(false);
   const { register } = useAuth();
+  const { regus } = useAllRegus();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +50,11 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
         fullName: formData.fullName,
         phone: cleanPhone,
         city: formData.city,
-        reguId: formData.reguId
+        reguId: formData.regu
       });
 
       // Use cleaned phone number
-      const result = await register(formData.fullName, cleanPhone, formData.city, formData.reguId);
+      const result = await register(formData.fullName, cleanPhone, formData.city, formData.regu);
       
       console.log('✅ Registration successful:', result);
       toast.success('Pendaftaran berhasil!');
@@ -136,24 +139,32 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
             </div>
 
             <div>
-              <Label htmlFor="regu">Pilih Regu (Opsional)</Label>
-              <select
-                id="regu"
-                value={formData.reguId}
-                onChange={(e) => setFormData({ ...formData, reguId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                disabled={isLoading}
-              >
-                <option value="">Akan ditentukan kemudian</option>
-                {mockRegus.map((regu) => (
-                  <option key={regu.id} value={regu.id}>
-                    {regu.name} - {regu.pembimbingName}
-                  </option>
-                ))}
-              </select>
-              <p className="text-gray-500 mt-1">
-                Regu dapat dipilih setelah pendaftaran
-              </p>
+              <Label htmlFor="regu">Regu (Opsional)</Label>
+              <div className="space-y-3">
+                <select
+                  id="regu"
+                  value={formData.regu}
+                  onChange={(e) => setFormData({ ...formData, regu: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  disabled={isLoading || regusLoading}
+                >
+                  <option value="">Akan ditentukan kemudian</option>
+                  {regus.map((regu) => (
+                    <option key={regu.id} value={regu.id}>
+                      {regu.name} - {regu.pembimbing_name}
+                    </option>
+                  ))}
+                </select>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => onNavigate?.('join-regu')}
+                >
+                  Atau Gabung via QR Code
+                </Button>
+              </div>
             </div>
 
             <Button

@@ -238,6 +238,79 @@ app.post('/make-server-f689ca3f/auth/verify-otp', async (c) => {
 // MUZAKKI ENDPOINTS
 // ============================================
 
+// Update user role (admin only - for now open for testing)
+app.patch('/make-server-f689ca3f/users/:phone/role', async (c) => {
+  try {
+    const phone = c.req.param('phone');
+    const { role } = await c.req.json();
+
+    if (!phone || !role) {
+      return c.json({ error: 'Phone dan role harus diisi' }, 400);
+    }
+
+    if (!['relawan', 'pembimbing', 'admin'].includes(role)) {
+      return c.json({ error: 'Role tidak valid. Harus: relawan, pembimbing, atau admin' }, 400);
+    }
+
+    // Get user by phone
+    const user = await kv.get(`user:phone:${phone}`);
+    
+    if (!user) {
+      return c.json({ error: 'User tidak ditemukan' }, 404);
+    }
+
+    // Update role
+    const updatedUser = {
+      ...user,
+      role: role,
+      updated_at: new Date().toISOString()
+    };
+
+    // Update in both locations
+    await kv.set(`user:${user.id}`, updatedUser);
+    await kv.set(`user:phone:${phone}`, updatedUser);
+
+    console.log(`✅ User role updated: ${phone} → ${role}`);
+
+    return c.json({
+      success: true,
+      message: `Role berhasil diubah menjadi ${role}`,
+      user: updatedUser
+    });
+  } catch (error) {
+    console.log('Update user role error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Get user by phone
+app.get('/make-server-f689ca3f/users/phone/:phone', async (c) => {
+  try {
+    const phone = c.req.param('phone');
+    
+    if (!phone) {
+      return c.json({ error: 'Phone harus diisi' }, 400);
+    }
+
+    // Get user by phone
+    const user = await kv.get(`user:phone:${phone}`);
+    
+    if (!user) {
+      return c.json({ error: 'User tidak ditemukan' }, 404);
+    }
+
+    console.log(`✅ User found: ${phone} → ${user.role}`);
+
+    return c.json({
+      success: true,
+      user: user
+    });
+  } catch (error) {
+    console.log('Get user error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
 // Get all muzakki for a relawan
 app.get('/make-server-f689ca3f/muzakki', async (c) => {
   try {
@@ -522,6 +595,118 @@ app.get('/make-server-f689ca3f/communications/:muzakki_id', async (c) => {
 // REGU & CHAT ENDPOINTS
 // ============================================
 
+// Get all regus
+app.get('/make-server-f689ca3f/regus', async (c) => {
+  try {
+    console.log('🔍 Fetching all regus...');
+    const regus = await kv.getByPrefix('regu:');
+    console.log('✅ Regus found:', regus.length);
+    
+    return c.json({
+      success: true,
+      data: regus
+    });
+  } catch (error) {
+    console.error('❌ Get all regus error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Create new regu (pembimbing only)
+app.post('/make-server-f689ca3f/regus', async (c) => {
+  try {
+    const { pembimbing_id, name, target_amount } = await c.req.json();
+
+    console.log('📝 Create Regu Request:', { pembimbing_id, name, target_amount });
+
+    if (!pembimbing_id || !name) {
+      return c.json({ error: 'Pembimbing ID dan nama regu harus diisi' }, 400);
+    }
+
+    // Get pembimbing user
+    const pembimbingResult = await kv.get(`user:${pembimbing_id}`);
+    if (!pembimbingResult || !pembimbingResult.value) {
+      return c.json({ error: 'Pembimbing tidak ditemukan' }, 404);
+    }
+    
+    const user = pembimbingResult.value;
+    console.log('User data from KV store:', JSON.stringify(user, null, 2));
+    
+    // Debug: Log all user properties
+    console.log('User properties:', Object.keys(user));
+    
+    if (user.role !== 'pembimbing') {
+      return c.json({ 
+        error: 'Hanya pengguna dengan role pembimbing yang bisa membuat regu',
+        userRole: user.role,
+        userId: pembimbing_id,
+        userData: user
+      }, 403);
+    }
+
+    // Generate unique join code (6 karakter uppercase alphanumeric)
+    const generateJoinCode = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude similar chars
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+
+    let joinCode = generateJoinCode();
+    // Ensure uniqueness
+    let codeExists = await kv.get(`regu:code:${joinCode}`);
+    while (codeExists) {
+      joinCode = generateJoinCode();
+      codeExists = await kv.get(`regu:code:${joinCode}`);
+    }
+
+    const reguId = crypto.randomUUID();
+    const regu = {
+      id: reguId,
+      name: name,
+      pembimbing_id: pembimbing_id,
+      pembimbing_name: user.full_name,  // Menggunakan user.full_name
+      member_count: 0,
+      total_donations: 0,
+      target_amount: target_amount || 60000000,
+      join_code: joinCode,
+      created_at: new Date().toISOString()
+    };
+
+    // Save regu
+    await kv.set(`regu:${reguId}`, regu);
+    
+    // Save join code mapping
+    await kv.set(`regu:code:${joinCode}`, reguId);
+
+    console.log('✅ Regu created successfully:', { reguId, name, joinCode });
+
+    // Siapkan respons yang mencakup data regu dan role user
+    const response = {
+      success: true,
+      message: 'Regu berhasil dibuat!',
+      data: {
+        ...regu,
+        role: 'pembimbing' // Menambahkan role ke dalam respons
+      },
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        role: user.role,
+        regu_id: reguId
+      }
+    };
+
+    console.log('📤 Response with role:', response);
+    return c.json(response);
+  } catch (error) {
+    console.error('❌ Create regu error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
 // Get regu info
 app.get('/make-server-f689ca3f/regu/:id', async (c) => {
   try {
@@ -538,6 +723,37 @@ app.get('/make-server-f689ca3f/regu/:id', async (c) => {
     });
   } catch (error) {
     console.log('Get regu error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Get regu info by join code
+app.get('/make-server-f689ca3f/regu/by-code/:code', async (c) => {
+  try {
+    const joinCode = c.req.param('code');
+    
+    console.log('🔍 Looking for regu with join code:', joinCode);
+    
+    // Get all regus and find the one with matching join code
+    const allRegus = await kv.getByPrefix('regu:');
+    
+    console.log('📦 Total regus found:', allRegus.length);
+    
+    const regu = allRegus.find((r: any) => r.join_code === joinCode);
+    
+    if (!regu) {
+      console.log('❌ Regu not found with code:', joinCode);
+      return c.json({ error: 'Regu tidak ditemukan' }, 404);
+    }
+    
+    console.log('✅ Regu found:', regu);
+
+    return c.json({
+      success: true,
+      data: regu
+    });
+  } catch (error) {
+    console.log('Get regu by code error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
@@ -587,7 +803,7 @@ app.post('/make-server-f689ca3f/regu/:id/members', async (c) => {
     // Get user
     const user = await kv.get(`user:${userId}`);
     if (!user) {
-      return c.json({ error: 'User tidak ditemukan' }, 404);
+      return c.json({ error: 'User tidak ditemukan' }, 404)
     }
     
     // Update user's regu
@@ -602,6 +818,78 @@ app.post('/make-server-f689ca3f/regu/:id/members', async (c) => {
     });
   } catch (error) {
     console.log('Add regu member error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Join regu by code (QR code or manual input)
+app.post('/make-server-f689ca3f/regu/join', async (c) => {
+  try {
+    const { user_id, join_code } = await c.req.json();
+
+    console.log('🔍 Join regu request:', { user_id, join_code });
+
+    if (!user_id || !join_code) {
+      return c.json({ error: 'User ID dan kode regu harus diisi' }, 400);
+    }
+
+    // Get user
+    const user = await kv.get(`user:${user_id}`);
+    if (!user) {
+      return c.json({ error: 'User tidak ditemukan' }, 404);
+    }
+
+    // Check if user already in a regu
+    if (user.regu_id) {
+      return c.json({ error: 'Anda sudah tergabung dalam regu. Hubungi pembimbing untuk pindah regu.' }, 400);
+    }
+
+    // Get regu ID from join code
+    const reguId = await kv.get(`regu:code:${join_code.toUpperCase()}`);
+    if (!reguId) {
+      return c.json({ error: 'Kode regu tidak valid' }, 404);
+    }
+
+    // Get regu details
+    const regu = await kv.get(`regu:${reguId}`);
+    if (!regu) {
+      return c.json({ error: 'Regu tidak ditemukan' }, 404);
+    }
+
+    // Update user's regu
+    const updatedUser = {
+      ...user,
+      regu_id: reguId,
+      regu_name: regu.name,
+      joined_regu_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${user_id}`, updatedUser);
+    await kv.set(`user:phone:${user.phone}`, updatedUser);
+
+    // Update regu member count
+    await kv.set(`regu:${reguId}`, {
+      ...regu,
+      member_count: (regu.member_count || 0) + 1,
+      updated_at: new Date().toISOString()
+    });
+
+    console.log('✅ User joined regu successfully:', {
+      user_id,
+      regu_id: reguId,
+      regu_name: regu.name
+    });
+
+    return c.json({
+      success: true,
+      message: `Berhasil bergabung dengan ${regu.name}!`,
+      data: {
+        user: updatedUser,
+        regu: regu
+      }
+    });
+  } catch (error) {
+    console.error('❌ Join regu error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
@@ -949,6 +1237,192 @@ app.post('/make-server-f689ca3f/templates', async (c) => {
 // Health check
 app.get('/make-server-f689ca3f/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Seed database with initial data
+app.post('/make-server-f689ca3f/seed', async (c) => {
+  try {
+    console.log('🌱 Seeding database...');
+    
+    // Helper function to generate unique regu code
+    const generateReguCode = () => {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    };
+    
+    // Seed Regus
+    const regus = [
+      {
+        id: 'regu1',
+        name: 'Regu Ar-Rahman',
+        pembimbing_name: 'Ustadz Abdullah',
+        member_count: 8,
+        total_donations: 52000000,
+        target_amount: 60000000,
+        join_code: generateReguCode(),
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'regu2',
+        name: 'Regu Al-Karim',
+        pembimbing_name: 'Ustadz Muhammad',
+        member_count: 6,
+        total_donations: 38000000,
+        target_amount: 50000000,
+        join_code: generateReguCode(),
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'regu3',
+        name: 'Regu An-Nur',
+        pembimbing_name: 'Ustadzah Fatimah',
+        member_count: 7,
+        total_donations: 45000000,
+        target_amount: 55000000,
+        join_code: generateReguCode(),
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    for (const regu of regus) {
+      await kv.set(`regu:${regu.id}`, regu);
+      // Also create reverse lookup: code -> regu_id
+      await kv.set(`regu:code:${regu.join_code}`, regu.id);
+    }
+
+    // Seed Programs
+    const programs = [
+      {
+        id: crypto.randomUUID(),
+        title: 'Bantu Pendidikan Anak Yatim',
+        category: 'zakat',
+        description: 'Program beasiswa untuk 100 anak yatim di seluruh Indonesia',
+        target: 500000000,
+        collected: 325000000,
+        contributors: 1250,
+        location: 'Seluruh Indonesia',
+        endDate: '2025-12-31',
+        image: '',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Wakaf Quran untuk Pesantren',
+        category: 'wakaf',
+        description: 'Pengadaan 1000 Al-Quran untuk pesantren di daerah terpencil',
+        target: 200000000,
+        collected: 145000000,
+        contributors: 580,
+        location: 'Papua, NTT',
+        endDate: '2025-11-30',
+        image: '',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Infaq Pembangunan Masjid',
+        category: 'infaq',
+        description: 'Renovasi masjid di desa tertinggal',
+        target: 300000000,
+        collected: 180000000,
+        contributors: 720,
+        location: 'Jawa Tengah',
+        endDate: '2026-01-31',
+        image: '',
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    for (const program of programs) {
+      await kv.set(`program:${program.id}`, program);
+    }
+
+    // Seed Templates
+    const templates = [
+      {
+        id: crypto.randomUUID(),
+        title: 'Ucapan Terima Kasih Donasi',
+        category: 'terima-kasih',
+        content: 'Assalamualaikum {nama},\n\nBarakallahu fiikum atas donasi {kategori} sebesar {nominal} yang telah Bapak/Ibu salurkan.\n\nSemoga menjadi amal jariyah dan berkah untuk keluarga.\n\nJazakumullahu khairan.',
+        variables: ['nama', 'kategori', 'nominal'],
+        created_at: new Date().toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Reminder Follow Up',
+        category: 'follow-up',
+        content: 'Assalamualaikum {nama},\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu.\n\nKami ingin mengingatkan tentang kesempatan berbagi kebaikan di bulan {bulan} ini.\n\nTerima kasih atas perhatiannya.',
+        variables: ['nama', 'bulan'],
+        created_at: new Date().toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Laporan Penyaluran',
+        category: 'laporan',
+        content: 'Assalamualaikum {nama},\n\nAlhamdulillah, donasi Bapak/Ibu sebesar {nominal} telah disalurkan untuk program {program}.\n\nTerlampir bukti penyaluran.\n\nBarakallahu fiikum.',
+        variables: ['nama', 'nominal', 'program'],
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    for (const template of templates) {
+      await kv.set(`template:${template.id}`, template);
+    }
+
+    // Seed Demo Users (for testing role-based access)
+    const demoUsers = [
+      {
+        id: 'demo-pembimbing-1',
+        full_name: 'Ustadz Abdullah (Pembimbing)',
+        phone: '+6281111111111',
+        email: 'pembimbing1@demo.com',
+        city: 'Jakarta',
+        regu_id: 'regu1',
+        role: 'pembimbing',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-admin-1',
+        full_name: 'Admin ZISWAF',
+        phone: '+6282222222222',
+        email: 'admin@demo.com',
+        city: 'Jakarta',
+        regu_id: null,
+        role: 'admin',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-relawan-1',
+        full_name: 'Ahmad Relawan',
+        phone: '+6283333333333',
+        email: 'relawan1@demo.com',
+        city: 'Bandung',
+        regu_id: 'regu1',
+        role: 'relawan',
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    for (const user of demoUsers) {
+      await kv.set(`user:${user.id}`, user);
+      await kv.set(`user:phone:${user.phone}`, user);
+    }
+
+    console.log('✅ Database seeded successfully');
+
+    return c.json({
+      success: true,
+      message: 'Database seeded successfully',
+      data: {
+        regus: regus.length,
+        programs: programs.length,
+        templates: templates.length,
+        demo_users: demoUsers.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ Seed error:', error);
+    return c.json({ error: `Seed error: ${error.message}` }, 500);
+  }
 });
 
 Deno.serve(app.fetch);

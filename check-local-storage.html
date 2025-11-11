@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Local Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .user-data {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Local Storage Checker</h1>
+    <p>This page checks for user data in your browser's local storage.</p>
+    
+    <div id="output">
+        <h2>Local Storage Contents:</h2>
+        <pre id="storageContent">Checking local storage...</pre>
+        
+        <div id="userData" class="user-data" style="display: none;">
+            <h3>User Information:</h3>
+            <p><strong>ID:</strong> <span id="userId"></span></p>
+            <p><strong>Name:</strong> <span id="userName"></span></p>
+            <p><strong>Phone:</strong> <span id="userPhone"></span></p>
+            <p><strong>Role:</strong> <span id="userRole"></span></p>
+            <p><strong>Regu ID:</strong> <span id="userReguId"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const storageContent = document.getElementById('storageContent');
+            const userDataDiv = document.getElementById('userData');
+            
+            try {
+                // Get all items from local storage
+                const storage = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    try {
+                        storage[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        storage[key] = localStorage.getItem(key);
+                    }
+                }
+                
+                // Display all storage content
+                storageContent.textContent = JSON.stringify(storage, null, 2);
+                
+                // Check for user data
+                const userData = storage.user ? (typeof storage.user === 'string' ? JSON.parse(storage.user) : storage.user) : null;
+                
+                if (userData) {
+                    document.getElementById('userId').textContent = userData.id || 'N/A';
+                    document.getElementById('userName').textContent = userData.full_name || userData.name || 'N/A';
+                    document.getElementById('userPhone').textContent = userData.phone || 'N/A';
+                    document.getElementById('userRole').textContent = userData.role || 'N/A';
+                    document.getElementById('userReguId').textContent = userData.regu_id || 'N/A';
+                    userDataDiv.style.display = 'block';
+                    
+                    // Check if this is the user we're looking for
+                    if (userData.phone && 
+                        (userData.phone.includes('081316056909') || 
+                         userData.phone.includes('6281316056909'))) {
+                        console.log('✅ Found the target user in local storage!');
+                    }
+                } else {
+                    storageContent.textContent += '\n\nNo user data found in local storage.';
+                }
+                
+            } catch (error) {
+                storageContent.textContent = 'Error reading local storage: ' + error.message;
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

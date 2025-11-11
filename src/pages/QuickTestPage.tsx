@@ -102,29 +102,10 @@ export function QuickTestPage({ onBack }: QuickTestPageProps) {
       console.log('✅ Verify OTP response:', response);
       
       if (response.success) {
-        console.log('👤 User data:', response.user);
-        console.log('🔑 Access token:', response.access_token);
-        console.log('🆔 User ID:', response.user?.id);
-        
-        // Save to localStorage
-        localStorage.setItem('access_token', response.access_token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        
-        // Verify save
-        const savedUser = localStorage.getItem('user');
-        const savedToken = localStorage.getItem('access_token');
-        
-        console.log('✅ Saved to localStorage:');
-        console.log('- User:', savedUser);
-        console.log('- Token:', savedToken);
-        
         toast.success('✅ Login berhasil!');
-        toast.info('🔄 Refresh halaman untuk masuk ke dashboard');
-        
-        // Reload after 2 seconds
         setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+          window.location.href = '/';
+        }, 1500);
       } else {
         toast.error(response.error || 'Verifikasi OTP gagal');
       }
@@ -136,97 +117,28 @@ export function QuickTestPage({ onBack }: QuickTestPageProps) {
     }
   };
 
-  // Step 4: Add Muzakki
-  const handleAddMuzakki = async () => {
+  // Seed Database
+  const handleSeedDatabase = async () => {
     setLoading(true);
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('🌱 Seeding database...');
       
-      if (!user.id) {
-        toast.error('❌ Belum login! Login dulu.');
-        return;
-      }
-      
-      console.log('➕ Adding muzakki for user:', user.id);
-      
-      const muzakkiData = {
-        relawan_id: user.id,
-        name: 'Ahmad Muzakki',
-        phone: '08123456789',
-        city: 'Jakarta',
-        status: 'baru',
-        notes: 'Test muzakki 1'
-      };
-      
-      const response = await apiCall('/muzakki', {
-        method: 'POST',
-        body: JSON.stringify(muzakkiData)
+      const response = await apiCall('/seed', {
+        method: 'POST'
       });
 
-      console.log('✅ Add muzakki response:', response);
+      console.log('✅ Seed response:', response);
       
       if (response.success) {
-        toast.success('✅ Muzakki berhasil ditambahkan!');
+        toast.success(`✅ Database seeded! ${response.data.regus} regus, ${response.data.programs} programs, ${response.data.templates} templates`);
       } else {
-        toast.error(response.error || 'Gagal menambah muzakki');
+        toast.error(response.error || 'Seed gagal');
       }
     } catch (error: any) {
-      console.error('❌ Add muzakki error:', error);
-      toast.error(error.message || 'Gagal menambah muzakki');
+      console.error('❌ Seed error:', error);
+      toast.error(error.message || 'Seed gagal');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Step 5: Check Muzakki
-  const handleCheckMuzakki = async () => {
-    setLoading(true);
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      if (!user.id) {
-        toast.error('❌ Belum login! Login dulu.');
-        return;
-      }
-      
-      console.log('🔍 Fetching muzakki for user:', user.id);
-      
-      const response = await apiCall(`/muzakki?relawan_id=${user.id}`);
-
-      console.log('✅ Fetch muzakki response:', response);
-      console.log('📊 Muzakki count:', response.data?.length || 0);
-      console.log('📦 Muzakki data:', response.data);
-      
-      if (response.success) {
-        toast.success(`✅ Ditemukan ${response.data?.length || 0} muzakki`);
-      } else {
-        toast.error(response.error || 'Gagal fetch muzakki');
-      }
-    } catch (error: any) {
-      console.error('❌ Fetch muzakki error:', error);
-      toast.error(error.message || 'Gagal fetch muzakki');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Check localStorage
-  const handleCheckLocalStorage = () => {
-    const user = localStorage.getItem('user');
-    const token = localStorage.getItem('access_token');
-    
-    console.log('\n═══════════════════════════════════════════');
-    console.log('📦 LOCALSTORAGE CHECK');
-    console.log('═══════════════════════════════════════════');
-    console.log('User:', user);
-    console.log('Token:', token);
-    console.log('Parsed User:', user ? JSON.parse(user) : null);
-    console.log('═══════════════════════════════════════════\n');
-    
-    if (user && token) {
-      toast.success('✅ LocalStorage OK');
-    } else {
-      toast.error('❌ LocalStorage kosong - belum login');
     }
   };
 
@@ -330,42 +242,19 @@ export function QuickTestPage({ onBack }: QuickTestPageProps) {
           </div>
         </Card>
 
-        {/* Step 4: Add Muzakki */}
+        {/* Seed Database */}
         <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">4️⃣ Add Muzakki</h2>
+          <h2 className="text-xl font-bold mb-4">🌱 Seed Database</h2>
           <p className="text-sm text-gray-600 mb-3">
-            (Pastikan sudah login dulu!)
+            (Hanya untuk pengembangan!)
           </p>
           <Button 
-            onClick={handleAddMuzakki}
+            onClick={handleSeedDatabase}
             disabled={loading}
             className="w-full"
           >
-            {loading ? 'Loading...' : 'Add Test Muzakki'}
+            {loading ? 'Loading...' : 'Seed Database'}
           </Button>
-        </Card>
-
-        {/* Step 5: Check Data */}
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">5️⃣ Check Data</h2>
-          <div className="space-y-2">
-            <Button 
-              onClick={handleCheckMuzakki}
-              disabled={loading}
-              className="w-full"
-              variant="outline"
-            >
-              {loading ? 'Loading...' : 'Check Muzakki Data'}
-            </Button>
-            <Button 
-              onClick={handleCheckLocalStorage}
-              disabled={loading}
-              className="w-full"
-              variant="outline"
-            >
-              Check LocalStorage
-            </Button>
-          </div>
         </Card>
 
         {/* Console Info */}

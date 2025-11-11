@@ -15,6 +15,10 @@ import { DetailProgramPage } from './pages/DetailProgramPage';
 import { DetailProspekPage } from './pages/DetailProspekPage';
 import { TambahProspekPage } from './pages/TambahProspekPage';
 import { ReguPage } from './pages/ReguPage';
+import { ReguQRCodePage } from './pages/ReguQRCodePage';
+import { JoinReguPage } from './pages/JoinReguPage';
+import { CreateReguPage } from './pages/CreateReguPage';
+import { MyRegusPage } from './pages/MyRegusPage';
 import { GeneratorResiPage } from './pages/GeneratorResiPage';
 import { NotifikasiPage } from './pages/NotifikasiPage';
 import { ImportKontakPage } from './pages/ImportKontakPage';
@@ -22,11 +26,10 @@ import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
 import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
 import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
 import { MateriPromosiPage } from './pages/MateriPromosiPage';
-import { ChatReguPage } from './pages/ChatReguPage';
+import { ChatReguPageWithBackend } from './pages/ChatReguPageWithBackend';
 import { PengaturanPage } from './pages/PengaturanPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { ErrorPage } from './pages/ErrorPage';
-import OfflinePage from './pages/OfflinePage';
 import { TestConnectionPage } from './pages/TestConnectionPage';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useAppContext } from './contexts/AppContext';
@@ -36,10 +39,12 @@ import { DesktopLaporanPage } from './pages/desktop/DesktopLaporanPage';
 import { DesktopProfilPage } from './pages/desktop/DesktopProfilPage';
 import { DesktopTambahProspekPage } from './pages/desktop/DesktopTambahProspekPage';
 import { DesktopChatReguPage } from './pages/desktop/DesktopChatReguPage';
+import { DesktopProgramPage } from './pages/desktop/DesktopProgramPage';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
 import { useResponsive } from './hooks/useResponsive';
 import { DebugPage } from './pages/DebugPage';
 import { QuickTestPage } from './pages/QuickTestPage';
+import { AdminToolsPage } from './pages/AdminToolsPage';
 
 type Page = 
   | 'splash'
@@ -58,6 +63,10 @@ type Page =
   | 'detail-prospek'
   | 'tambah-prospek'
   | 'regu'
+  | 'regu-qr-code'
+  | 'join-regu'
+  | 'create-regu'
+  | 'my-regus'
   | 'generator-resi'
   | 'notifikasi'
   | 'import-kontak'
@@ -68,6 +77,7 @@ type Page =
   | 'chat-regu'
   | 'pengaturan'
   | 'admin-dashboard'
+  | 'admin-tools'
   | 'test-connection'
   | 'debug'
   | 'quick-test'
@@ -139,8 +149,9 @@ function AppContent() {
     }
   }, [loading, isAuthenticated, currentPage, user, logout]);
 
-  const handleNavigation = (page: Page) => {
-    setCurrentPage(page);
+  const handleNavigation = (page: string) => {
+    // Type assertion to Page since we know the string is a valid Page
+    setCurrentPage(page as Page);
   };
 
   const renderMobilePage = () => {
@@ -221,8 +232,38 @@ function AppContent() {
         );
       
       case 'regu':
-      case 'chat-regu':
         return <ReguPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
+      
+      case 'regu-qr-code':
+        return <ReguQRCodePage onBack={() => setCurrentPage('regu')} />;
+      
+      case 'join-regu':
+        return (
+          <JoinReguPage 
+            onBack={() => setCurrentPage('register')}
+            onSuccess={() => {
+              console.log('✅ Join regu success');
+              setCurrentPage('dashboard');
+            }}
+          />
+        );
+      
+      case 'create-regu':
+        return (
+          <CreateReguPage
+            onBack={() => setCurrentPage('regu')}
+            onSuccess={() => {
+              console.log('✅ Create regu success');
+              setCurrentPage('regu');
+            }}
+          />
+        );
+      
+      case 'my-regus':
+        return <MyRegusPage onBack={() => setCurrentPage('regu')} />;
+      
+      case 'chat-regu':
+        return <ChatReguPageWithBackend onBack={() => setCurrentPage('regu')} />;
       
       case 'generator-resi':
         return <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
@@ -255,6 +296,9 @@ function AppContent() {
       
       case 'admin-dashboard':
         return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'admin-tools':
+        return <AdminToolsPage onBack={() => setCurrentPage('dashboard')} />;
 
       case 'test-connection':
         return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
@@ -278,78 +322,20 @@ function AppContent() {
           />
         );
       
-      case 'offline':
-        return (
-          <OfflinePage
-            onRetry={() => setCurrentPage('dashboard')}
-            onHome={() => setCurrentPage('dashboard')}
-          />
-        );
-      
       default:
         return <DashboardPage onNavigate={handleNavigation} />;
     }
   };
 
   const renderDesktopPage = () => {
-    // Auth pages (no layout)
-    if (['login', 'register', 'register-success', 'otp', 'onboarding', 'test-connection', 'quick-test', 'splash'].includes(currentPage)) {
-      switch (currentPage) {
-        case 'splash':
-          return <SplashScreen onComplete={() => setCurrentPage('login')} />;
-        
-        case 'login':
-          return (
-            <LoginPage
-              onLogin={() => setCurrentPage('otp')}
-              onSendOTP={(phone) => {
-                setPhoneNumber(phone);
-                setCurrentPage('otp');
-              }}
-              onRegister={() => setCurrentPage('register')}
-            />
-          );
-        
-        case 'register':
-          return (
-            <RegisterPage
-              onBack={() => setCurrentPage('login')}
-              onRegister={() => setCurrentPage('register-success')}
-            />
-          );
-        
-        case 'register-success':
-          return <RegisterSuccessPage onComplete={() => setCurrentPage('login')} />;
-        
-        case 'otp':
-          return (
-            <OTPVerificationPage
-              phoneNumber={phoneNumber}
-              onVerify={() => {
-                // After successful OTP verification, navigate to onboarding
-                // Auth state should be updated by now
-                console.log('📍 OTP verified, navigating to dashboard (skip onboarding for now)');
-                setCurrentPage('dashboard');
-              }}
-              onBack={() => setCurrentPage('login')}
-            />
-          );
-        
-        case 'onboarding':
-          return <OnboardingPage onComplete={() => setCurrentPage('dashboard')} />;
-
-        case 'test-connection':
-          return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
-        
-        case 'quick-test':
-          return <QuickTestPage onBack={() => setCurrentPage('dashboard')} />;
-        
-        default:
-          return null;
-      }
+    // Auth pages and system pages (no desktop layout)
+    const noLayoutPages = ['splash', 'login', 'register', 'register-success', 'otp', 'onboarding', 'error', 'offline', 'test-connection', 'quick-test', 'debug'];
+    
+    if (noLayoutPages.includes(currentPage)) {
+      return renderMobilePage(); // Use mobile version for auth pages
     }
 
-    // Main pages (with desktop layout)
+    // Desktop pages with DesktopLayout
     return (
       <DesktopLayout currentPage={currentPage} onNavigate={handleNavigation}>
         {(() => {
@@ -363,28 +349,11 @@ function AppContent() {
             case 'laporan':
               return <DesktopLaporanPage onNavigate={handleNavigation} />;
             
-            case 'regu':
-            case 'chat-regu':
-              return <DesktopChatReguPage onNavigate={handleNavigation} />;
-            
             case 'profil':
               return <DesktopProfilPage onNavigate={handleNavigation} />;
             
-            case 'admin-dashboard':
-              return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} />;
-
-            // Other pages use mobile version in desktop layout
-            case 'template':
-              return <TemplatePesanPage onBack={() => setCurrentPage('profil')} />;
-            
             case 'program':
-              return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
-            
-            case 'detail-program':
-              return <DetailProgramPage onBack={() => setCurrentPage('program')} />;
-            
-            case 'detail-prospek':
-              return <DetailProspekPage onBack={() => setCurrentPage('donatur')} />;
+              return <DesktopProgramPage onNavigate={handleNavigation} />;
             
             case 'tambah-prospek':
               return (
@@ -394,25 +363,12 @@ function AppContent() {
                 />
               );
             
-            case 'generator-resi':
-              return <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
+            case 'chat-regu':
+              return <DesktopChatReguPage onBack={() => setCurrentPage('regu')} />;
             
-            case 'notifikasi':
-              return <NotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
-            
-            case 'import-kontak':
-              return (
-                <ImportKontakPage
-                  onBack={() => setCurrentPage('donatur')}
-                  onImport={() => setCurrentPage('donatur')}
-                />
-              );
-            
-            case 'pengaturan':
-              return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
-            
+            // For pages without desktop version, use mobile version
             default:
-              return <DesktopDashboardPage onNavigate={handleNavigation} />;
+              return renderMobilePage();
           }
         })()}
       </DesktopLayout>

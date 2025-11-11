@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Camera, Edit, Mail, Phone, MapPin, Calendar, Award, TrendingUp, Users, MessageSquare } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';

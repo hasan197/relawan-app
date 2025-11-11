@@ -1,27 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, Smile, Paperclip, MoreVertical } from 'lucide-react';
+import { Send, Loader2, RefreshCw, Users, Search } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
-import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
 import { useAppContext } from '../../contexts/AppContext';
 import { useChat } from '../../hooks/useChat';
-import { useReguMembers } from '../../hooks/useReguMembers';
 import { toast } from 'sonner@2.0.3';
 
 interface DesktopChatReguPageProps {
-  onNavigate?: (page: string) => void;
+  onBack?: () => void;
 }
 
-export function DesktopChatReguPage({ onNavigate }: DesktopChatReguPageProps) {
+export function DesktopChatReguPage({ onBack }: DesktopChatReguPageProps) {
   const { user } = useAppContext();
-  const reguId = user?.regu_id || 'demo-regu';
-  const { messages, loading, sendMessage } = useChat(reguId, user?.id);
-  const { members, loading: membersLoading } = useReguMembers(reguId);
+  const { messages, loading, error, sending, sendMessage, refetch } = useChat(
+    user?.regu_id || null,
+    user?.id || null,
+    5000 // Poll every 5 seconds
+  );
+
   const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -35,15 +36,13 @@ export function DesktopChatReguPage({ onNavigate }: DesktopChatReguPageProps) {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
-    setSending(true);
-    
     try {
-      await sendMessage(newMessage, user?.full_name || 'Anonymous');
+      await sendMessage(newMessage, user?.full_name || 'Relawan');
       setNewMessage('');
+      toast.success('Pesan terkirim');
     } catch (error: any) {
       toast.error(error.message || 'Gagal mengirim pesan');
-    } finally {
-      setSending(false);
+      console.error('Send message error:', error);
     }
   };
 
@@ -54,158 +53,232 @@ export function DesktopChatReguPage({ onNavigate }: DesktopChatReguPageProps) {
     }
   };
 
+  // Group messages to determine when to show avatar/name
+  const processedMessages = messages.map((msg, index) => {
+    const isOwnMessage = msg.sender_id === user?.id;
+    const showAvatar = index === 0 || messages[index - 1].sender_id !== msg.sender_id;
+    const showName = showAvatar && !isOwnMessage;
+
+    return {
+      ...msg,
+      isOwnMessage,
+      showAvatar,
+      showName
+    };
+  });
+
+  // Filter messages based on search
+  const filteredMessages = searchQuery
+    ? processedMessages.filter(
+        (msg) =>
+          msg.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          msg.sender_name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : processedMessages;
+
+  // Get unique senders for member list
+  const uniqueSenders = Array.from(
+    new Map(messages.map((msg) => [msg.sender_id, msg.sender_name])).entries()
+  ).map(([id, name]) => ({ id, name }));
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DesktopTopbar 
-        title="Chat Regu" 
-        subtitle={user?.regu_name || 'Diskusi dengan anggota regu'}
-        onNavigate={onNavigate}
-      />
-
-      <div className="p-8">
-        <div className="grid grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
-          {/* Members Sidebar */}
-          <Card className="p-4 overflow-y-auto">
-            <h3 className="text-gray-900 mb-4">Anggota Regu ({members.length})</h3>
-            <div className="space-y-2">
-              {members.map((member) => (
-                <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                  <div className="relative">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.full_name}`} />
-                      <AvatarFallback className="bg-primary-100 text-primary-700">
-                        {getInitials(member.full_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                      member.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
-                    }`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 truncate">{member.full_name}</p>
-                    <p className="text-gray-500">
-                      {member.status === 'online' ? 'Online' : 'Offline'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Chat Area */}
-          <Card className="col-span-3 flex flex-col">
-            {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="h-full flex">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-100 rounded-full">
+                <Users className="h-6 w-6 text-primary-600" />
+              </div>
               <div>
-                <h3 className="text-gray-900">Grup Chat</h3>
-                <p className="text-gray-500">{messages.length} pesan</p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {user?.regu_name || 'Chat Regu'}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {loading ? 'Memuat...' : `${messages.length} pesan • ${uniqueSenders.length} anggota`}
+                </p>
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <MoreVertical className="h-5 w-5 text-gray-600" />
-              </button>
             </div>
-
-            {/* Messages */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              {loading && messages.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                  <p className="text-gray-500 mt-2">Memuat pesan...</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Belum ada pesan. Mulai percakapan!</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {messages.map((msg, index) => {
-                    const isOwnMessage = msg.sender_id === user?.id;
-                    const showAvatar = index === 0 || messages[index - 1].sender_id !== msg.sender_id;
-                    const showName = showAvatar && !isOwnMessage;
-
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                      >
-                        {!isOwnMessage && showAvatar && (
-                          <Avatar className="h-8 w-8 mr-3 mt-1">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_name}`} />
-                            <AvatarFallback className="bg-primary-100 text-primary-700">
-                              {getInitials(msg.sender_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-
-                        {!isOwnMessage && !showAvatar && (
-                          <div className="w-8 mr-3" />
-                        )}
-
-                        <div className={`max-w-md ${isOwnMessage ? '' : 'flex-1'}`}>
-                          {showName && (
-                            <p className="text-gray-600 mb-1 ml-1">{msg.sender_name}</p>
-                          )}
-                          <div
-                            className={`rounded-2xl px-4 py-3 ${
-                              isOwnMessage
-                                ? 'bg-primary-600 text-white rounded-tr-sm'
-                                : 'bg-white text-gray-900 rounded-tl-sm shadow-sm'
-                            }`}
-                          >
-                            <p className="break-words">{msg.message}</p>
-                          </div>
-                          <p className={`text-gray-400 mt-1 ml-1 ${isOwnMessage ? 'text-right' : ''}`}>
-                            {formatRelativeTime(new Date(msg.created_at))}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Cari pesan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+              <Button
+                onClick={refetch}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
+          </div>
+        </div>
 
-            {/* Input Area */}
-            <div className="p-4 border-t border-gray-200">
-              <div className="flex items-end gap-3">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Paperclip className="h-5 w-5 text-gray-600" />
-                </button>
-                
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <ImageIcon className="h-5 w-5 text-gray-600" />
-                </button>
-                
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    placeholder="Tulis pesan..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="pr-12"
-                    disabled={sending}
-                  />
-                  <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors">
-                    <Smile className="h-5 w-5 text-gray-600" />
-                  </button>
-                </div>
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {loading && messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <Loader2 className="h-12 w-12 animate-spin mb-4" />
+              <p className="text-lg">Memuat pesan...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <p className="text-red-500 text-lg mb-4">{error}</p>
+              <Button onClick={refetch} variant="outline" size="lg">
+                Coba Lagi
+              </Button>
+            </div>
+          ) : filteredMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 text-center">
+              <div className="text-8xl mb-6">💬</div>
+              <p className="text-xl mb-2">
+                {searchQuery ? 'Tidak ada pesan yang cocok' : 'Belum ada pesan'}
+              </p>
+              <p className="text-sm">
+                {searchQuery
+                  ? 'Coba kata kunci lain'
+                  : 'Mulai percakapan dengan mengirim pesan pertama'}
+              </p>
+            </div>
+          ) : (
+            filteredMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.isOwnMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                {!msg.isOwnMessage && msg.showAvatar && (
+                  <Avatar className="h-10 w-10 mr-3 mt-1">
+                    <AvatarFallback className="bg-primary-100 text-primary-700">
+                      {getInitials(msg.sender_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
 
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || sending}
-                  className="bg-primary-600 hover:bg-primary-700"
-                >
-                  {sending ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="h-5 w-5" />
+                {!msg.isOwnMessage && !msg.showAvatar && (
+                  <div className="w-10 mr-3" />
+                )}
+
+                <div className={`max-w-[60%] ${msg.isOwnMessage ? '' : 'flex-1'}`}>
+                  {msg.showName && (
+                    <p className="text-gray-600 text-sm font-medium mb-1 ml-1">
+                      {msg.sender_name}
+                    </p>
                   )}
-                </Button>
+                  <div
+                    className={`rounded-2xl px-5 py-3 ${
+                      msg.isOwnMessage
+                        ? 'bg-primary-600 text-white rounded-tr-md'
+                        : 'bg-white text-gray-900 rounded-tl-md shadow-sm border border-gray-100'
+                    }`}
+                  >
+                    <p className="break-words leading-relaxed">{msg.message}</p>
+                  </div>
+                  <p
+                    className={`text-gray-400 text-xs mt-1 ml-1 ${
+                      msg.isOwnMessage ? 'text-right' : ''
+                    }`}
+                  >
+                    {formatRelativeTime(new Date(msg.created_at))}
+                  </p>
+                </div>
               </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-white border-t border-gray-200 p-6">
+          {!user?.regu_id ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-lg">Anda belum tergabung dalam regu</p>
             </div>
-          </Card>
+          ) : (
+            <div className="flex items-end gap-3">
+              <Avatar className="h-10 w-10 mb-1">
+                <AvatarFallback className="bg-primary-100 text-primary-700">
+                  {getInitials(user?.full_name || 'R')}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Tulis pesan..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  disabled={sending}
+                  className="h-12 text-base"
+                />
+              </div>
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || sending}
+                className="bg-primary-600 hover:bg-primary-700 h-12 px-8"
+                size="lg"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Mengirim...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5 mr-2" />
+                    Kirim
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sidebar - Member List */}
+      <div className="w-80 bg-white border-l border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900 mb-1">Anggota Regu</h3>
+          <p className="text-sm text-gray-500">{uniqueSenders.length} anggota aktif</p>
+        </div>
+        <div className="p-4 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          {uniqueSenders.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Belum ada anggota</p>
+          ) : (
+            uniqueSenders.map((sender) => (
+              <div
+                key={sender.id}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-primary-100 text-primary-700">
+                    {getInitials(sender.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {sender.name}
+                  </p>
+                  {sender.id === user?.id && (
+                    <p className="text-xs text-primary-600">Anda</p>
+                  )}
+                </div>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
