@@ -1,8 +1,8 @@
 import { Bell, TrendingUp } from 'lucide-react';
-import { currentUser } from '../lib/mockData';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { getInitials } from '../lib/utils';
 import { Badge } from './ui/badge';
+import { useAppContext } from '../contexts/AppContext';
 
 interface HeaderProps {
   onNotificationClick?: () => void;
@@ -10,19 +10,20 @@ interface HeaderProps {
 }
 
 export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
+  const { user } = useAppContext();
+  
   return (
     <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12 border-2 border-white">
-            <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
             <AvatarFallback className="bg-primary-700 text-white">
-              {getInitials(currentUser.name)}
+              {getInitials(user?.full_name || 'Relawan')}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-primary-50">Hi, {currentUser.name} 👋</p>
-            <p className="text-white mt-0.5">{currentUser.reguName}</p>
+            <p className="text-primary-50">Hi, {user?.full_name || 'Relawan'} 👋</p>
+            <p className="text-white mt-0.5">{user?.city || 'ZISWAF Manager'}</p>
           </div>
         </div>
         

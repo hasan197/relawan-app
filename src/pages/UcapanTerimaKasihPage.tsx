@@ -9,7 +9,6 @@ import { toast } from 'sonner@2.0.3';
 
 interface UcapanTerimaKasihPageProps {
   onBack?: () => void;
-  onNavigate?: (page: string) => void;
 }
 
 export function UcapanTerimaKasihPage({ onBack }: UcapanTerimaKasihPageProps) {
@@ -103,8 +102,9 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
       </div>
 
       <div className="px-4 -mt-4 pb-6">
-        <Card className="p-4 mb-4">
-          <h3 className="text-gray-900 mb-3">Form Ucapan</h3>
+        {/* Form */}
+        <Card className="p-4 mb-4 shadow-card">
+          <h4 className="text-gray-900 mb-4">Detail Donatur</h4>
           
           <div className="space-y-4">
             <div>
@@ -112,7 +112,7 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
               <Input
                 id="donorName"
                 type="text"
-                placeholder="Nama donatur"
+                placeholder="Masukkan nama donatur"
                 value={donorName}
                 onChange={(e) => setDonorName(e.target.value)}
               />
@@ -123,96 +123,110 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
               <Input
                 id="amount"
                 type="number"
-                placeholder="Contoh: 100000"
+                placeholder="50000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
             </div>
 
             <div>
-              <Label>Jenis Donasi</Label>
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button
-                  type="button"
-                  className={`p-2 rounded-md text-center ${category === 'zakat' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100'}`}
-                  onClick={() => setCategory('zakat')}
-                >
-                  Zakat
-                </button>
-                <button
-                  type="button"
-                  className={`p-2 rounded-md text-center ${category === 'infaq' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100'}`}
-                  onClick={() => setCategory('infaq')}
-                >
-                  Infaq
-                </button>
-                <button
-                  type="button"
-                  className={`p-2 rounded-md text-center ${category === 'sedekah' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100'}`}
-                  onClick={() => setCategory('sedekah')}
-                >
-                  Sedekah
-                </button>
-                <button
-                  type="button"
-                  className={`p-2 rounded-md text-center ${category === 'wakaf' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100'}`}
-                  onClick={() => setCategory('wakaf')}
-                >
-                  Wakaf
-                </button>
+              <Label>Kategori</Label>
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {(['zakat', 'infaq', 'sedekah', 'wakaf'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`px-3 py-2 rounded-lg transition-colors capitalize ${
+                      category === cat
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="customMessage">Pesan Tambahan (Opsional)</Label>
-              <textarea
-                id="customMessage"
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[100px]"
-                placeholder="Tulis pesan tambahan..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-              />
             </div>
           </div>
         </Card>
 
+        {/* Template Quick Add */}
         <Card className="p-4 mb-4">
-          <h3 className="text-gray-900 mb-3">Template Pesan</h3>
-          <div className="space-y-2">
+          <h4 className="text-gray-900 mb-3">Template Pesan Tambahan</h4>
+          <div className="space-y-2 mb-3">
             {templates.map((template) => (
               <button
                 key={template.id}
-                className="w-full p-3 text-left bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
                 onClick={() => setCustomMessage(template.message)}
+                className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <p className="text-sm font-medium text-gray-900">{template.name}</p>
-                <p className="text-xs text-gray-500 line-clamp-2">{template.message}</p>
+                <p className="text-gray-900 mb-1">{template.name}</p>
+                <p className="text-gray-600">{template.message}</p>
               </button>
             ))}
           </div>
-        </Card>
-
-        <Card className="p-4 mb-4">
-          <h3 className="text-gray-900 mb-3">Pratinjau Pesan</h3>
-          <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700">
-            {message}
+          
+          <div>
+            <Label htmlFor="customMessage">Atau Tulis Pesan Kustom</Label>
+            <textarea
+              id="customMessage"
+              placeholder="Tambahkan pesan pribadi..."
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
           </div>
         </Card>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" onClick={handleCopy}>
+        {/* Preview */}
+        <Card className="p-4 mb-4">
+          <h4 className="text-gray-900 mb-3">Preview Pesan</h4>
+          <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+            <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+              {message}
+            </p>
+          </div>
+        </Card>
+
+        {/* Actions */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <Button
+            variant="outline"
+            onClick={handleCopy}
+          >
             <Copy className="h-4 w-4 mr-2" />
             Salin
           </Button>
-          <Button variant="outline" onClick={handleSendWhatsApp}>
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Kirim WA
-          </Button>
-          <Button className="col-span-2 bg-primary-600 hover:bg-primary-700" onClick={handleShare}>
+          
+          <Button
+            variant="outline"
+            onClick={handleShare}
+          >
             <Share2 className="h-4 w-4 mr-2" />
             Bagikan
           </Button>
         </div>
+
+        <Button
+          onClick={handleSendWhatsApp}
+          className="w-full bg-green-600 hover:bg-green-700"
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          Kirim via WhatsApp
+        </Button>
+
+        {/* Info Card */}
+        <Card className="mt-4 p-4 bg-primary-50 border-primary-200">
+          <h4 className="text-primary-900 mb-2">💡 Tips Mengirim Ucapan</h4>
+          <ul className="space-y-1 text-primary-700">
+            <li>• Kirim segera setelah menerima donasi</li>
+            <li>• Personalisasi dengan nama donatur</li>
+            <li>• Sertakan doa dan harapan baik</li>
+            <li>• Gunakan bahasa yang ramah dan sopan</li>
+          </ul>
+        </Card>
       </div>
     </div>
   );

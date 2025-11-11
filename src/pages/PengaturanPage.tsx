@@ -36,37 +36,18 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
     toast.error('Fitur hapus akun memerlukan konfirmasi admin');
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (window.history.length > 1) {
-      window.history.back();
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3">
           <button 
-            onClick={handleBack}
-            className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
-            style={{
-              WebkitTapHighlightColor: 'transparent',
-              minWidth: '44px',
-              minHeight: '44px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              zIndex: 10
-            }}
-            aria-label="Kembali"
+            onClick={onBack}
+            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <h2 className="text-white text-xl font-semibold">Pengaturan</h2>
+          <h2 className="text-white">Pengaturan</h2>
         </div>
       </div>
 
@@ -121,20 +102,19 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
 
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
-                <Label htmlFor="reminder-followup">Pengingat Follow Up</Label>
-                <p className="text-gray-500">Aktifkan pengingat untuk follow up donatur</p>
+                <Label htmlFor="reminder">Reminder Follow-up</Label>
+                <p className="text-gray-500">Pengingat otomatis follow-up muzakki</p>
               </div>
               <Switch
-                id="reminder-followup"
+                id="reminder"
                 checked={settings.reminderFollowUp}
                 onCheckedChange={() => handleToggle('reminderFollowUp')}
-                disabled={!settings.notificationEnabled}
               />
             </div>
           </div>
         </Card>
 
-        {/* Display */}
+        {/* Appearance */}
         <Card className="mb-4 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
             <div className="flex items-center gap-2">
@@ -147,7 +127,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
                 <Label htmlFor="dark-mode">Mode Gelap</Label>
-                <p className="text-gray-500">Aktifkan tampilan mode gelap</p>
+                <p className="text-gray-500">Ubah tema menjadi gelap</p>
               </div>
               <Switch
                 id="dark-mode"
@@ -157,17 +137,17 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
             </div>
 
             <div className="px-4 py-4">
-              <Label htmlFor="language" className="block mb-2">Bahasa</Label>
+              <Label>Bahasa</Label>
+              <p className="text-gray-500 mb-3">Pilih bahasa aplikasi</p>
               <select
-                id="language"
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 value={settings.language}
                 onChange={(e) => {
-                  setSettings(prev => ({ ...prev, language: e.target.value }));
+                  setSettings({ ...settings, language: e.target.value });
                   toast.success('Bahasa berhasil diubah');
                 }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="id">Bahasa Indonesia</option>
+                <option value="id">Indonesia</option>
                 <option value="en">English</option>
                 <option value="ar">العربية</option>
               </select>
@@ -180,15 +160,15 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <Lock className="h-5 w-5 text-gray-600" />
-              <h4 className="text-gray-700">Keamanan</h4>
+              <h4 className="text-gray-700">Keamanan & Privasi</h4>
             </div>
           </div>
           
           <div className="divide-y divide-gray-100">
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
-                <Label htmlFor="biometric">Otentikasi Biometrik</Label>
-                <p className="text-gray-500">Gunakan sidik jari atau wajah untuk login</p>
+                <Label htmlFor="biometric">Autentikasi Biometrik</Label>
+                <p className="text-gray-500">Login dengan sidik jari/wajah</p>
               </div>
               <Switch
                 id="biometric"
@@ -197,71 +177,75 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               />
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between">
-              <div>
-                <Label>Backup Otomatis</Label>
-                <p className="text-gray-500">Pencadangan data otomatis ke cloud</p>
+            <button className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <div className="text-left">
+                <p className="text-gray-700">Ubah Password</p>
+                <p className="text-gray-500">Ganti password akun Anda</p>
               </div>
-              <Switch
-                checked={settings.autoBackup}
-                onCheckedChange={() => handleToggle('autoBackup')}
-              />
-            </div>
+              <Lock className="h-5 w-5 text-gray-400" />
+            </button>
           </div>
         </Card>
 
-        {/* Storage */}
+        {/* Data & Storage */}
         <Card className="mb-4 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <Smartphone className="h-5 w-5 text-gray-600" />
-              <h4 className="text-gray-700">Penyimpanan</h4>
+              <h4 className="text-gray-700">Data & Penyimpanan</h4>
             </div>
           </div>
           
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Penyimpanan yang digunakan</span>
-              <span className="text-sm font-medium">245 MB dari 2 GB</span>
+          <div className="divide-y divide-gray-100">
+            <div className="px-4 py-4 flex items-center justify-between">
+              <div>
+                <Label htmlFor="auto-backup">Backup Otomatis</Label>
+                <p className="text-gray-500">Cadangkan data secara otomatis</p>
+              </div>
+              <Switch
+                id="auto-backup"
+                checked={settings.autoBackup}
+                onCheckedChange={() => handleToggle('autoBackup')}
+              />
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-primary-600 h-2.5 rounded-full" style={{ width: '12.25%' }}></div>
-            </div>
-            
-            <Button 
-              variant="outline" 
-              className="w-full mt-4"
+
+            <button 
               onClick={handleClearCache}
+              className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
-              <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-              Bersihkan Cache
-            </Button>
+              <div className="text-left">
+                <p className="text-gray-700">Hapus Cache</p>
+                <p className="text-gray-500">Bersihkan data sementara</p>
+              </div>
+              <Trash2 className="h-5 w-5 text-gray-400" />
+            </button>
           </div>
         </Card>
 
-        {/* Account Actions */}
-        <div className="space-y-4">
-          <Button 
-            variant="outline" 
-            className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-            onClick={handleDeleteAccount}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Hapus Akun
-          </Button>
+        {/* Danger Zone */}
+        <Card className="mb-4 border-red-200">
+          <div className="px-4 py-3 bg-red-50 border-b border-red-100">
+            <h4 className="text-red-700">Zona Berbahaya</h4>
+          </div>
           
-          <Button 
-            variant="outline" 
-            className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Keluar
-          </Button>
-        </div>
+          <div className="p-4">
+            <Button
+              variant="outline"
+              onClick={handleDeleteAccount}
+              className="w-full border-red-600 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Hapus Akun
+            </Button>
+            <p className="text-gray-500 mt-2 text-center">
+              Tindakan ini tidak dapat dibatalkan
+            </p>
+          </div>
+        </Card>
 
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">Versi 1.0.0</p>
-          <p className="text-xs text-gray-400 mt-1">© 2025 Relawan App. All rights reserved.</p>
+        <div className="text-center text-gray-400 mb-4">
+          <p>ZISWAF Manager v1.0.0</p>
+          <p>Build 2025.11.08</p>
         </div>
       </div>
     </div>

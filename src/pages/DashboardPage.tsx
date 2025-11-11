@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Header } from '../components/Header';
 import { TotalDonationCard } from '../components/TotalDonationCard';
 import { RecentActivities } from '../components/RecentActivities';
@@ -6,26 +6,18 @@ import { CategoryCards } from '../components/CategoryCards';
 import { TargetProgress } from '../components/TargetProgress';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { mockActivities, mockTarget } from '../lib/mockData';
-import { toast } from 'sonner';
-
-type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'regu' | 'notifikasi' | 'generator-resi';
 
 interface DashboardPageProps {
-  onNavigate?: (page: NavigatePage) => void;
+  onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program') => void;
 }
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
-  const [activeNav, setActiveNav] = useState<NavigatePage>('dashboard');
-  const [isSalurkanInProgress, setIsSalurkanInProgress] = useState(false);
+  const [activeNav, setActiveNav] = useState<'dashboard' | 'donatur' | 'laporan' | 'profil'>('dashboard');
 
-  const handleNavigation = useCallback((item: NavigatePage) => {
-    if (isSalurkanInProgress && item !== 'dashboard' && item !== 'generator-resi') {
-      toast.error('Harap selesaikan proses salurkan terlebih dahulu');
-      return;
-    }
+  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
     setActiveNav(item);
     onNavigate?.(item);
-  }, [isSalurkanInProgress, onNavigate]);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -37,10 +29,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       <TotalDonationCard
         total={12450000}
         increase={450000}
-        onSalurkan={() => {
-          setIsSalurkanInProgress(true);
-          onNavigate?.('generator-resi');
-        }}
+        onSalurkan={() => onNavigate?.('generator-resi')}
         onTambahDonatur={() => handleNavigation('donatur')}
         onLaporan={() => handleNavigation('laporan')}
       />
@@ -55,15 +44,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       />
 
       <CategoryCards 
-        onCategoryClick={(id) => {
-          if (id === 'regu') {
-            onNavigate?.('regu');
-          } else if (id === 'template') {
-            onNavigate?.('template');
-          } else {
-            onNavigate?.('program');
-          }
-        }}
+        onCategoryClick={(id) => onNavigate?.('program')}
       />
 
       <BottomNavigation active={activeNav} onNavigate={handleNavigation} />

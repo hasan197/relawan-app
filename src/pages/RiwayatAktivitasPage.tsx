@@ -8,7 +8,6 @@ import { mockActivities } from '../lib/mockData';
 
 interface RiwayatAktivitasPageProps {
   onBack?: () => void;
-  onNavigate?: (page: string) => void;
 }
 
 export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
@@ -103,176 +102,154 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
     }
   };
 
-  const handleExport = () => {
-    // In a real app, this would export the data to a file
-    alert('Mengekspor data riwayat aktivitas...');
+  // Statistics
+  const stats = {
+    total: filteredActivities.length,
+    donations: filteredActivities.filter(a => a.type === 'donation').length,
+    followUps: filteredActivities.filter(a => a.type === 'follow-up').length,
+    distributions: filteredActivities.filter(a => a.type === 'distribution').length,
+    totalAmount: filteredActivities
+      .filter(a => a.amount)
+      .reduce((sum, a) => sum + (a.amount || 0), 0)
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onBack}
-              className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </button>
-            <h2 className="text-white">Riwayat Aktivitas</h2>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-white/20"
-            onClick={handleExport}
+        <div className="flex items-center gap-3 mb-4">
+          <button 
+            onClick={onBack}
+            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
-            <Download className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </button>
+          <div className="flex-1">
+            <h2 className="text-white">Riwayat Aktivitas</h2>
+            <p className="text-primary-100">
+              {stats.total} aktivitas tercatat
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-white/20 border-white/40 text-white hover:bg-white/30"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Ekspor
           </Button>
         </div>
       </div>
 
       <div className="px-4 -mt-4 pb-6">
-        {/* Filters */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-2">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter:</span>
-            <button
-              onClick={() => setFilter('semua')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                filter === 'semua' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Semua
-            </button>
-            <button
-              onClick={() => setFilter('donation')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                filter === 'donation' 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Donasi
-            </button>
-            <button
-              onClick={() => setFilter('follow-up')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                filter === 'follow-up' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Follow-up
-            </button>
-            <button
-              onClick={() => setFilter('distribution')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                filter === 'distribution' 
-                  ? 'bg-orange-100 text-orange-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Penyaluran
-            </button>
-          </div>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <Card className="p-3 text-center">
+            <Calendar className="h-5 w-5 text-green-600 mx-auto mb-1" />
+            <p className="text-gray-500">Donasi</p>
+            <p className="text-gray-900">{stats.donations}</p>
+          </Card>
           
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Waktu:</span>
-            <button
-              onClick={() => setDateFilter('hari-ini')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                dateFilter === 'hari-ini' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Hari Ini
-            </button>
-            <button
-              onClick={() => setDateFilter('minggu-ini')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                dateFilter === 'minggu-ini' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Minggu Ini
-            </button>
-            <button
-              onClick={() => setDateFilter('bulan-ini')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                dateFilter === 'bulan-ini' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Bulan Ini
-            </button>
-            <button
-              onClick={() => setDateFilter('semua')}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                dateFilter === 'semua' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              Semua
-            </button>
-          </div>
+          <Card className="p-3 text-center">
+            <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+            <p className="text-gray-500">Follow-up</p>
+            <p className="text-gray-900">{stats.followUps}</p>
+          </Card>
+          
+          <Card className="p-3 text-center">
+            <Package className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+            <p className="text-gray-500">Salur</p>
+            <p className="text-gray-900">{stats.distributions}</p>
+          </Card>
         </div>
 
-        {/* Activity List */}
+        {/* Date Filter */}
+        <Card className="p-4 mb-4 shadow-card">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-gray-600" />
+            <h4 className="text-gray-900">Filter</h4>
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
+            {(['hari-ini', 'minggu-ini', 'bulan-ini', 'semua'] as const).map((date) => (
+              <button
+                key={date}
+                onClick={() => setDateFilter(date)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  dateFilter === date
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {date === 'hari-ini' ? 'Hari Ini' : date === 'minggu-ini' ? 'Minggu Ini' : date === 'bulan-ini' ? 'Bulan Ini' : 'Semua'}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {(['semua', 'donation', 'follow-up', 'distribution'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilter(type)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  filter === type
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {type === 'semua' ? 'Semua Tipe' : getTypeLabel(type)}
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Activities List */}
         <div className="space-y-3">
-          {filteredActivities.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="text-gray-500">Tidak ada aktivitas yang ditemukan</p>
-            </Card>
-          ) : (
-            filteredActivities.map((activity) => {
-              const Icon = getIcon(activity.type);
-              const iconColor = getIconColor(activity.type);
-              const typeLabel = getTypeLabel(activity.type);
-              
-              return (
-                <Card key={activity.id} className="overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${iconColor}`}>
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-gray-900">{activity.title}</h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Badge variant="outline" className="border-gray-200">
-                              {typeLabel}
-                            </Badge>
-                            <span>•</span>
-                            <span>{formatRelativeTime(activity.time)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {'amount' in activity && (
-                        <span className="text-green-600 font-medium">
-                          {formatCurrency(activity.amount)}
-                        </span>
-                      )}
+          {filteredActivities.map((activity) => {
+            const Icon = getIcon(activity.type);
+            const iconColor = getIconColor(activity.type);
+            
+            return (
+              <Card key={activity.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-full ${iconColor} flex-shrink-0`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4 className="text-gray-900">{activity.title}</h4>
+                      <Badge className="bg-gray-100 text-gray-700 border-none">
+                        {getTypeLabel(activity.type)}
+                      </Badge>
                     </div>
                     
-                    <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" className="text-gray-500">
-                        Detail
-                      </Button>
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-500">
+                        {formatRelativeTime(activity.time)}
+                      </p>
+                      {activity.amount && (
+                        <p className={`${
+                          activity.type === 'distribution' 
+                            ? 'text-orange-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {activity.type === 'distribution' ? '-' : '+'}
+                          {formatCurrency(activity.amount)}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </Card>
-              );
-            })
+                </div>
+              </Card>
+            );
+          })}
+
+          {filteredActivities.length === 0 && (
+            <div className="text-center py-12">
+              <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">Tidak ada aktivitas ditemukan</p>
+            </div>
           )}
         </div>
       </div>

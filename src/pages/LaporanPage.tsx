@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { getInitials, formatCurrency } from '../lib/utils';
 import { Trophy, TrendingUp, Calendar, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { MessageCircle } from 'lucide-react';
 
 interface LaporanPageProps {
   onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program') => void;
@@ -48,10 +49,19 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
         <Card className="p-4 shadow-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-900">Laporan & Statistik</h3>
-            <button className="flex items-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-              <Download className="h-4 w-4" />
-              <span>Ekspor</span>
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => onNavigate?.('riwayat-aktivitas')}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Riwayat</span>
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <Download className="h-4 w-4" />
+                <span>Ekspor</span>
+              </button>
+            </div>
           </div>
 
           {/* Period Filter */}
@@ -140,12 +150,12 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
                   {mockLeaderboard.map((entry) => (
                     <div 
                       key={entry.relawanId}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
+                      className={`flex items-center gap-3 p-3 rounded-lg ${
                         entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100' : 'bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="relative shrink-0">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="relative">
                           {entry.rank <= 3 && (
                             <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white z-10">
                               <Trophy className="h-3 w-3" />
@@ -161,17 +171,17 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-primary-100 text-primary-700 border-none shrink-0">
+                            <Badge className="bg-primary-100 text-primary-700 border-none">
                               #{entry.rank}
                             </Badge>
                             <h4 className="text-gray-900 truncate">{entry.relawanName}</h4>
                           </div>
-                          <p className="text-gray-500 text-sm">{entry.muzakkiCount} muzakki</p>
+                          <p className="text-gray-500">{entry.muzakkiCount} muzakki</p>
                         </div>
                       </div>
                       
-                      <div className="text-right pl-2 shrink-0">
-                        <p className="text-gray-900 font-medium text-sm whitespace-nowrap">{formatCurrency(entry.totalDonations)}</p>
+                      <div className="text-right">
+                        <p className="text-gray-900">{formatCurrency(entry.totalDonations)}</p>
                       </div>
                     </div>
                   ))}

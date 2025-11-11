@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner@2.0.3';
 import { mockRegus } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 
 interface RegisterPageProps {
   onBack?: () => void;
@@ -21,6 +22,7 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,19 +32,36 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
       return;
     }
 
-    if (formData.phone.length < 10) {
-      toast.error('Nomor WhatsApp tidak valid');
+    // Improved phone validation - accept various formats
+    const cleanPhone = formData.phone.replace(/\D/g, ''); // Remove non-digits
+    
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      toast.error('Nomor WhatsApp harus 10-15 digit');
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success('Pendaftaran berhasil! Kode OTP akan dikirim');
+    try {
+      console.log('📝 Registering user:', {
+        fullName: formData.fullName,
+        phone: cleanPhone,
+        city: formData.city,
+        reguId: formData.reguId
+      });
+
+      // Use cleaned phone number
+      const result = await register(formData.fullName, cleanPhone, formData.city, formData.reguId);
+      
+      console.log('✅ Registration successful:', result);
+      toast.success('Pendaftaran berhasil!');
       onRegister?.();
-    }, 1500);
+    } catch (error: any) {
+      console.error('❌ Registration error:', error);
+      toast.error(error.message || 'Gagal mendaftar. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,7 +120,7 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
             </div>
 
             <div>
-              <Label htmlFor="city">Kota/Kabupaten *</Label>
+              <Label htmlFor="city">Kota/Domisili *</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
@@ -120,42 +139,50 @@ export function RegisterPage({ onBack, onRegister }: RegisterPageProps) {
               <Label htmlFor="regu">Pilih Regu (Opsional)</Label>
               <select
                 id="regu"
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 value={formData.reguId}
                 onChange={(e) => setFormData({ ...formData, reguId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 disabled={isLoading}
               >
-                <option value="">Pilih regu (opsional)</option>
+                <option value="">Akan ditentukan kemudian</option>
                 {mockRegus.map((regu) => (
                   <option key={regu.id} value={regu.id}>
-                    {regu.name} - {regu.leader}
+                    {regu.name} - {regu.pembimbingName}
                   </option>
                 ))}
               </select>
+              <p className="text-gray-500 mt-1">
+                Regu dapat dipilih setelah pendaftaran
+              </p>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full mt-6 bg-primary-600 hover:bg-primary-700"
+            <Button
+              type="submit"
+              className="w-full bg-primary-600 hover:bg-primary-700"
               disabled={isLoading}
             >
-              {isLoading ? 'Memproses...' : 'Daftar Sekarang'}
+              {isLoading ? 'Mendaftar...' : 'Daftar Sekarang'}
             </Button>
           </form>
 
-          <p className="text-sm text-gray-500 mt-4 text-center">
-            Dengan mendaftar, Anda menyetujui{' '}
-            <a href="#" className="text-primary-600 hover:underline">Syarat & Ketentuan</a>{' '}
-            dan{' '}
-            <a href="#" className="text-primary-600 hover:underline">Kebijakan Privasi</a>
-          </p>
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-center text-gray-600">
+              Sudah punya akun?{' '}
+              <button 
+                onClick={onBack}
+                className="text-primary-600 hover:text-primary-700"
+              >
+                Masuk
+              </button>
+            </p>
+          </div>
         </Card>
 
         <p className="text-center text-gray-500 mt-6">
-          Sudah punya akun?{' '}
-          <a href="#" className="text-primary-600 font-medium hover:underline">
-            Masuk
-          </a>
+          Dengan mendaftar, Anda menyetujui{' '}
+          <button className="text-primary-600 hover:underline">
+            Syarat & Ketentuan
+          </button>
         </p>
       </div>
     </div>

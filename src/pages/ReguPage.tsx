@@ -8,22 +8,12 @@ import { Button } from '../components/ui/button';
 import { getInitials, formatCurrency } from '../lib/utils';
 import { Progress } from '../components/ui/progress';
 
-type NavigatePage = 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'login' | 'regu' | 'notifikasi';
-
 interface ReguPageProps {
   onBack?: () => void;
-  onNavigate?: (page: NavigatePage) => void;
+  onNavigate?: (page: string) => void;
 }
 
 export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (onNavigate) {
-      onNavigate('dashboard');
-    }
-  };
-
   const [selectedRegu] = useState(mockRegus[0]); // Current user's regu
   const reguMembers = mockLeaderboard; // Mock regu members
 
@@ -36,7 +26,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3 mb-6">
           <button 
-            onClick={handleBack}
+            onClick={onBack}
             className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
@@ -86,7 +76,10 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
             </div>
           </div>
 
-          <Button className="w-full bg-primary-600 hover:bg-primary-700">
+          <Button 
+            className="w-full bg-primary-600 hover:bg-primary-700"
+            onClick={() => onNavigate?.('chat-regu')}
+          >
             <MessageSquare className="h-4 w-4 mr-2" />
             Chat Regu
           </Button>

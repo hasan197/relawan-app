@@ -7,20 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
 
-// Fungsi untuk menampilkan notifikasi
-export const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-  switch (type) {
-    case 'success':
-      toast.success(message);
-      break;
-    case 'error':
-      toast.error(message);
-      break;
-    default:
-      toast(message);
-  }
-};
-
 interface MateriPromosiPageProps {
   onBack?: () => void;
 }
@@ -113,158 +99,224 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
       navigator.share({
         title: material.title,
         text: shareText,
-        url: material.url || window.location.href
-      }).catch(console.error);
+        url: material.url
+      }).then(() => {
+        toast.success('Berhasil membagikan materi!');
+      });
     } else {
-      navigator.clipboard.writeText(`${material.title}\n\n${shareText}${material.url ? '\n\n' + material.url : ''}`);
-      toast.success('Konten berhasil disalin ke clipboard');
+      navigator.clipboard.writeText(shareText);
+      toast.success('Caption disalin ke clipboard!');
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      zakat: 'Zakat',
-      infaq: 'Infaq',
-      sedekah: 'Sedekah',
-      wakaf: 'Wakaf',
-      umum: 'Umum'
-    };
-    return labels[category] || category;
+  const handleCopyCaption = (caption: string) => {
+    navigator.clipboard.writeText(caption);
+    toast.success('Caption berhasil disalin!');
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      zakat: 'bg-yellow-100 text-yellow-800',
-      infaq: 'bg-blue-100 text-blue-800',
-      sedekah: 'bg-green-100 text-green-800',
-      wakaf: 'bg-purple-100 text-purple-800',
-      umum: 'bg-gray-100 text-gray-800'
+  const getCategoryBadge = (category: Material['category']) => {
+    const variants = {
+      'zakat': 'bg-green-100 text-green-700',
+      'infaq': 'bg-yellow-100 text-yellow-700',
+      'sedekah': 'bg-blue-100 text-blue-700',
+      'wakaf': 'bg-gray-100 text-gray-700',
+      'umum': 'bg-purple-100 text-purple-700'
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (window.history.length > 1) {
-      window.history.back();
-    }
+    return <Badge className={`${variants[category]} border-none capitalize`}>{category}</Badge>;
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3">
           <button 
-            onClick={handleBack}
-            className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
-            style={{
-              WebkitTapHighlightColor: 'transparent',
-              minWidth: '44px', // Ukuran touch target minimal untuk aksesibilitas
-              minHeight: '44px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              zIndex: 10
-            }}
-            aria-label="Kembali"
+            onClick={onBack}
+            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <h2 className="text-white text-xl font-semibold">Materi Promosi</h2>
+          <h2 className="text-white">Materi Promosi</h2>
         </div>
       </div>
 
       <div className="px-4 -mt-4 pb-6">
-        <Tabs defaultValue="semua" className="mb-6">
-          <div className="overflow-x-auto pb-2">
-            <TabsList className="bg-white p-1 rounded-xl border border-gray-200 w-max">
-              <TabsTrigger 
-                value="semua" 
-                className="data-[state=active]:bg-primary-100 data-[state=active]:text-primary-700 rounded-lg px-4 py-2 text-sm font-medium"
-                onClick={() => setSelectedCategory('semua')}
+        {/* Category Filter */}
+        <Card className="p-4 mb-4 shadow-card">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {(['semua', 'zakat', 'infaq', 'sedekah', 'wakaf', 'umum'] as const).map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                Semua
-              </TabsTrigger>
-              {['zakat', 'infaq', 'sedekah', 'wakaf', 'umum'].map((category) => (
-                <TabsTrigger
-                  key={category}
-                  value={category}
-                  className="data-[state=active]:bg-primary-100 data-[state=active]:text-primary-700 rounded-lg px-4 py-2 text-sm font-medium"
-                  onClick={() => setSelectedCategory(category as Material['category'])}
-                >
-                  {getCategoryLabel(category)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </button>
+            ))}
           </div>
-        </Tabs>
+        </Card>
 
-        <div className="space-y-4">
-          {filteredMaterials.map((material) => (
-            <Card key={material.id} className="overflow-hidden">
-              {material.type === 'image' && material.url && (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="w-full grid grid-cols-3 mb-4">
+            <TabsTrigger value="all">Semua</TabsTrigger>
+            <TabsTrigger value="images">Gambar</TabsTrigger>
+            <TabsTrigger value="captions">Caption</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-3">
+            {filteredMaterials.map((material) => (
+              <Card key={material.id} className="overflow-hidden">
+                {material.type === 'image' && material.url && (
+                  <div className="relative h-48">
+                    <ImageWithFallback
+                      src={material.url}
+                      alt={material.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 right-3">
+                      {getCategoryBadge(material.category)}
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    {material.type === 'image' && <ImageIcon className="h-5 w-5 text-gray-400 mt-0.5" />}
+                    {material.type === 'video' && <Video className="h-5 w-5 text-gray-400 mt-0.5" />}
+                    {material.type === 'text' && <FileText className="h-5 w-5 text-gray-400 mt-0.5" />}
+                    <div className="flex-1">
+                      <h4 className="text-gray-900 mb-1">{material.title}</h4>
+                      <p className="text-gray-600">{material.description}</p>
+                    </div>
+                  </div>
+
+                  {material.caption && (
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700">{material.caption}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {material.type === 'image' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleDownload(material)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Unduh
+                      </Button>
+                    )}
+                    
+                    {material.caption && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleCopyCaption(material.caption!)}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Salin Caption
+                      </Button>
+                    )}
+                    
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-primary-600 hover:bg-primary-700"
+                      onClick={() => handleShare(material)}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Bagikan
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="images" className="space-y-3">
+            {filteredMaterials.filter(m => m.type === 'image').map((material) => (
+              <Card key={material.id} className="overflow-hidden">
                 <div className="relative h-48">
                   <ImageWithFallback
                     src={material.url}
                     alt={material.title}
                     className="w-full h-full object-cover"
                   />
-                </div>
-              )}
-              
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-gray-900 font-medium">{material.title}</h3>
-                  <Badge className={`text-xs ${getCategoryColor(material.category)}`}>
-                    {getCategoryLabel(material.category)}
-                  </Badge>
-                </div>
-                
-                <p className="text-gray-600 text-sm mb-4">{material.description}</p>
-                
-                {material.caption && (
-                  <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                    <p className="text-gray-700 text-sm whitespace-pre-line">{material.caption}</p>
+                  <div className="absolute top-3 right-3">
+                    {getCategoryBadge(material.category)}
                   </div>
-                )}
-                
+                </div>
+
+                <div className="p-4">
+                  <h4 className="text-gray-900 mb-2">{material.title}</h4>
+                  {material.caption && (
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700">{material.caption}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleDownload(material)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Unduh
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-primary-600 hover:bg-primary-700"
+                      onClick={() => handleShare(material)}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Bagikan
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="captions" className="space-y-3">
+            {filteredMaterials.filter(m => m.type === 'text').map((material) => (
+              <Card key={material.id} className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <h4 className="text-gray-900">{material.title}</h4>
+                  {getCategoryBadge(material.category)}
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg mb-3">
+                  <p className="text-gray-700">{material.caption}</p>
+                </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="flex-1"
-                    onClick={() => handleDownload(material)}
+                    onClick={() => handleCopyCaption(material.caption!)}
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Unduh
+                    <FileText className="h-4 w-4 mr-2" />
+                    Salin
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-primary-600 hover:bg-primary-700"
                     onClick={() => handleShare(material)}
                   >
                     <Share2 className="h-4 w-4 mr-2" />
                     Bagikan
                   </Button>
                 </div>
-              </div>
-            </Card>
-          ))}
-          
-          {filteredMaterials.length === 0 && (
-            <div className="text-center py-8">
-              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-gray-900 font-medium mb-1">Tidak ada materi</h3>
-              <p className="text-gray-500 text-sm">Tidak ada materi yang tersedia untuk kategori ini</p>
-            </div>
-          )}
-        </div>
+              </Card>
+            ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

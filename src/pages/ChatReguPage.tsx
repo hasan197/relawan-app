@@ -9,7 +9,6 @@ import { currentUser } from '../lib/mockData';
 
 interface ChatReguPageProps {
   onBack?: () => void;
-  onNavigate?: (page: string) => void;
 }
 
 interface Message {

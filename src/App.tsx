@@ -1,320 +1,445 @@
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { SplashScreen } from './pages/SplashScreen';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
+import { OTPVerificationPage } from './pages/OTPVerificationPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DonaturPage } from './pages/DonaturPage';
 import { LaporanPage } from './pages/LaporanPage';
 import { ProfilPage } from './pages/ProfilPage';
-import { LoginPage } from './pages/LoginPage';
-import { OTPVerificationPage } from './pages/OTPVerificationPage';
-import { ReguPage } from './pages/ReguPage';
-import { TemplatePesanPage } from './pages/TemplatePesanPage';
-import { NotifikasiPage } from './pages/NotifikasiPage';
-import { ImportKontakPage } from './pages/ImportKontakPage';
-import { TambahProspekPage } from './pages/TambahProspekPage';
-import { GeneratorResiPage } from './pages/GeneratorResiPage';
-import { ChatReguPage } from './pages/ChatReguPage';
-import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
-import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
-import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
-import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
+import TemplatePage from './pages/TemplatePage';
+import { ProgramPage } from './pages/ProgramPage';
 import { DetailProgramPage } from './pages/DetailProgramPage';
 import { DetailProspekPage } from './pages/DetailProspekPage';
-import { ErrorPage } from './pages/ErrorPage';
+import { TambahProspekPage } from './pages/TambahProspekPage';
+import { ReguPage } from './pages/ReguPage';
+import { GeneratorResiPage } from './pages/GeneratorResiPage';
+import { NotifikasiPage } from './pages/NotifikasiPage';
+import { ImportKontakPage } from './pages/ImportKontakPage';
+import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
+import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
+import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
 import { MateriPromosiPage } from './pages/MateriPromosiPage';
-import { OnboardingPage } from './pages/OnboardingPage';
+import { ChatReguPage } from './pages/ChatReguPage';
 import { PengaturanPage } from './pages/PengaturanPage';
-import { ProgramPage } from './pages/ProgramPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { SplashScreen } from './pages/SplashScreen';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { ErrorPage } from './pages/ErrorPage';
+import OfflinePage from './pages/OfflinePage';
+import { TestConnectionPage } from './pages/TestConnectionPage';
 import { Toaster } from './components/ui/sonner';
-import { ScrollToTop } from './components/ScrollToTop';
+import { AppProvider, useAppContext } from './contexts/AppContext';
+import { DesktopDashboardPage } from './pages/desktop/DesktopDashboardPage';
+import { DesktopDonaturPage } from './pages/desktop/DesktopDonaturPage';
+import { DesktopLaporanPage } from './pages/desktop/DesktopLaporanPage';
+import { DesktopProfilPage } from './pages/desktop/DesktopProfilPage';
+import { DesktopTambahProspekPage } from './pages/desktop/DesktopTambahProspekPage';
+import { DesktopChatReguPage } from './pages/desktop/DesktopChatReguPage';
+import { DesktopLayout } from './components/desktop/DesktopLayout';
+import { useResponsive } from './hooks/useResponsive';
+import { DebugPage } from './pages/DebugPage';
+import { QuickTestPage } from './pages/QuickTestPage';
 
-// Simple Protected Route Component (temporary)
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  return children;
-};
+type Page = 
+  | 'splash'
+  | 'login'
+  | 'register'
+  | 'register-success'
+  | 'otp'
+  | 'onboarding'
+  | 'dashboard'
+  | 'donatur'
+  | 'laporan'
+  | 'profil'
+  | 'template'
+  | 'program'
+  | 'detail-program'
+  | 'detail-prospek'
+  | 'tambah-prospek'
+  | 'regu'
+  | 'generator-resi'
+  | 'notifikasi'
+  | 'import-kontak'
+  | 'reminder-follow-up'
+  | 'ucapan-terima-kasih'
+  | 'riwayat-aktivitas'
+  | 'materi-promosi'
+  | 'chat-regu'
+  | 'pengaturan'
+  | 'admin-dashboard'
+  | 'test-connection'
+  | 'debug'
+  | 'quick-test'
+  | 'error'
+  | 'offline';
 
-const App = () => {
+function AppContent() {
+  const { isAuthenticated, loading, user, logout } = useAppContext();
+  const { isDesktop } = useResponsive();
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    // Check if there's a ?test query param
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('test') === 'quick') {
+      return 'quick-test';
+    }
+    return 'splash';
+  });
   const [phoneNumber, setPhoneNumber] = useState('');
-  const navigate = useNavigate();
+  const [errorType, setErrorType] = useState<'error' | 'no-user-id' | 'offline' | '404'>('error');
 
-  const handleLogin = (phone: string) => {
-    setPhoneNumber(phone);
-    navigate('/otp');
+  useEffect(() => {
+    // Check if user is authenticated on mount
+    if (!loading) {
+      console.log('🔐 Auth Check:', { isAuthenticated, user, currentPage });
+      
+      if (isAuthenticated) {
+        // ✅ User is authenticated
+        
+        // Check if user has ID (relawan_id)
+        if (!user?.id) {
+          console.error('❌ User authenticated but NO USER ID found!');
+          console.error('User object:', user);
+          
+          // Force logout if no user ID
+          logout();
+          setErrorType('no-user-id');
+          setCurrentPage('error');
+          return;
+        }
+        
+        console.log('✅ User ID exists:', user.id);
+        console.log('✅ User authenticated and ready!');
+        
+        // If on auth pages, redirect to dashboard
+        if (currentPage === 'splash' || currentPage === 'login' || currentPage === 'otp') {
+          console.log('📍 Redirecting from', currentPage, 'to dashboard');
+          setCurrentPage('dashboard');
+        }
+      } else {
+        // ❌ User not authenticated
+        console.log('❌ User not authenticated');
+        
+        // If on protected pages, redirect to login
+        const protectedPages = ['dashboard', 'donatur', 'laporan', 'profil', 'tambah-prospek', 'detail-prospek'];
+        if (protectedPages.includes(currentPage)) {
+          console.log('📍 Not authenticated, redirecting to login');
+          setCurrentPage('login');
+          return;
+        }
+        
+        // If on splash, auto-redirect to login after delay
+        if (currentPage === 'splash') {
+          setTimeout(() => {
+            console.log('📍 Splash complete, redirecting to login');
+            setCurrentPage('login');
+          }, 2500);
+        }
+      }
+    }
+  }, [loading, isAuthenticated, currentPage, user, logout]);
+
+  const handleNavigation = (page: Page) => {
+    setCurrentPage(page);
   };
 
-  const handleVerifyOTP = () => {
-    // Skip token for now
-    navigate('/dashboard');
+  const renderMobilePage = () => {
+    switch (currentPage) {
+      case 'splash':
+        return <SplashScreen onComplete={() => setCurrentPage('login')} />;
+      
+      case 'login':
+        return (
+          <LoginPage
+            onLogin={() => setCurrentPage('otp')}
+            onSendOTP={(phone) => {
+              setPhoneNumber(phone);
+              setCurrentPage('otp');
+            }}
+            onRegister={() => setCurrentPage('register')}
+          />
+        );
+      
+      case 'register':
+        return (
+          <RegisterPage
+            onBack={() => setCurrentPage('login')}
+            onRegister={() => setCurrentPage('register-success')}
+          />
+        );
+      
+      case 'register-success':
+        return <RegisterSuccessPage onComplete={() => setCurrentPage('login')} />;
+      
+      case 'otp':
+        return (
+          <OTPVerificationPage
+            phoneNumber={phoneNumber}
+            onVerify={() => {
+              // After successful OTP verification, navigate to onboarding
+              // Auth state should be updated by now
+              console.log('📍 OTP verified, navigating to dashboard (skip onboarding for now)');
+              setCurrentPage('dashboard');
+            }}
+            onBack={() => setCurrentPage('login')}
+          />
+        );
+      
+      case 'onboarding':
+        return <OnboardingPage onComplete={() => setCurrentPage('dashboard')} />;
+      
+      case 'dashboard':
+        return <DashboardPage onNavigate={handleNavigation} />;
+      
+      case 'donatur':
+        return <DonaturPage onNavigate={handleNavigation} />;
+      
+      case 'laporan':
+        return <LaporanPage onNavigate={handleNavigation} />;
+      
+      case 'profil':
+        return <ProfilPage onNavigate={handleNavigation} />;
+      
+      case 'template':
+        return <TemplatePage onBack={() => setCurrentPage('profil')} />;
+      
+      case 'program':
+        return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'detail-program':
+        return <DetailProgramPage onBack={() => setCurrentPage('program')} />;
+      
+      case 'detail-prospek':
+        return <DetailProspekPage onBack={() => setCurrentPage('donatur')} />;
+      
+      case 'tambah-prospek':
+        return (
+          <TambahProspekPage
+            onBack={() => setCurrentPage('donatur')}
+            onSave={() => setCurrentPage('donatur')}
+          />
+        );
+      
+      case 'regu':
+      case 'chat-regu':
+        return <ReguPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
+      
+      case 'generator-resi':
+        return <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'notifikasi':
+        return <NotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'import-kontak':
+        return (
+          <ImportKontakPage
+            onBack={() => setCurrentPage('donatur')}
+            onImport={() => setCurrentPage('donatur')}
+          />
+        );
+      
+      case 'reminder-follow-up':
+        return <ReminderFollowUpPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'ucapan-terima-kasih':
+        return <UcapanTerimaKasihPage onBack={() => setCurrentPage('dashboard')} />;
+      
+      case 'riwayat-aktivitas':
+        return <RiwayatAktivitasPage onBack={() => setCurrentPage('laporan')} />;
+      
+      case 'materi-promosi':
+        return <MateriPromosiPage onBack={() => setCurrentPage('profil')} />;
+      
+      case 'pengaturan':
+        return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
+      
+      case 'admin-dashboard':
+        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} />;
+
+      case 'test-connection':
+        return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
+
+      case 'quick-test':
+        return <QuickTestPage onBack={() => setCurrentPage('dashboard')} />;
+
+      case 'debug':
+        return <DebugPage onBack={() => setCurrentPage('dashboard')} />;
+
+      case 'error':
+        return (
+          <ErrorPage
+            type={errorType}
+            onRetry={() => setCurrentPage('dashboard')}
+            onHome={() => setCurrentPage('dashboard')}
+            onLogout={() => {
+              logout();
+              setCurrentPage('login');
+            }}
+          />
+        );
+      
+      case 'offline':
+        return (
+          <OfflinePage
+            onRetry={() => setCurrentPage('dashboard')}
+            onHome={() => setCurrentPage('dashboard')}
+          />
+        );
+      
+      default:
+        return <DashboardPage onNavigate={handleNavigation} />;
+    }
   };
-  
-  // Handle navigation from pages
-  const handleNavigation = (page: string) => {
-    navigate(`/${page}`);
+
+  const renderDesktopPage = () => {
+    // Auth pages (no layout)
+    if (['login', 'register', 'register-success', 'otp', 'onboarding', 'test-connection', 'quick-test', 'splash'].includes(currentPage)) {
+      switch (currentPage) {
+        case 'splash':
+          return <SplashScreen onComplete={() => setCurrentPage('login')} />;
+        
+        case 'login':
+          return (
+            <LoginPage
+              onLogin={() => setCurrentPage('otp')}
+              onSendOTP={(phone) => {
+                setPhoneNumber(phone);
+                setCurrentPage('otp');
+              }}
+              onRegister={() => setCurrentPage('register')}
+            />
+          );
+        
+        case 'register':
+          return (
+            <RegisterPage
+              onBack={() => setCurrentPage('login')}
+              onRegister={() => setCurrentPage('register-success')}
+            />
+          );
+        
+        case 'register-success':
+          return <RegisterSuccessPage onComplete={() => setCurrentPage('login')} />;
+        
+        case 'otp':
+          return (
+            <OTPVerificationPage
+              phoneNumber={phoneNumber}
+              onVerify={() => {
+                // After successful OTP verification, navigate to onboarding
+                // Auth state should be updated by now
+                console.log('📍 OTP verified, navigating to dashboard (skip onboarding for now)');
+                setCurrentPage('dashboard');
+              }}
+              onBack={() => setCurrentPage('login')}
+            />
+          );
+        
+        case 'onboarding':
+          return <OnboardingPage onComplete={() => setCurrentPage('dashboard')} />;
+
+        case 'test-connection':
+          return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
+        
+        case 'quick-test':
+          return <QuickTestPage onBack={() => setCurrentPage('dashboard')} />;
+        
+        default:
+          return null;
+      }
+    }
+
+    // Main pages (with desktop layout)
+    return (
+      <DesktopLayout currentPage={currentPage} onNavigate={handleNavigation}>
+        {(() => {
+          switch (currentPage) {
+            case 'dashboard':
+              return <DesktopDashboardPage onNavigate={handleNavigation} />;
+            
+            case 'donatur':
+              return <DesktopDonaturPage onNavigate={handleNavigation} />;
+            
+            case 'laporan':
+              return <DesktopLaporanPage onNavigate={handleNavigation} />;
+            
+            case 'regu':
+            case 'chat-regu':
+              return <DesktopChatReguPage onNavigate={handleNavigation} />;
+            
+            case 'profil':
+              return <DesktopProfilPage onNavigate={handleNavigation} />;
+            
+            case 'admin-dashboard':
+              return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} />;
+
+            // Other pages use mobile version in desktop layout
+            case 'template':
+              return <TemplatePage onBack={() => setCurrentPage('profil')} />;
+            
+            case 'program':
+              return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
+            
+            case 'detail-program':
+              return <DetailProgramPage onBack={() => setCurrentPage('program')} />;
+            
+            case 'detail-prospek':
+              return <DetailProspekPage onBack={() => setCurrentPage('donatur')} />;
+            
+            case 'tambah-prospek':
+              return (
+                <DesktopTambahProspekPage
+                  onBack={() => setCurrentPage('donatur')}
+                  onSave={() => setCurrentPage('donatur')}
+                />
+              );
+            
+            case 'generator-resi':
+              return <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
+            
+            case 'notifikasi':
+              return <NotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
+            
+            case 'import-kontak':
+              return (
+                <ImportKontakPage
+                  onBack={() => setCurrentPage('donatur')}
+                  onImport={() => setCurrentPage('donatur')}
+                />
+              );
+            
+            case 'pengaturan':
+              return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
+            
+            default:
+              return <DesktopDashboardPage onNavigate={handleNavigation} />;
+          }
+        })()}
+      </DesktopLayout>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Toaster position="top-center" />
-      <ScrollToTop />
-      <Routes>
-        {/* Public Routes */}
-        <Route 
-          path="/login" 
-          element={
-            <LoginPage 
-              onLogin={() => {}}
-              onSendOTP={handleLogin}
-            />
-          } 
-        />
-        
-        <Route 
-          path="/otp" 
-          element={
-            <OTPVerificationPage
-              phoneNumber={phoneNumber}
-              onVerify={handleVerifyOTP}
-              onBack={() => navigate('/login')}
-            />
-          } 
-        />
-
-        {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <DashboardPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/donatur" 
-          element={
-            <ProtectedRoute>
-              <DonaturPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/laporan" 
-          element={
-            <ProtectedRoute>
-              <LaporanPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/profil" 
-          element={
-            <ProtectedRoute>
-              <ProfilPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/generator-resi" 
-          element={
-            <ProtectedRoute>
-              <GeneratorResiPage onBack={() => navigate('/dashboard')} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/regu" 
-          element={
-            <ProtectedRoute>
-              <ReguPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/template" 
-          element={
-            <ProtectedRoute>
-              <TemplatePesanPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/notifikasi" 
-          element={
-            <ProtectedRoute>
-              <NotifikasiPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/import-kontak" 
-          element={
-            <ProtectedRoute>
-              <ImportKontakPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/tambah-prospek" 
-          element={
-            <ProtectedRoute>
-              <TambahProspekPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* New Pages */}
-        <Route 
-          path="/chat-regu" 
-          element={
-            <ProtectedRoute>
-              <ChatReguPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/register-success" 
-          element={
-            <ProtectedRoute>
-              <RegisterSuccessPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/reminder-followup" 
-          element={
-            <ProtectedRoute>
-              <ReminderFollowUpPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/riwayat-aktivitas" 
-          element={
-            <ProtectedRoute>
-              <RiwayatAktivitasPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/ucapan-terimakasih" 
-          element={
-            <ProtectedRoute>
-              <UcapanTerimaKasihPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Additional New Pages */}
-        <Route 
-          path="/detail-program/:id" 
-          element={
-            <ProtectedRoute>
-              <DetailProgramPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/detail-prospek/:id" 
-          element={
-            <ProtectedRoute>
-              <DetailProspekPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/materi-promosi" 
-          element={
-            <ProtectedRoute>
-              <MateriPromosiPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/onboarding" 
-          element={
-            <OnboardingPage onComplete={() => navigate('/dashboard')} />
-          } 
-        />
-
-        <Route 
-          path="/pengaturan" 
-          element={
-            <ProtectedRoute>
-              <PengaturanPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/program" 
-          element={
-            <ProtectedRoute>
-              <ProgramPage onNavigate={handleNavigation} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/register" 
-          element={
-            <RegisterPage onSuccess={() => navigate('/register-success')} />
-          } 
-        />
-
-        <Route 
-          path="/splash" 
-          element={
-            <SplashScreen onFinish={() => navigate('/onboarding')} />
-          } 
-        />
-
-        {/* Error Page */}
-        <Route 
-          path="/error" 
-          element={
-            <ErrorPage 
-              onRetry={() => window.location.reload()} 
-              onBack={() => navigate(-1)}
-            />
-          } 
-        />
-
-        {/* Redirect root to /dashboard */}
-        <Route 
-          path="/" 
-          element={
-            <Navigate to="/dashboard" replace />
-          } 
-        />
-
-        {/* 404 Page */}
-        <Route 
-          path="*" 
-          element={
-            <div className="flex items-center justify-center h-screen">
-              <h1 className="text-2xl font-bold">404 - Halaman tidak ditemukan</h1>
-            </div>
-          } 
-        />
-      </Routes>
-    </div>
+    <>
+      {isDesktop ? renderDesktopPage() : renderMobilePage()}
+      <Toaster 
+        position="top-center" 
+        closeButton
+        richColors
+        expand={false}
+        toastOptions={{
+          duration: 4000,
+          className: 'toast-custom',
+        }}
+      />
+    </>
   );
-};
+}
 
-export default App;
+export default function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}

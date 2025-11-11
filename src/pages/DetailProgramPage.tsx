@@ -202,26 +202,24 @@ Program Zakat Fitrah 1446 H merupakan program tahunan yang bertujuan untuk memud
         </Card>
 
         {/* Action Buttons */}
-        <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 shadow-lg">
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="flex-1"
-              onClick={handleShare}
-            >
-              <Share2 className="h-5 w-5 mr-2" />
-              Bagikan
-            </Button>
-            <Button 
-              size="lg" 
-              className="flex-1 bg-primary-600 hover:bg-primary-700"
-              onClick={() => window.open(program.donationLink, '_blank')}
-            >
-              <ExternalLink className="h-5 w-5 mr-2" />
-              Donasi Sekarang
-            </Button>
-          </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <Button
+            variant="outline"
+            onClick={handleShare}
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Bagikan
+          </Button>
+          
+          <Button
+            className="bg-primary-600 hover:bg-primary-700"
+            onClick={() => {
+              window.open(program.donationLink, '_blank');
+            }}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Donasi
+          </Button>
         </div>
       </div>
     </div>

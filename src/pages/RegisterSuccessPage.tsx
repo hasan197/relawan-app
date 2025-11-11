@@ -3,11 +3,15 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 
 interface RegisterSuccessPageProps {
-  onContinue?: () => void;
-  onNavigate?: (page: string) => void;
+  onComplete?: () => void;
 }
 
-export function RegisterSuccessPage({ onContinue }: RegisterSuccessPageProps) {
+export function RegisterSuccessPage({ onComplete }: RegisterSuccessPageProps) {
+  const handleContinue = () => {
+    console.log('✅ Registration success - Redirecting to login for OTP authentication');
+    onComplete?.();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-accent-50 to-primary-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -23,7 +27,7 @@ export function RegisterSuccessPage({ onContinue }: RegisterSuccessPageProps) {
           {/* Description */}
           <p className="text-gray-600 mb-6 leading-relaxed">
             Selamat! Akun Anda telah berhasil dibuat. 
-            Mari mulai perjalanan sebagai relawan zakat dan raih keberkahan bersama.
+            Silakan login dengan nomor WhatsApp untuk verifikasi dan mulai menggunakan aplikasi.
           </p>
 
           {/* Info Card */}
@@ -32,25 +36,25 @@ export function RegisterSuccessPage({ onContinue }: RegisterSuccessPageProps) {
             <ul className="space-y-2 text-primary-700">
               <li className="flex items-start gap-2">
                 <span className="text-green-600 mt-0.5">✓</span>
-                <span>Ikuti proses onboarding untuk mengenal aplikasi</span>
+                <span>Login dengan nomor WhatsApp Anda</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-600 mt-0.5">✓</span>
-                <span>Lengkapi profil dan pilih regu</span>
+                <span>Verifikasi kode OTP yang dikirimkan</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-600 mt-0.5">✓</span>
-                <span>Mulai tambahkan muzakki pertama Anda</span>
+                <span>Ikuti onboarding dan mulai mengelola muzakki</span>
               </li>
             </ul>
           </div>
 
           {/* CTA Button */}
           <Button
-            onClick={onContinue}
+            onClick={handleContinue}
             className="w-full bg-primary-600 hover:bg-primary-700"
           >
-            Mulai Onboarding
+            Lanjut ke Login
           </Button>
         </Card>
 

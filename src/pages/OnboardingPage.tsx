@@ -56,14 +56,18 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
   const currentStepData = steps[currentStep];
 
   const handleNext = () => {
+    console.log('🎯 Onboarding - Next clicked. Current step:', currentStep, '/', steps.length - 1);
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      console.log('✅ Onboarding - Complete! Calling onComplete...');
       onComplete?.();
     }
   };
 
   const handleSkip = () => {
+    console.log('⏭️ Onboarding - Skip clicked. Calling onComplete...');
     onComplete?.();
   };
 

@@ -5,28 +5,20 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface TambahProspekPageProps {
   onBack?: () => void;
-  onNavigate?: (page: string) => void;
   onSave?: () => void;
 }
 
-export function TambahProspekPage({ onBack, onNavigate, onSave }: TambahProspekPageProps) {
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (onNavigate) {
-      onNavigate('dashboard');
-    }
-  };
+export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     city: '',
     notes: '',
-    status: 'baru' as 'baru' | 'follow-up' | 'donasi'
+    status: 'baru' as const
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -54,9 +46,12 @@ export function TambahProspekPage({ onBack, onNavigate, onSave }: TambahProspekP
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={handleBack} className="text-gray-700">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <button 
+            onClick={onBack}
+            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </button>
           <h2 className="text-white">Tambah Muzakki Baru</h2>
         </div>
       </div>

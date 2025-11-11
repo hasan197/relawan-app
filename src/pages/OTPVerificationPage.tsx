@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner@2.0.3';
+import { useAuth } from '../hooks/useAuth';
 
 interface OTPVerificationPageProps {
   phoneNumber?: string;
@@ -12,9 +13,10 @@ interface OTPVerificationPageProps {
 
 export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onBack }: OTPVerificationPageProps) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { verifyOTP, sendOTP } = useAuth();
 
   useEffect(() => {
     if (countdown > 0) {
@@ -46,35 +48,69 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const otpCode = otp.join('');
     
     if (otpCode.length !== 6) {
-      toast.error('Masukkan kode OTP lengkap');
+      toast.error('Masukkan 6 digit kode OTP');
       return;
     }
 
-    setIsLoading(true);
+    setIsVerifying(true);
 
-    // Simulate verification
-    setTimeout(() => {
-      setIsLoading(false);
-      if (otpCode === '123456') {
-        toast.success('Verifikasi berhasil!');
-        onVerify?.();
-      } else {
-        toast.error('Kode OTP salah. Gunakan 123456 untuk demo');
+    try {
+      console.log('🔐 Verifying OTP:', { phoneNumber, otpCode });
+      const response = await verifyOTP(phoneNumber, otpCode);
+      
+      console.log('✅ OTP verification response:', response);
+      console.log('✅ User from response:', response.user);
+      console.log('✅ User ID:', response.user?.id);
+
+      if (response.success) {
+        toast.success('Login berhasil!');
+        console.log('📍 Reloading to refresh auth state...');
+        
+        // Force reload to ensure auth state is fresh from localStorage
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
-    }, 1500);
+    } catch (error: any) {
+      console.error('❌ OTP verification error:', error);
+      toast.error(error.message || 'Kode OTP salah atau sudah kadaluarsa');
+      setIsVerifying(false);
+    }
+    // Don't set isVerifying to false if success - page will reload
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (countdown > 0) return;
     
-    setCountdown(60);
-    setOtp(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
-    toast.success('Kode OTP baru telah dikirim');
+    try {
+      const response = await sendOTP(phoneNumber);
+      setCountdown(60);
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+      
+      // Show demo OTP for development - karena belum ada third party SMS
+      if (response.demo_otp) {
+        toast.success(`Kode OTP baru dikirim!`);
+        toast.info(`🔑 Demo OTP: ${response.demo_otp}`, { 
+          duration: 15000,
+          description: 'Cek console log untuk melihat OTP (belum ada SMS service)' 
+        });
+        console.log('\n═══════════════════════════════════════════');
+        console.log('📱 KODE OTP VERIFIKASI');
+        console.log('═══════════════════════════════════════════');
+        console.log(`Phone: ${phoneNumber}`);
+        console.log(`OTP: ${response.demo_otp}`);
+        console.log('═══════════════════════════════════════════\n');
+      } else {
+        toast.success('Kode OTP baru telah dikirim');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal mengirim ulang OTP');
+    }
   };
 
   return (
@@ -119,7 +155,7 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   className="w-12 h-14 text-center border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:outline-none transition-colors"
-                  disabled={isLoading}
+                  disabled={isVerifying}
                 />
               ))}
             </div>
@@ -128,9 +164,9 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
           <Button
             onClick={handleVerify}
             className="w-full bg-primary-600 hover:bg-primary-700 mb-4"
-            disabled={isLoading || otp.join('').length !== 6}
+            disabled={isVerifying || otp.join('').length !== 6}
           >
-            {isLoading ? 'Memverifikasi...' : 'Verifikasi'}
+            {isVerifying ? 'Memverifikasi...' : 'Verifikasi'}
           </Button>
 
           <div className="text-center">
@@ -151,7 +187,7 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-gray-500">
-              💡 Untuk demo, gunakan kode: <span className="text-gray-900">123456</span>
+              💡 Untuk demo, kode OTP akan ditampilkan di notifikasi
             </p>
           </div>
         </Card>

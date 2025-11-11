@@ -4,15 +4,18 @@ import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner@2.0.3';
+import { useAuth } from '../hooks/useAuth';
 
 interface LoginPageProps {
   onLogin?: () => void;
   onSendOTP?: (phone: string) => void;
+  onRegister?: () => void;
 }
 
-export function LoginPage({ onLogin, onSendOTP }: LoginPageProps) {
+export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { sendOTP } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,19 +25,42 @@ export function LoginPage({ onLogin, onSendOTP }: LoginPageProps) {
       return;
     }
 
-    if (phoneNumber.length < 10) {
-      toast.error('Nomor WhatsApp tidak valid');
+    // Improved phone validation - accept various formats
+    const cleanPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      toast.error('Nomor WhatsApp harus 10-15 digit');
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await sendOTP(cleanPhone);
+      
+      // Show demo OTP for development - karena belum ada third party SMS
+      if (response.demo_otp) {
+        toast.success('Kode OTP berhasil dikirim!');
+        toast.info(`🔑 Demo OTP: ${response.demo_otp}`, { 
+          duration: 15000,
+          description: 'Salin kode ini untuk verifikasi (belum ada SMS service)' 
+        });
+        console.log('\n═══════════════════════════════════════════');
+        console.log('📱 KODE OTP LOGIN');
+        console.log('═══════════════════════════════════════════');
+        console.log(`Phone: ${cleanPhone}`);
+        console.log(`OTP: ${response.demo_otp}`);
+        console.log('═══════════════════════════════════════════\n');
+      } else {
+        toast.success('Kode OTP telah dikirim ke WhatsApp Anda');
+      }
+      
+      onSendOTP?.(cleanPhone);
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal mengirim OTP');
+    } finally {
       setIsLoading(false);
-      toast.success('Kode OTP telah dikirim ke WhatsApp Anda');
-      onSendOTP?.(phoneNumber);
-    }, 1500);
+    }
   };
 
   return (
@@ -89,7 +115,10 @@ export function LoginPage({ onLogin, onSendOTP }: LoginPageProps) {
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-gray-600">
               Belum punya akun?{' '}
-              <button className="text-primary-600 hover:text-primary-700">
+              <button 
+                onClick={onRegister}
+                className="text-primary-600 hover:text-primary-700"
+              >
                 Daftar Sekarang
               </button>
             </p>

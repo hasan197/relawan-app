@@ -1,14 +1,15 @@
-import { WifiOff, AlertCircle, RefreshCcw, Home } from 'lucide-react';
+import { WifiOff, AlertCircle, RefreshCcw, Home, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 
 interface ErrorPageProps {
-  type?: 'offline' | 'error' | '404';
+  type?: 'offline' | 'error' | '404' | 'no-user-id';
   onRetry?: () => void;
   onHome?: () => void;
+  onLogout?: () => void;
 }
 
-export function ErrorPage({ type = 'error', onRetry, onHome }: ErrorPageProps) {
+export function ErrorPage({ type = 'error', onRetry, onHome, onLogout }: ErrorPageProps) {
   const errorContent = {
     offline: {
       icon: WifiOff,
@@ -21,6 +22,13 @@ export function ErrorPage({ type = 'error', onRetry, onHome }: ErrorPageProps) {
       icon: AlertCircle,
       title: 'Terjadi Kesalahan',
       description: 'Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi.',
+      iconColor: 'text-red-600',
+      bgColor: 'bg-red-100'
+    },
+    'no-user-id': {
+      icon: AlertCircle,
+      title: 'Data Relawan Tidak Lengkap',
+      description: 'ID Relawan tidak ditemukan. Anda harus login ulang atau mendaftar kembali untuk melanjutkan.',
       iconColor: 'text-red-600',
       bgColor: 'bg-red-100'
     },
@@ -72,6 +80,17 @@ export function ErrorPage({ type = 'error', onRetry, onHome }: ErrorPageProps) {
             <Home className="h-4 w-4 mr-2" />
             Kembali ke Beranda
           </Button>
+
+          {type === 'no-user-id' && (
+            <Button
+              onClick={onLogout}
+              variant="outline"
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          )}
         </div>
 
         {/* Offline Mode Info */}
