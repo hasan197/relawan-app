@@ -9,6 +9,14 @@ interface HeaderProps {
   onStatsClick?: () => void;
 }
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 10) return 'Selamat Pagi';
+  if (hour < 15) return 'Selamat Siang';
+  if (hour < 18) return 'Selamat Sore';
+  return 'Selamat Malam';
+};
+
 export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
   const { user } = useAppContext();
   
@@ -16,14 +24,14 @@ export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
     <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-white">
+          <Avatar className="h-12 w-12 border-2 border-white shadow-md">
             <AvatarFallback className="bg-primary-700 text-white">
               {getInitials(user?.full_name || 'Relawan')}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-primary-50">Hi, {user?.full_name || 'Relawan'} 👋</p>
-            <p className="text-white mt-0.5">{user?.city || 'ZISWAF Manager'}</p>
+            <p className="text-primary-50 text-sm">{getGreeting()} 👋</p>
+            <p className="text-white mt-0.5 font-medium">{user?.full_name || 'Relawan ZISWAF'}</p>
           </div>
         </div>
         

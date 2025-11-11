@@ -18,13 +18,13 @@ export function TotalDonationCard({
   onLaporan
 }: TotalDonationCardProps) {
   return (
-    <Card className="bg-gradient-to-br from-accent-100 to-accent-200 border-none shadow-card -mt-8 mx-4 p-6">
-      <div className="text-center mb-6">
-        <p className="text-accent-700 mb-2">Total Donasi Relawan</p>
-        <h2 className="text-gray-900 mb-2">{formatCurrency(total)}</h2>
-        <div className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full">
+    <Card className="bg-gradient-to-br from-accent-100 to-accent-200 border-none shadow-lg -mt-8 p-5">
+      <div className="text-center mb-5">
+        <p className="text-accent-700 text-sm mb-1">Total Donasi Relawan</p>
+        <h2 className="text-gray-900 mb-2 text-2xl">{formatCurrency(total)}</h2>
+        <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-sm">
           <span>+{formatCurrency(increase)}</span>
-          <ArrowUp className="h-4 w-4" />
+          <ArrowUp className="h-3.5 w-3.5" />
         </div>
       </div>
       

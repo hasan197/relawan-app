@@ -13,8 +13,13 @@ export function TargetProgress({ target }: TargetProgressProps) {
   const muzakkiProgress = (target.currentMuzakki / target.targetMuzakki) * 100;
 
   return (
-    <Card className="mx-4 mb-6 p-4">
-      <h3 className="text-gray-900 mb-4">Target Bulan Ini</h3>
+    <Card className="p-4 shadow-sm border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-gray-900">Target Bulan Ini</h3>
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          {target.period}
+        </span>
+      </div>
       
       <div className="space-y-4">
         {/* Donation Target */}

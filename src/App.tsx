@@ -9,7 +9,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { DonaturPage } from './pages/DonaturPage';
 import { LaporanPage } from './pages/LaporanPage';
 import { ProfilPage } from './pages/ProfilPage';
-import TemplatePage from './pages/TemplatePage';
+import { TemplatePesanPage } from './pages/TemplatePesanPage';
 import { ProgramPage } from './pages/ProgramPage';
 import { DetailProgramPage } from './pages/DetailProgramPage';
 import { DetailProspekPage } from './pages/DetailProspekPage';
@@ -201,7 +201,7 @@ function AppContent() {
         return <ProfilPage onNavigate={handleNavigation} />;
       
       case 'template':
-        return <TemplatePage onBack={() => setCurrentPage('profil')} />;
+        return <TemplatePesanPage onBack={() => setCurrentPage('profil')} />;
       
       case 'program':
         return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
@@ -375,7 +375,7 @@ function AppContent() {
 
             // Other pages use mobile version in desktop layout
             case 'template':
-              return <TemplatePage onBack={() => setCurrentPage('profil')} />;
+              return <TemplatePesanPage onBack={() => setCurrentPage('profil')} />;
             
             case 'program':
               return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;

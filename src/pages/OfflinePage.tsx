@@ -1,6 +1,11 @@
 import React from 'react';
 
-const OfflinePage: React.FC = () => {
+interface OfflinePageProps {
+  onRetry: () => void;
+  onHome: () => void;
+}
+
+const OfflinePage: React.FC<OfflinePageProps> = ({ onRetry, onHome }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
@@ -10,12 +15,20 @@ const OfflinePage: React.FC = () => {
           Maaf, sepertinya Anda sedang tidak terhubung ke internet. 
           Silakan periksa koneksi Anda dan coba lagi.
         </p>
-        <button 
-          onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Muat Ulang Halaman
-        </button>
+        <div className="flex flex-col space-y-3">
+          <button 
+            onClick={onRetry}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Coba Lagi
+          </button>
+          <button 
+            onClick={onHome}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Kembali ke Beranda
+          </button>
+        </div>
       </div>
     </div>
   );
