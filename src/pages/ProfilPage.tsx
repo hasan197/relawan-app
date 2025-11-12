@@ -200,84 +200,6 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
           </Card>
         </motion.div>
 
-        {/* Statistics Card - PREMIUM DESIGN */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="relative overflow-hidden mb-4 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-none shadow-xl">
-            {/* Decorative Elements */}
-            <div className="absolute inset-0 opacity-15">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-              <div className="absolute top-1/3 left-1/3 w-24 h-24 bg-white rounded-full blur-2xl"></div>
-            </div>
-
-            {/* Animated Sparkles */}
-            <div className="absolute top-6 right-6">
-              <motion.div
-                animate={{ 
-                  rotate: [0, 15, 0, -15, 0],
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Sparkles className="h-7 w-7 text-yellow-200" />
-              </motion.div>
-            </div>
-
-            <div className="relative z-10 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
-                  <Award className="h-5 w-5 text-white" />
-                </div>
-                <h4 className="text-white">Total Pencapaian</h4>
-              </div>
-
-              {/* Main Stats */}
-              <div className="mb-5">
-                <p className="text-white/90 text-sm mb-2">Total Donasi Terkumpul</p>
-                <motion.h2 
-                  className="text-white text-4xl mb-3 drop-shadow-lg"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ 
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15,
-                    delay: 0.3
-                  }}
-                >
-                  {loading ? '...' : formatCurrency(statistics?.total_donations || 0)}
-                </motion.h2>
-                
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 px-3 py-1 bg-green-400/40 backdrop-blur-sm rounded-full border border-white/20">
-                    <TrendingUp className="h-4 w-4 text-white" />
-                    <span className="text-white text-sm">+18% minggu ini</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* View Details Button */}
-              <motion.button
-                onClick={() => onNavigate?.('laporan')}
-                className="w-full p-3 bg-white/25 backdrop-blur-sm hover:bg-white/35 text-white rounded-xl border border-white/30 transition-all flex items-center justify-center gap-2 shadow-lg"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span>Lihat Detail Statistik</span>
-                <TrendingUp className="h-4 w-4" />
-              </motion.button>
-            </div>
-          </Card>
-        </motion.div>
-
         {/* Menu Sections - Modern Card Design */}
         {menuSections.map((section, sectionIndex) => (
           <motion.div
@@ -347,7 +269,10 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
         </motion.p>
       </div>
 
-      <BottomNavigation active="profil" onNavigate={handleNavigation} />
+      {/* Bottom Navigation - Fixed to Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <BottomNavigation active="profil" onNavigate={handleNavigation} />
+      </div>
     </div>
   );
 }

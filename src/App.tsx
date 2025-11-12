@@ -59,6 +59,7 @@ type Page =
   | 'laporan'
   | 'profil'
   | 'template'
+  | 'template-pesan'
   | 'program'
   | 'detail-program'
   | 'detail-prospek'
@@ -98,6 +99,22 @@ function AppContent() {
   });
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errorType, setErrorType] = useState<'error' | 'no-user-id' | 'offline' | '404'>('error');
+  const [navigationHistory, setNavigationHistory] = useState<Page[]>([]);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+
+  // Track navigation history when page changes (excluding back navigation)
+  useEffect(() => {
+    if (currentPage && !isNavigatingBack) {
+      setNavigationHistory(prev => {
+        // Don't add if it's the same as the last page
+        if (prev[prev.length - 1] === currentPage) {
+          return prev;
+        }
+        return [...prev, currentPage];
+      });
+    }
+    setIsNavigatingBack(false);
+  }, [currentPage, isNavigatingBack]);
 
   useEffect(() => {
     // Check if user is authenticated on mount
@@ -151,7 +168,21 @@ function AppContent() {
   }, [loading, isAuthenticated, currentPage, user, logout]);
 
   const handleNavigation = (page: Page) => {
+    setNavigationHistory([...navigationHistory, page]);
     setCurrentPage(page);
+    // Scroll to top setiap pindah halaman
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  const handleBackNavigation = () => {
+    if (navigationHistory.length > 1) {
+      const previousPage = navigationHistory[navigationHistory.length - 2];
+      setNavigationHistory(navigationHistory.slice(0, -1));
+      setCurrentPage(previousPage);
+      setIsNavigatingBack(true);
+      // Scroll to top setiap pindah halaman
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   };
 
   const renderMobilePage = () => {
@@ -212,7 +243,10 @@ function AppContent() {
         return <ProfilPage onNavigate={handleNavigation} />;
       
       case 'template':
-        return <TemplatePesanPage onBack={() => setCurrentPage('profil')} />;
+        return <TemplatePesanPage onBack={handleBackNavigation} />;
+      
+      case 'template-pesan':
+        return <TemplatePesanPage onBack={handleBackNavigation} />;
       
       case 'program':
         return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
