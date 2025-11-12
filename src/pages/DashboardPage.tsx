@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, TrendingUp, Users, DollarSign, Target, Plus, Send, FileText, Gift, MessageSquare, BarChart3, Award, CalendarCheck, QrCode, Settings } from 'lucide-react';
+import { Bell, TrendingUp, Users, DollarSign, Target, Plus, Send, FileText, Gift, MessageSquare, BarChart3, Award, CalendarCheck, QrCode, Settings, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
@@ -10,6 +10,7 @@ import { MotivationalBanner } from '../components/MotivationalBanner';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { useAppContext } from '../contexts/AppContext';
 import { useStatistics } from '../hooks/useStatistics';
+import { motion } from 'motion/react';
 
 interface DashboardPageProps {
   onNavigate?: (page: any) => void;
@@ -62,44 +63,104 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           </button>
         </div>
 
-        {/* Total Donasi Card */}
-        <Card className="p-5 bg-white/95 backdrop-blur">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-gray-600 text-sm mb-1">Total Donasi Terkumpul</p>
-              <h3 className="text-2xl text-gray-900 mb-1">
-                {loading ? '...' : formatCurrency(totalDonations)}
-              </h3>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-green-600 text-sm">+12% bulan ini</span>
+        {/* Total Donasi Card - UPGRADED DESIGN */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="relative overflow-hidden p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-none shadow-xl">
+            {/* Decorative Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
+              <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white rounded-full"></div>
+            </div>
+            
+            {/* Sparkle Icon */}
+            <div className="absolute top-4 right-4">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, 0, -10, 0],
+                  scale: [1, 1.1, 1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <Sparkles className="h-6 w-6 text-yellow-300" />
+              </motion.div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 bg-white/25 backdrop-blur-sm rounded-lg shadow-lg">
+                      <DollarSign className="h-5 w-5 text-white" />
+                    </div>
+                    <p className="text-white/95 text-sm">Total Donasi Terkumpul</p>
+                  </div>
+                  
+                  <motion.h3 
+                    className="text-white text-3xl mb-2 drop-shadow-lg"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15
+                    }}
+                  >
+                    {loading ? '...' : formatCurrency(totalDonations)}
+                  </motion.h3>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-400/40 backdrop-blur-sm rounded-full border border-white/20">
+                      <TrendingUp className="h-3 w-3 text-white" />
+                      <span className="text-white text-xs">+12%</span>
+                    </div>
+                    <span className="text-white/90 text-xs">bulan ini</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Mini Cards */}
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
+                  <p className="text-white/90 text-xs mb-1">Muzakki Aktif</p>
+                  <p className="text-white text-lg drop-shadow">{loading ? '...' : totalMuzakki}</p>
+                </div>
+                <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
+                  <p className="text-white/90 text-xs mb-1">Target Bulan Ini</p>
+                  <p className="text-white text-lg drop-shadow">{Math.round(monthlyProgress)}%</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => onNavigate?.('tambah-prospek')}
+                  className="bg-white text-indigo-600 hover:bg-white/90 shadow-lg"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Tambah Donatur
+                </Button>
+                <Button
+                  onClick={() => handleNavigation('laporan')}
+                  className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg"
+                  size="sm"
+                >
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  Lihat Laporan
+                </Button>
               </div>
             </div>
-            <div className="p-3 bg-primary-100 rounded-xl">
-              <DollarSign className="h-6 w-6 text-primary-600" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
-            <Button
-              onClick={() => onNavigate?.('tambah-prospek')}
-              className="bg-primary-600 hover:bg-primary-700 text-sm"
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Tambah Donatur
-            </Button>
-            <Button
-              onClick={() => handleNavigation('laporan')}
-              variant="outline"
-              className="text-sm"
-              size="sm"
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              Lihat Laporan
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Motivational Banner */}
@@ -160,80 +221,6 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           )}
         </div>
       </div>
-
-      {/* Quick Stats Cards */}
-      <div className="mt-4 px-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="h-5 w-5 text-primary-600" />
-              <Badge className="bg-primary-100 text-primary-700 border-none text-xs">
-                Aktif
-              </Badge>
-            </div>
-            <p className="text-2xl text-gray-900 mb-1">
-              {loading ? '...' : totalMuzakki}
-            </p>
-            <p className="text-gray-500 text-sm">Total Muzakki</p>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              <Badge className="bg-blue-100 text-blue-700 border-none text-xs">
-                {Math.round(monthlyProgress)}%
-              </Badge>
-            </div>
-            <p className="text-2xl text-gray-900 mb-1">
-              {loading ? '...' : formatCurrency(monthlyTarget - totalDonations)}
-            </p>
-            <p className="text-gray-500 text-sm">Sisa Target</p>
-          </Card>
-        </div>
-      </div>
-
-      {/* Target Progress */}
-      <div className="mt-4 px-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-gray-900 mb-1">Target Bulanan</p>
-              <p className="text-2xl text-gray-900">{Math.round(monthlyProgress)}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-primary-600">{formatCurrency(totalDonations)}</p>
-              <p className="text-gray-500 text-sm">dari {formatCurrency(monthlyTarget)}</p>
-            </div>
-          </div>
-          <Progress value={monthlyProgress} className="h-2" />
-        </Card>
-      </div>
-
-      {/* QR Code Regu - Featured Card */}
-      {user?.regu_id && (user?.role === 'admin' || user?.role === 'pembimbing') && (
-        <div className="mt-4 px-4">
-          <Card className="p-4 bg-gradient-to-r from-green-50 to-primary-50 border-primary-200">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-600 rounded-xl">
-                <QrCode className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-gray-900 mb-1">QR Code Regu</h4>
-                <p className="text-gray-600 text-sm">
-                  Share untuk undang anggota baru
-                </p>
-              </div>
-              <Button
-                onClick={() => onNavigate?.('regu-qr-code')}
-                className="bg-primary-600 hover:bg-primary-700"
-                size="sm"
-              >
-                Buka
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
 
       {/* Divider */}
       <div className="px-4 my-6">
