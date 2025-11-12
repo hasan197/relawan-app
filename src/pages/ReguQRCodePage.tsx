@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Download, Share2, Copy, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Share2, Copy, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -16,6 +16,7 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
   const { user } = useAppContext();
   const { regu, members, loading } = useRegu(user?.regu_id || null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [qrError, setQrError] = useState(false);
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -28,6 +29,9 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
 
   const generateQRCode = async (code: string) => {
     try {
+      console.log('🔄 Generating QR Code for:', code);
+      setQrError(false);
+      
       // Generate QR code as data URL
       const url = await QRCode.toDataURL(code, {
         width: 400,
@@ -35,12 +39,19 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
         color: {
           dark: '#16a34a', // primary-600
           light: '#ffffff'
-        }
+        },
+        errorCorrectionLevel: 'H'
       });
+      
+      console.log('✅ QR Code generated successfully');
+      console.log('📊 QR URL length:', url.length);
+      console.log('📊 QR URL preview:', url.substring(0, 50) + '...');
+      
       setQrCodeUrl(url);
     } catch (err) {
-      console.error('QR generation error:', err);
-      toast.error('Gagal membuat QR code');
+      console.error('❌ QR generation error:', err);
+      setQrError(true);
+      toast.error('Gagal membuat QR code. Silakan gunakan kode manual.');
     }
   };
 

@@ -10,6 +10,7 @@ interface AppContextType {
   isAuthenticated: boolean;
   login: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<any>;
   
   // Muzakki
   muzakkiList: any[];
@@ -81,6 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isAuthenticated: auth.isAuthenticated,
     login,
     logout: auth.logout,
+    refreshUser: auth.refreshUser,
     
     // Muzakki
     muzakkiList: muzakki.muzakkiList,

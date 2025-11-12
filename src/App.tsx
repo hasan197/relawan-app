@@ -30,6 +30,7 @@ import { ChatReguPageWithBackend } from './pages/ChatReguPageWithBackend';
 import { PengaturanPage } from './pages/PengaturanPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { ErrorPage } from './pages/ErrorPage';
+import { OfflinePage } from './pages/OfflinePage';
 import { TestConnectionPage } from './pages/TestConnectionPage';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useAppContext } from './contexts/AppContext';
@@ -149,9 +150,8 @@ function AppContent() {
     }
   }, [loading, isAuthenticated, currentPage, user, logout]);
 
-  const handleNavigation = (page: string) => {
-    // Type assertion to Page since we know the string is a valid Page
-    setCurrentPage(page as Page);
+  const handleNavigation = (page: Page) => {
+    setCurrentPage(page);
   };
 
   const renderMobilePage = () => {
@@ -240,7 +240,14 @@ function AppContent() {
       case 'join-regu':
         return (
           <JoinReguPage 
-            onBack={() => setCurrentPage('register')}
+            onBack={() => {
+              // Back to appropriate page based on auth state
+              if (isAuthenticated) {
+                setCurrentPage('regu');
+              } else {
+                setCurrentPage('register');
+              }
+            }}
             onSuccess={() => {
               console.log('✅ Join regu success');
               setCurrentPage('dashboard');
@@ -319,6 +326,14 @@ function AppContent() {
               logout();
               setCurrentPage('login');
             }}
+          />
+        );
+      
+      case 'offline':
+        return (
+          <OfflinePage
+            onRetry={() => setCurrentPage('dashboard')}
+            onHome={() => setCurrentPage('dashboard')}
           />
         );
       

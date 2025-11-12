@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Camera, Keyboard, Loader2, CheckCircle2, QrCode } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -8,6 +8,7 @@ import { toast } from 'sonner@2.0.3';
 import { useAppContext } from '../contexts/AppContext';
 import { useJoinRegu } from '../hooks/useJoinRegu';
 import { motion } from 'motion/react';
+import jsQR from 'jsqr';
 
 interface JoinReguPageProps {
   onBack?: () => void;
@@ -15,14 +16,16 @@ interface JoinReguPageProps {
 }
 
 export function JoinReguPage({ onBack, onSuccess }: JoinReguPageProps) {
-  const { user, setUser } = useAppContext();
+  const { user, refreshUser } = useAppContext();
   const { joinRegu, loading } = useJoinRegu();
   const [mode, setMode] = useState<'choice' | 'scan' | 'manual'>('choice');
   const [joinCode, setJoinCode] = useState('');
   const [success, setSuccess] = useState(false);
   const [reguInfo, setReguInfo] = useState<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scanning, setScanning] = useState(false);
+  const scanningIntervalRef = useRef<number | null>(null);
 
   // Format code input (auto-uppercase, max 6 chars)
   const handleCodeInput = (value: string) => {
@@ -48,10 +51,8 @@ export function JoinReguPage({ onBack, onSuccess }: JoinReguPageProps) {
       setSuccess(true);
       setReguInfo(result.data?.regu);
       
-      // Update user context
-      if (result.data?.user) {
-        setUser(result.data.user);
-      }
+      // Refresh user context to get updated regu_id
+      await refreshUser();
 
       // Show success for 2 seconds then navigate
       setTimeout(() => {
@@ -98,6 +99,83 @@ export function JoinReguPage({ onBack, onSuccess }: JoinReguPageProps) {
     }
     setScanning(false);
   };
+
+  // Scan QR code from video frame
+  const scanQRCode = async () => {
+    if (!videoRef.current || !canvasRef.current || !user?.id) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    if (canvas.width === 0 || canvas.height === 0) return;
+    
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code && code.data) {
+      console.log('✅ QR Code detected:', code.data);
+      
+      // Stop scanning
+      setScanning(false);
+      stopCamera();
+      
+      // Extract just the code (in case QR contains full URL or extra data)
+      const detectedCode = code.data.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      
+      if (detectedCode.length !== 6) {
+        toast.error('QR code tidak valid. Gunakan input manual.');
+        setMode('manual');
+        return;
+      }
+      
+      // Join regu with detected code
+      const result = await joinRegu(user.id, detectedCode);
+
+      if (result.success) {
+        setSuccess(true);
+        setReguInfo(result.data?.regu);
+        
+        // Refresh user context to get updated regu_id
+        await refreshUser();
+
+        // Show success for 2 seconds then navigate
+        setTimeout(() => {
+          toast.success(result.message);
+          onSuccess?.();
+        }, 2000);
+      } else {
+        toast.error(result.message);
+        setMode('manual');
+      }
+    }
+  };
+
+  // Start scanning interval
+  useEffect(() => {
+    if (scanning) {
+      scanningIntervalRef.current = window.setInterval(scanQRCode, 300);
+    } else {
+      if (scanningIntervalRef.current) {
+        clearInterval(scanningIntervalRef.current);
+        scanningIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (scanningIntervalRef.current) {
+        clearInterval(scanningIntervalRef.current);
+        scanningIntervalRef.current = null;
+      }
+    };
+  }, [scanning, user]);
 
   // Success Animation
   if (success && reguInfo) {
@@ -351,6 +429,9 @@ export function JoinReguPage({ onBack, onSuccess }: JoinReguPageProps) {
           </motion.div>
         )}
       </div>
+
+      {/* Hidden canvas for QR code scanning */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
 }

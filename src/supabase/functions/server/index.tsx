@@ -624,24 +624,32 @@ app.post('/make-server-f689ca3f/regus', async (c) => {
     }
 
     // Get pembimbing user
-    const pembimbingResult = await kv.get(`user:${pembimbing_id}`);
-    if (!pembimbingResult || !pembimbingResult.value) {
-      return c.json({ error: 'Pembimbing tidak ditemukan' }, 404);
+    console.log(`🔍 Looking up user with ID: ${pembimbing_id}`);
+    const pembimbing = await kv.get(`user:${pembimbing_id}`);
+    
+    if (!pembimbing) {
+      console.error(`❌ User not found with ID: ${pembimbing_id}`);
+      
+      // Try to find all users to help debug
+      const allUsers = await kv.getByPrefix('user:');
+      console.log('📦 Available users in database:', allUsers.length);
+      allUsers.slice(0, 5).forEach((u: any) => {
+        console.log(`  - ID: ${u.id}, Name: ${u.full_name}, Role: ${u.role}, Phone: ${u.phone}`);
+      });
+      
+      return c.json({ error: 'Pembimbing tidak ditemukan. Silakan pastikan Anda sudah login dengan benar.' }, 404);
     }
-    
-    const user = pembimbingResult.value;
-    console.log('User data from KV store:', JSON.stringify(user, null, 2));
-    
-    // Debug: Log all user properties
-    console.log('User properties:', Object.keys(user));
-    
-    if (user.role !== 'pembimbing') {
-      return c.json({ 
-        error: 'Hanya pengguna dengan role pembimbing yang bisa membuat regu',
-        userRole: user.role,
-        userId: pembimbing_id,
-        userData: user
-      }, 403);
+
+    console.log(`✅ User found:`, { 
+      id: pembimbing.id, 
+      name: pembimbing.full_name, 
+      role: pembimbing.role,
+      phone: pembimbing.phone
+    });
+
+    if (pembimbing.role !== 'pembimbing') {
+      console.error(`❌ User role check failed. Expected: 'pembimbing', Got: '${pembimbing.role}'`);
+      return c.json({ error: `Hanya pembimbing yang bisa membuat regu. Role Anda saat ini: ${pembimbing.role}` }, 403);
     }
 
     // Generate unique join code (6 karakter uppercase alphanumeric)
@@ -667,7 +675,7 @@ app.post('/make-server-f689ca3f/regus', async (c) => {
       id: reguId,
       name: name,
       pembimbing_id: pembimbing_id,
-      pembimbing_name: user.full_name,  // Menggunakan user.full_name
+      pembimbing_name: pembimbing.full_name,
       member_count: 0,
       total_donations: 0,
       target_amount: target_amount || 60000000,
@@ -677,30 +685,28 @@ app.post('/make-server-f689ca3f/regus', async (c) => {
 
     // Save regu
     await kv.set(`regu:${reguId}`, regu);
+
+    // Update regu
+    const updatedPembimbing = {
+      ...pembimbing,
+      regu_id: reguId,
+      updated_at: new Date().toISOString()
+    };
+    
+    // 🔧 FIX: Save to BOTH keys
+    await kv.set(`user:${pembimbing.id}`, updatedPembimbing);
+    await kv.set(`user:phone:${pembimbing.phone}`, updatedPembimbing);
     
     // Save join code mapping
     await kv.set(`regu:code:${joinCode}`, reguId);
 
     console.log('✅ Regu created successfully:', { reguId, name, joinCode });
 
-    // Siapkan respons yang mencakup data regu dan role user
-    const response = {
+    return c.json({
       success: true,
       message: 'Regu berhasil dibuat!',
-      data: {
-        ...regu,
-        role: 'pembimbing' // Menambahkan role ke dalam respons
-      },
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        role: user.role,
-        regu_id: reguId
-      }
-    };
-
-    console.log('📤 Response with role:', response);
-    return c.json(response);
+      data: regu
+    });
   } catch (error) {
     console.error('❌ Create regu error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
@@ -782,11 +788,22 @@ app.get('/make-server-f689ca3f/regu/:id/members', async (c) => {
         return user.regu_id === reguId;
       });
     
-    console.log('✅ Members found:', members.length);
+    // IMPORTANT: Remove duplicates by id
+    // Since both user:{id} and user:phone:{phone} have same data,
+    // we need to deduplicate by user.id
+    const uniqueMembers = members.reduce((acc: any[], member: any) => {
+      if (!acc.some((m: any) => m.id === member.id)) {
+        acc.push(member);
+      }
+      return acc;
+    }, []);
+    
+    console.log('✅ Members found (before dedup):', members.length);
+    console.log('✅ Unique members (after dedup):', uniqueMembers.length);
     
     return c.json({
       success: true,
-      data: members
+      data: uniqueMembers
     });
   } catch (error) {
     console.error('❌ Get regu members error:', error);
@@ -807,10 +824,15 @@ app.post('/make-server-f689ca3f/regu/:id/members', async (c) => {
     }
     
     // Update user's regu
-    await kv.set(`user:${userId}`, {
+    const updatedUser = {
       ...user,
-      regu_id: reguId
-    });
+      regu_id: reguId,
+      updated_at: new Date().toISOString()
+    };
+    
+    // 🔧 FIX: Save to BOTH keys
+    await kv.set(`user:${userId}`, updatedUser);
+    await kv.set(`user:phone:${user.phone}`, updatedUser);
     
     return c.json({
       success: true,

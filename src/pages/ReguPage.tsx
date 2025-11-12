@@ -45,7 +45,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
             <p className="text-gray-400 text-sm mb-4">
               {isPembimbingWithoutRegu 
                 ? 'Sebagai pembimbing, Anda dapat membuat regu baru untuk mengelola relawan'
-                : 'Silakan hubungi admin untuk bergabung dengan regu'
+                : 'Scan QR code dari pembimbing atau masukkan kode regu untuk bergabung'
               }
             </p>
             
@@ -57,6 +57,17 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Buat Regu Baru
+              </Button>
+            )}
+            
+            {/* Tombol Gabung Regu untuk Relawan */}
+            {!isPembimbingWithoutRegu && (
+              <Button 
+                onClick={() => onNavigate?.('join-regu')}
+                className="bg-primary-600 hover:bg-primary-700 mt-2"
+              >
+                <QrCode className="h-5 w-5 mr-2" />
+                Gabung Regu
               </Button>
             )}
           </Card>

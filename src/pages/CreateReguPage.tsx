@@ -27,8 +27,18 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('🔍 Current user data:', user);
+    console.log('🔍 User ID:', user?.id);
+    console.log('🔍 User role:', user?.role);
+
     if (!user?.id) {
-      toast.error('User tidak ditemukan');
+      toast.error('User tidak ditemukan. Silakan login kembali.');
+      return;
+    }
+
+    if (user.role !== 'pembimbing') {
+      toast.error(`Anda perlu role pembimbing untuk membuat regu. Role saat ini: ${user.role}`);
+      console.error('❌ Role check failed:', { role: user.role });
       return;
     }
 
@@ -39,6 +49,12 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
 
     try {
       const targetAmount = parseInt(formData.targetAmount) || 60000000;
+      console.log('📝 Attempting to create regu with:', {
+        pembimbingId: user.id,
+        name: formData.name.trim(),
+        targetAmount
+      });
+      
       const newRegu = await createRegu(user.id, formData.name.trim(), targetAmount);
       
       setCreatedRegu(newRegu);
@@ -50,6 +66,7 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
         targetAmount: '60000000'
       });
     } catch (error: any) {
+      console.error('❌ Create regu failed:', error);
       toast.error(error.message || 'Gagal membuat regu');
     }
   };
