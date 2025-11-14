@@ -46,7 +46,7 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-white mb-1">Laporan & Statistik</h2>

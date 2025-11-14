@@ -108,7 +108,7 @@ export function ChatReguPage({ onBack }: ChatReguPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 shadow-lg">
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 shadow-lg">
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}

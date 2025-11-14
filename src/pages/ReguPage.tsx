@@ -24,7 +24,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   if (!user?.regu_id) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
+        <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <button 
               onClick={onBack}
@@ -88,7 +88,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3 mb-6">
           <button 
             onClick={onBack}

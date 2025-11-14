@@ -192,19 +192,19 @@ export function DashboardPage({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => onNavigate?.("tambah-prospek")}
-                  className="bg-white text-indigo-600 hover:bg-white/90 shadow-lg py-4 px-6 text-base"
-                  size="lg"
+                  className="bg-white text-indigo-600 hover:bg-white/90 shadow-lg"
+                  size="sm"
                 >
-                  <Plus className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Tambah Donatur</span>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Tambah Donatur
                 </Button>
                 <Button
                   onClick={() => handleNavigation("laporan")}
-                  className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg py-4 px-6 text-base"
-                  size="lg"
+                  className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg"
+                  size="sm"
                 >
-                  <ArrowUpRight className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Lihat Laporan</span>
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  Lihat Laporan
                 </Button>
               </div>
             </div>
