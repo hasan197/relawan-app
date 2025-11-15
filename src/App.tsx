@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Toaster } from './components/ui/sonner';
 import { SplashScreen } from './pages/SplashScreen';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -32,7 +33,6 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { OfflinePage } from './pages/OfflinePage';
 import { TestConnectionPage } from './pages/TestConnectionPage';
-import { Toaster } from './components/ui/sonner';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { DesktopDashboardPage } from './pages/desktop/DesktopDashboardPage';
 import { DesktopDonaturPage } from './pages/desktop/DesktopDonaturPage';
@@ -41,11 +41,24 @@ import { DesktopProfilPage } from './pages/desktop/DesktopProfilPage';
 import { DesktopTambahProspekPage } from './pages/desktop/DesktopTambahProspekPage';
 import { DesktopChatReguPage } from './pages/desktop/DesktopChatReguPage';
 import { DesktopProgramPage } from './pages/desktop/DesktopProgramPage';
+import { DesktopPengaturanPage } from './pages/desktop/DesktopPengaturanPage';
+import { DesktopDetailProgramPage } from './pages/desktop/DesktopDetailProgramPage';
+import { DesktopDetailProspekPage } from './pages/desktop/DesktopDetailProspekPage';
+import { DesktopReguPage } from './pages/desktop/DesktopReguPage';
+import { DesktopReguQRCodePage } from './pages/desktop/DesktopReguQRCodePage';
+import { DesktopJoinReguPage } from './pages/desktop/DesktopJoinReguPage';
+import { DesktopCreateReguPage } from './pages/desktop/DesktopCreateReguPage';
+import { DesktopTemplatePesanPage } from './pages/desktop/DesktopTemplatePesanPage';
+import { DesktopNotifikasiPage } from './pages/desktop/DesktopNotifikasiPage';
+import { DesktopAdminDashboardPage } from './pages/desktop/DesktopAdminDashboardPage';
+import { DesktopAdminToolsPage } from './pages/desktop/DesktopAdminToolsPage';
+import { DesktopDatabaseResetPage } from './pages/desktop/DesktopDatabaseResetPage';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
 import { useResponsive } from './hooks/useResponsive';
 import { DebugPage } from './pages/DebugPage';
 import { QuickTestPage } from './pages/QuickTestPage';
 import { AdminToolsPage } from './pages/AdminToolsPage';
+import { DatabaseResetPage } from './pages/DatabaseResetPage';
 
 type Page = 
   | 'splash'
@@ -80,6 +93,7 @@ type Page =
   | 'pengaturan'
   | 'admin-dashboard'
   | 'admin-tools'
+  | 'database-reset'
   | 'test-connection'
   | 'debug'
   | 'quick-test'
@@ -343,11 +357,14 @@ function AppContent() {
         return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
       
       case 'admin-dashboard':
-        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} />;
+        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setCurrentPage} />;
       
       case 'admin-tools':
-        return <AdminToolsPage onBack={() => setCurrentPage('dashboard')} />;
-
+        return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
+      
+      case 'database-reset':
+        return <DatabaseResetPage onBack={() => setCurrentPage('admin-dashboard')} />;
+      
       case 'test-connection':
         return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
 
@@ -424,6 +441,52 @@ function AppContent() {
             
             case 'chat-regu':
               return <DesktopChatReguPage onBack={() => setCurrentPage('regu')} />;
+            
+            case 'pengaturan':
+              return <DesktopPengaturanPage onBack={() => setCurrentPage('profil')} />;
+            
+            case 'detail-program':
+              return <DesktopDetailProgramPage onBack={() => setCurrentPage('program')} />;
+            
+            case 'detail-prospek':
+              return <DesktopDetailProspekPage muzakkiId={selectedMuzakkiId || undefined} onBack={() => setCurrentPage('donatur')} />;
+            
+            case 'regu':
+              return <DesktopReguPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
+            
+            case 'regu-qr-code':
+              return <DesktopReguQRCodePage onBack={() => setCurrentPage('regu')} />;
+            
+            case 'join-regu':
+              return (
+                <DesktopJoinReguPage 
+                  onBack={() => setCurrentPage('regu')}
+                  onSuccess={() => setCurrentPage('dashboard')}
+                />
+              );
+            
+            case 'create-regu':
+              return (
+                <DesktopCreateReguPage
+                  onBack={() => setCurrentPage('regu')}
+                  onSuccess={() => setCurrentPage('regu')}
+                />
+              );
+            
+            case 'template-pesan':
+              return <DesktopTemplatePesanPage onBack={() => setCurrentPage('profil')} />;
+            
+            case 'notifikasi':
+              return <DesktopNotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
+            
+            case 'admin-dashboard':
+              return <DesktopAdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
+            
+            case 'admin-tools':
+              return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
+            
+            case 'database-reset':
+              return <DesktopDatabaseResetPage onBack={() => setCurrentPage('admin-tools')} />;
             
             // For pages without desktop version, use mobile version
             default:

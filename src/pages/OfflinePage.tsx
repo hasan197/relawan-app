@@ -1,28 +1,62 @@
-import React from 'react';
+import { WifiOff, RefreshCw, Home } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { WifiOff } from 'lucide-react';
+import { Card } from '../components/ui/card';
 
-export const OfflinePage: React.FC = () => {
-  const handleRetry = () => {
-    window.location.reload();
-  };
+interface OfflinePageProps {
+  onRetry: () => void;
+  onHome: () => void;
+}
 
+export function OfflinePage({ onRetry, onHome }: OfflinePageProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="text-center max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
+      <Card className="max-w-md w-full p-8 text-center">
+        {/* Icon */}
         <div className="flex justify-center mb-6">
-          <WifiOff className="h-16 w-16 text-red-500" />
+          <div className="p-6 bg-orange-100 rounded-full">
+            <WifiOff className="h-16 w-16 text-orange-600" />
+          </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Tidak Ada Koneksi Internet</h1>
-        <p className="text-gray-600 mb-6">
-          Sepertinya Anda sedang offline. Silakan periksa koneksi internet Anda dan coba lagi.
+
+        {/* Title */}
+        <h1 className="text-gray-900 text-2xl mb-3">
+          Tidak Ada Koneksi Internet
+        </h1>
+
+        {/* Description */}
+        <p className="text-gray-600 mb-8">
+          Sepertinya Anda sedang offline. Periksa koneksi internet Anda dan coba lagi.
         </p>
-        <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">
-          Coba Lagi
-        </Button>
-      </div>
+
+        {/* Actions */}
+        <div className="space-y-3">
+          <Button
+            onClick={onRetry}
+            className="w-full bg-primary-600 hover:bg-primary-700"
+            size="lg"
+          >
+            <RefreshCw className="h-5 w-5 mr-2" />
+            Coba Lagi
+          </Button>
+
+          <Button
+            onClick={onHome}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
+            <Home className="h-5 w-5 mr-2" />
+            Kembali ke Beranda
+          </Button>
+        </div>
+
+        {/* Tips */}
+        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+          <p className="text-sm text-gray-700">
+            <strong>Tips:</strong> Pastikan WiFi atau data seluler Anda aktif
+          </p>
+        </div>
+      </Card>
     </div>
   );
-};
-
-export default OfflinePage;
+}

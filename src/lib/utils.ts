@@ -51,3 +51,38 @@ export function generateReceiptNumber(): string {
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
   return `ZKT${year}${month}${day}${random}`;
 }
+
+/**
+ * Copy text to clipboard with fallback for when Clipboard API is blocked
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    // Try modern Clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    
+    // Fallback method using textarea
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      textArea.remove();
+      return successful;
+    } catch (err) {
+      textArea.remove();
+      return false;
+    }
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+    return false;
+  }
+}

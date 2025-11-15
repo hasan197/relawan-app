@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { ArrowLeft, Search, Copy, Send, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, Copy, Plus, MessageSquare, DollarSign, Heart, Sparkles, Calendar, Loader2, Send } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Badge } from '../components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner@2.0.3';
 import { useTemplates } from '../hooks/useTemplates';
+import { copyToClipboard } from '../lib/utils';
 
 interface TemplatePesanPageProps {
   onBack?: () => void;
@@ -43,9 +45,13 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
     return matchesSearch && matchesCategory;
   });
 
-  const handleCopyTemplate = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success('Template berhasil disalin!');
+  const handleCopyTemplate = async (content: string) => {
+    const success = await copyToClipboard(content);
+    if (success) {
+      toast.success('Template berhasil disalin!');
+    } else {
+      toast.error('Gagal menyalin template');
+    }
   };
 
   const handleSendTemplate = (template: any) => {

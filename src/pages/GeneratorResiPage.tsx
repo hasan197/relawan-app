@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { ArrowLeft, Download, Share2, Copy, CheckCircle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, Download, Share2, Copy, CheckCircle, Printer, Receipt } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
-import { formatCurrency, generateReceiptNumber } from '../lib/utils';
+import { formatCurrency, generateReceiptNumber, copyToClipboard } from '../lib/utils';
 import { toast } from 'sonner@2.0.3';
 
 interface GeneratorResiPageProps {
@@ -77,7 +77,7 @@ ZISWAF Manager
 Platform Manajemen Relawan Zakat Digital
     `.trim();
 
-    navigator.clipboard.writeText(text);
+    copyToClipboard(text);
     toast.success('Resi berhasil disalin!');
   };
 
@@ -103,7 +103,7 @@ Semoga menjadi amal jariyah yang berkah ✨
         toast.success('Resi berhasil dibagikan!');
       });
     } else {
-      navigator.clipboard.writeText(text);
+      copyToClipboard(text);
       toast.success('Resi disalin ke clipboard!');
     }
   };

@@ -4,7 +4,8 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { formatCurrency } from '../lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { formatCurrency, copyToClipboard } from '../lib/utils';
 import { toast } from 'sonner@2.0.3';
 
 interface UcapanTerimaKasihPageProps {
@@ -47,7 +48,7 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
   const message = generateMessage();
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(message);
+    copyToClipboard(message);
     toast.success('Pesan berhasil disalin!');
   };
 
@@ -57,7 +58,7 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
         toast.success('Pesan berhasil dibagikan!');
       });
     } else {
-      navigator.clipboard.writeText(message);
+      copyToClipboard(message);
       toast.success('Pesan disalin ke clipboard!');
     }
   };
@@ -66,6 +67,19 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
     toast.success('Membuka WhatsApp...');
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([message], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ucapan_terima_kasih.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Pesan berhasil didownload!');
   };
 
   const templates = [
@@ -215,6 +229,14 @@ Wassalamualaikum warahmatullahi wabarakatuh 🤲
         >
           <MessageCircle className="h-4 w-4 mr-2" />
           Kirim via WhatsApp
+        </Button>
+
+        <Button
+          onClick={handleDownload}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download
         </Button>
 
         {/* Info Card */}

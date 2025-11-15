@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowLeft, Users, Plus, TrendingUp, Loader2, QrCode } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -6,7 +5,8 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { useAppContext } from '../contexts/AppContext';
 import { usePembimbingRegus } from '../hooks/useRegu';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, copyToClipboard } from '../lib/utils';
+import { toast } from 'sonner@2.0.3';
 
 interface MyRegusPageProps {
   onBack?: () => void;
@@ -170,11 +170,15 @@ export function MyRegusPage({ onBack, onNavigate }: MyRegusPageProps) {
                     <Button 
                       size="sm"
                       className="bg-primary-600 hover:bg-primary-700"
-                      onClick={() => {
+                      onClick={async () => {
                         // Copy join code
                         if (regu.join_code) {
-                          navigator.clipboard.writeText(regu.join_code);
-                          // Show toast
+                          const success = await copyToClipboard(regu.join_code);
+                          if (success) {
+                            toast.success('Kode regu berhasil disalin!');
+                          } else {
+                            toast.error('Gagal menyalin kode');
+                          }
                         }
                       }}
                     >

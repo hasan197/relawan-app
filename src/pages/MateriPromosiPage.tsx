@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Download, Share2, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { ArrowLeft, Download, Share2, Image as ImageIcon, Video, FileText, Copy } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
+import { copyToClipboard } from '../lib/utils';
 
 interface MateriPromosiPageProps {
   onBack?: () => void;
@@ -110,7 +111,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
   };
 
   const handleCopyCaption = (caption: string) => {
-    navigator.clipboard.writeText(caption);
+    copyToClipboard(caption);
     toast.success('Caption berhasil disalin!');
   };
 

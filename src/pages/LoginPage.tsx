@@ -62,7 +62,12 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
       // Handle specific error for unregistered phone
       if (error.message?.includes('belum terdaftar') || error.message?.includes('not found')) {
         toast.error('Nomor belum terdaftar', {
-          description: 'Silakan daftar terlebih dahulu atau gunakan nomor test: 081234567892'
+          description: 'Silakan daftar terlebih dahulu',
+          action: {
+            label: 'Daftar',
+            onClick: () => onRegister?.()
+          },
+          duration: 5000
         });
       } else {
         toast.error(error.message || 'Gagal mengirim OTP');

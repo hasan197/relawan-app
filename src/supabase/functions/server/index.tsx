@@ -85,11 +85,18 @@ const validateAccessToken = async (token: string) => {
 // Register new user (relawan)
 app.post('/make-server-f689ca3f/auth/register', async (c) => {
   try {
-    const { fullName, phone, city, reguId } = await c.req.json();
+    const { fullName, phone: rawPhone, city, reguId } = await c.req.json();
 
-    if (!fullName || !phone) {
+    if (!fullName || !rawPhone) {
       return c.json({ error: 'Nama dan nomor WhatsApp harus diisi' }, 400);
     }
+
+    // 🔧 NORMALIZE phone number
+    const phone = normalizePhone(rawPhone);
+
+    console.log('\n🔍 ===== DEBUG REGISTER =====');
+    console.log('📞 Phone input (raw):', rawPhone);
+    console.log('📞 Phone normalized:', phone);
 
     // Check if user already exists
     const existingUserData = await kv.get(`user:phone:${phone}`);
@@ -1694,6 +1701,360 @@ app.get('/make-server-f689ca3f/debug/user/:phone', async (c) => {
     return c.json({ 
       error: `Debug error: ${error.message}` 
     }, 500);
+  }
+});
+
+// ============================================
+// DATABASE RESET & SEED ENDPOINT
+// ============================================
+
+// DANGER: Reset entire database
+app.post('/make-server-f689ca3f/admin/reset-database', async (c) => {
+  try {
+    console.log('⚠️  DATABASE RESET REQUESTED!');
+    
+    // Get all keys
+    const allUsers = await kv.getByPrefix('user:');
+    const allRegus = await kv.getByPrefix('regu:');
+    const allDonations = await kv.getByPrefix('donation:');
+    const allProspects = await kv.getByPrefix('prospect:');
+    const allActivities = await kv.getByPrefix('activity:');
+    const allTemplates = await kv.getByPrefix('template:');
+    const allChats = await kv.getByPrefix('chat:');
+    
+    console.log('📊 Items to delete:');
+    console.log('  - Users:', allUsers.length);
+    console.log('  - Regus:', allRegus.length);
+    console.log('  - Donations:', allDonations.length);
+    console.log('  - Prospects:', allProspects.length);
+    console.log('  - Activities:', allActivities.length);
+    console.log('  - Templates:', allTemplates.length);
+    console.log('  - Chats:', allChats.length);
+    
+    // Delete all data
+    const keysToDelete = [
+      ...allUsers.map((u: any) => `user:${u.id}`),
+      ...allUsers.map((u: any) => `user:phone:${u.phone}`),
+      ...allRegus.map((r: any) => `regu:${r.id}`),
+      ...allRegus.map((r: any) => r.join_code ? `regu:code:${r.join_code}` : null).filter(Boolean),
+      ...allDonations.map((d: any) => `donation:${d.id}`),
+      ...allProspects.map((p: any) => `prospect:${p.id}`),
+      ...allActivities.map((a: any) => `activity:${a.id}`),
+      ...allTemplates.map((t: any) => `template:${t.id}`),
+      ...allChats.map((c: any) => `chat:${c.regu_id}:${c.id}`)
+    ];
+    
+    await kv.mdel(keysToDelete);
+    
+    console.log('✅ Database cleared!');
+    
+    return c.json({
+      success: true,
+      message: 'Database berhasil di-reset',
+      deleted: keysToDelete.length
+    });
+  } catch (error) {
+    console.error('❌ Reset database error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Seed initial data
+app.post('/make-server-f689ca3f/admin/seed-database', async (c) => {
+  try {
+    console.log('🌱 SEEDING DATABASE...');
+    
+    const generateJoinCode = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+    
+    // ============================================
+    // 1. CREATE ADMIN USER
+    // ============================================
+    const adminId = crypto.randomUUID();
+    const admin = {
+      id: adminId,
+      phone: '+6281234567890',
+      full_name: 'Admin ZISWAF',
+      email: 'admin@ziswaf.org',
+      city: 'Jakarta',
+      role: 'admin',
+      regu_id: null,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${adminId}`, admin);
+    await kv.set(`user:phone:${admin.phone}`, admin);
+    console.log('✅ Admin created:', admin.phone);
+    
+    // ============================================
+    // 2. CREATE PEMBIMBING USERS
+    // ============================================
+    const pembimbing1Id = crypto.randomUUID();
+    const pembimbing1 = {
+      id: pembimbing1Id,
+      phone: '+6281234567891',
+      full_name: 'Ustadz Ahmad',
+      email: 'ahmad@ziswaf.org',
+      city: 'Jakarta',
+      role: 'pembimbing',
+      regu_id: null, // Will be set after creating regu
+      created_at: new Date().toISOString()
+    };
+    
+    const pembimbing2Id = crypto.randomUUID();
+    const pembimbing2 = {
+      id: pembimbing2Id,
+      phone: '+6281234567892',
+      full_name: 'Ustadzah Fatimah',
+      email: 'fatimah@ziswaf.org',
+      city: 'Bandung',
+      role: 'pembimbing',
+      regu_id: null,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${pembimbing1Id}`, pembimbing1);
+    await kv.set(`user:phone:${pembimbing1.phone}`, pembimbing1);
+    await kv.set(`user:${pembimbing2Id}`, pembimbing2);
+    await kv.set(`user:phone:${pembimbing2.phone}`, pembimbing2);
+    console.log('✅ Pembimbing 1 created:', pembimbing1.phone);
+    console.log('✅ Pembimbing 2 created:', pembimbing2.phone);
+    
+    // ============================================
+    // 3. CREATE REGUS
+    // ============================================
+    const regu1Id = crypto.randomUUID();
+    const regu1JoinCode = generateJoinCode();
+    const regu1 = {
+      id: regu1Id,
+      name: 'Regu Barokah',
+      pembimbing_id: pembimbing1Id,
+      pembimbing_name: pembimbing1.full_name,
+      member_count: 0,
+      total_donations: 0,
+      target_amount: 60000000,
+      join_code: regu1JoinCode,
+      created_at: new Date().toISOString()
+    };
+    
+    const regu2Id = crypto.randomUUID();
+    const regu2JoinCode = generateJoinCode();
+    const regu2 = {
+      id: regu2Id,
+      name: 'Regu Sakinah',
+      pembimbing_id: pembimbing2Id,
+      pembimbing_name: pembimbing2.full_name,
+      member_count: 0,
+      total_donations: 0,
+      target_amount: 50000000,
+      join_code: regu2JoinCode,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`regu:${regu1Id}`, regu1);
+    await kv.set(`regu:code:${regu1JoinCode}`, regu1Id);
+    await kv.set(`regu:${regu2Id}`, regu2);
+    await kv.set(`regu:code:${regu2JoinCode}`, regu2Id);
+    console.log('✅ Regu 1 created:', regu1.name, 'Code:', regu1JoinCode);
+    console.log('✅ Regu 2 created:', regu2.name, 'Code:', regu2JoinCode);
+    
+    // Update pembimbing with regu_id
+    pembimbing1.regu_id = regu1Id;
+    pembimbing2.regu_id = regu2Id;
+    await kv.set(`user:${pembimbing1Id}`, pembimbing1);
+    await kv.set(`user:phone:${pembimbing1.phone}`, pembimbing1);
+    await kv.set(`user:${pembimbing2Id}`, pembimbing2);
+    await kv.set(`user:phone:${pembimbing2.phone}`, pembimbing2);
+    
+    // ============================================
+    // 4. CREATE RELAWAN USERS
+    // ============================================
+    const relawan1Id = crypto.randomUUID();
+    const relawan1 = {
+      id: relawan1Id,
+      phone: '+6281234567893',
+      full_name: 'Budi Santoso',
+      email: 'budi@example.com',
+      city: 'Jakarta',
+      role: 'relawan',
+      regu_id: regu1Id,
+      created_at: new Date().toISOString()
+    };
+    
+    const relawan2Id = crypto.randomUUID();
+    const relawan2 = {
+      id: relawan2Id,
+      phone: '+6281234567894',
+      full_name: 'Siti Nurhaliza',
+      email: 'siti@example.com',
+      city: 'Jakarta',
+      role: 'relawan',
+      regu_id: regu1Id,
+      created_at: new Date().toISOString()
+    };
+    
+    const relawan3Id = crypto.randomUUID();
+    const relawan3 = {
+      id: relawan3Id,
+      phone: '+6281234567895',
+      full_name: 'Andi Wijaya',
+      email: 'andi@example.com',
+      city: 'Bandung',
+      role: 'relawan',
+      regu_id: regu2Id,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${relawan1Id}`, relawan1);
+    await kv.set(`user:phone:${relawan1.phone}`, relawan1);
+    await kv.set(`user:${relawan2Id}`, relawan2);
+    await kv.set(`user:phone:${relawan2.phone}`, relawan2);
+    await kv.set(`user:${relawan3Id}`, relawan3);
+    await kv.set(`user:phone:${relawan3.phone}`, relawan3);
+    console.log('✅ Relawan 1 created:', relawan1.phone);
+    console.log('✅ Relawan 2 created:', relawan2.phone);
+    console.log('✅ Relawan 3 created:', relawan3.phone);
+    
+    // Update regu member counts
+    regu1.member_count = 3; // pembimbing + 2 relawan
+    regu2.member_count = 2; // pembimbing + 1 relawan
+    await kv.set(`regu:${regu1Id}`, regu1);
+    await kv.set(`regu:${regu2Id}`, regu2);
+    
+    // ============================================
+    // 5. CREATE SAMPLE DONATIONS
+    // ============================================
+    const donation1Id = crypto.randomUUID();
+    const donation1 = {
+      id: donation1Id,
+      user_id: relawan1Id,
+      user_name: relawan1.full_name,
+      regu_id: regu1Id,
+      muzakki_name: 'Pak Hasan',
+      amount: 5000000,
+      category: 'zakat',
+      payment_method: 'transfer',
+      notes: 'Zakat Maal',
+      created_at: new Date().toISOString()
+    };
+    
+    const donation2Id = crypto.randomUUID();
+    const donation2 = {
+      id: donation2Id,
+      user_id: relawan2Id,
+      user_name: relawan2.full_name,
+      regu_id: regu1Id,
+      muzakki_name: 'Bu Ani',
+      amount: 2000000,
+      category: 'infaq',
+      payment_method: 'cash',
+      notes: 'Infaq Jumat',
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`donation:${donation1Id}`, donation1);
+    await kv.set(`donation:${donation2Id}`, donation2);
+    console.log('✅ Sample donations created');
+    
+    // Update regu total donations
+    regu1.total_donations = 7000000;
+    await kv.set(`regu:${regu1Id}`, regu1);
+    
+    // ============================================
+    // 6. CREATE SAMPLE PROSPECTS
+    // ============================================
+    const prospect1Id = crypto.randomUUID();
+    const prospect1 = {
+      id: prospect1Id,
+      user_id: relawan1Id,
+      user_name: relawan1.full_name,
+      muzakki_name: 'Pak Bambang',
+      phone: '+628123456789',
+      address: 'Jl. Sudirman No. 123, Jakarta',
+      status: 'contacted',
+      potential_amount: 10000000,
+      notes: 'Tertarik untuk zakat profesi',
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`prospect:${prospect1Id}`, prospect1);
+    console.log('✅ Sample prospects created');
+    
+    // ============================================
+    // 7. CREATE SAMPLE TEMPLATES
+    // ============================================
+    const template1Id = crypto.randomUUID();
+    const template1 = {
+      id: template1Id,
+      title: 'Ucapan Terima Kasih',
+      category: 'follow_up',
+      content: 'Assalamu\'alaikum {{nama}}, jazakallahu khairan atas donasi {{kategori}} sebesar {{jumlah}}. Semoga menjadi amal jariyah.',
+      message: 'Assalamu\'alaikum {{nama}}, jazakallahu khairan atas donasi {{kategori}} sebesar {{jumlah}}. Semoga menjadi amal jariyah.',
+      variables: ['nama', 'kategori', 'jumlah'],
+      created_at: new Date().toISOString()
+    };
+    
+    const template2Id = crypto.randomUUID();
+    const template2 = {
+      id: template2Id,
+      title: 'Undangan Program',
+      category: 'invitation',
+      content: 'Assalamu\'alaikum {{nama}}, kami mengundang Bapak/Ibu untuk menghadiri {{acara}} pada {{tanggal}}. Jazakallahu khairan.',
+      message: 'Assalamu\'alaikum {{nama}}, kami mengundang Bapak/Ibu untuk menghadiri {{acara}} pada {{tanggal}}. Jazakallahu khairan.',
+      variables: ['nama', 'acara', 'tanggal'],
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`template:${template1Id}`, template1);
+    await kv.set(`template:${template2Id}`, template2);
+    console.log('✅ Sample templates created');
+    
+    // ============================================
+    // SUMMARY
+    // ============================================
+    const summary = {
+      users: {
+        admin: { phone: admin.phone, password: 'admin123' },
+        pembimbing: [
+          { phone: pembimbing1.phone, password: 'pembimbing123', regu: regu1.name, code: regu1JoinCode },
+          { phone: pembimbing2.phone, password: 'pembimbing123', regu: regu2.name, code: regu2JoinCode }
+        ],
+        relawan: [
+          { phone: relawan1.phone, password: 'relawan123', regu: regu1.name },
+          { phone: relawan2.phone, password: 'relawan123', regu: regu1.name },
+          { phone: relawan3.phone, password: 'relawan123', regu: regu2.name }
+        ]
+      },
+      regus: [
+        { name: regu1.name, code: regu1JoinCode, pembimbing: pembimbing1.full_name },
+        { name: regu2.name, code: regu2JoinCode, pembimbing: pembimbing2.full_name }
+      ],
+      stats: {
+        total_users: 6,
+        total_regus: 2,
+        total_donations: 2,
+        total_prospects: 1,
+        total_templates: 2
+      }
+    };
+    
+    console.log('🎉 DATABASE SEEDED SUCCESSFULLY!');
+    console.log('📊 Summary:', JSON.stringify(summary, null, 2));
+    
+    return c.json({
+      success: true,
+      message: 'Database berhasil di-seed!',
+      data: summary
+    });
+  } catch (error) {
+    console.error('❌ Seed database error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
 

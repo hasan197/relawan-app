@@ -1,12 +1,6 @@
-import { useState } from 'react';
-import { ArrowLeft, Users, QrCode, Check, Loader2 } from 'lucide-react';
-import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { useAppContext } from '../contexts/AppContext';
 import { useCreateRegu } from '../hooks/useRegu';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, copyToClipboard } from '../lib/utils';
 import { toast } from 'sonner@2.0.3';
 
 interface CreateReguPageProps {
@@ -71,10 +65,14 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
     }
   };
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
     if (createdRegu?.join_code) {
-      navigator.clipboard.writeText(createdRegu.join_code);
-      toast.success('Kode regu berhasil disalin!');
+      const success = await copyToClipboard(createdRegu.join_code);
+      if (success) {
+        toast.success('Kode regu berhasil disalin!');
+      } else {
+        toast.error('Gagal menyalin kode');
+      }
     }
   };
 

@@ -3,7 +3,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, copyToClipboard } from '../lib/utils';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
 import { useSingleProgram } from '../hooks/usePrograms.tsx';
@@ -19,7 +19,7 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
   const progress = program ? (program.collected / program.target) * 100 : 0;
   const daysLeft = program ? Math.ceil((new Date(program.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!program) return;
 
     const shareText = `${program.title}\n\n${program.description}\n\nTarget: ${formatCurrency(program.target)}\nTerkumpul: ${formatCurrency(program.collected)}\n\nLihat detail program ini di aplikasi ZISWAF Manager`;
@@ -30,14 +30,14 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
         text: shareText
       }).then(() => {
         toast.success('Berhasil membagikan program!');
-      }).catch(() => {
+      }).catch(async () => {
         // User cancelled share or error occurred
-        navigator.clipboard.writeText(shareText);
-        toast.success('Link berhasil disalin!');
+        const success = await copyToClipboard(shareText);
+        if (success) toast.success('Link berhasil disalin!');
       });
     } else {
-      navigator.clipboard.writeText(shareText);
-      toast.success('Teks program berhasil disalin!');
+      const success = await copyToClipboard(shareText);
+      if (success) toast.success('Teks program berhasil disalin!');
     }
   };
 

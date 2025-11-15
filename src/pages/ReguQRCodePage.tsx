@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Download, Share2, Copy, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Share2, Copy, CheckCircle2, Loader2, AlertCircle, Users } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner@2.0.3';
 import { useAppContext } from '../contexts/AppContext';
 import { useRegu } from '../hooks/useRegu';
+import { copyToClipboard } from '../lib/utils';
 import QRCode from 'qrcode';
 
 interface ReguQRCodePageProps {
@@ -20,12 +21,31 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Helper function to get the join code (backward compatibility)
+  const getJoinCode = () => {
+    return regu?.join_code || regu?.qr_code || null;
+  };
+
   // Generate QR Code
   useEffect(() => {
-    if (regu?.join_code) {
-      generateQRCode(regu.join_code);
+    console.log('🔍 QR Code useEffect triggered');
+    console.log('📊 Regu data:', regu);
+    console.log('📊 Join code:', regu?.join_code);
+    console.log('📊 QR code (legacy):', regu?.qr_code);
+    console.log('📊 Loading:', loading);
+    
+    const code = getJoinCode();
+    
+    if (code) {
+      console.log('✅ Code exists, generating QR for:', code);
+      generateQRCode(code);
+    } else if (regu && !code) {
+      console.warn('⚠️ Regu loaded but NO join_code or qr_code!');
+      setQrError(true);
+    } else {
+      console.log('⏳ Waiting for regu data...');
     }
-  }, [regu]);
+  }, [regu, loading]);
 
   const generateQRCode = async (code: string) => {
     try {
@@ -56,12 +76,17 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
   };
 
   // Copy code to clipboard
-  const handleCopyCode = () => {
-    if (regu?.join_code) {
-      navigator.clipboard.writeText(regu.join_code);
-      setCopied(true);
-      toast.success('Kode berhasil disalin!');
-      setTimeout(() => setCopied(false), 2000);
+  const handleCopyCode = async () => {
+    const code = getJoinCode();
+    if (code) {
+      const success = await copyToClipboard(code);
+      if (success) {
+        setCopied(true);
+        toast.success('Kode berhasil disalin!');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        toast.error('Gagal menyalin kode');
+      }
     }
   };
 
@@ -70,6 +95,8 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
     if (!qrCodeUrl) return;
 
     try {
+      const code = getJoinCode();
+      
       // Create a canvas with branding
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -116,7 +143,7 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
       // Code text
       ctx.fillStyle = '#374151';
       ctx.font = 'bold 28px monospace';
-      ctx.fillText(regu?.join_code || '', canvas.width / 2, qrY + qrSize + 70);
+      ctx.fillText(code || '', canvas.width / 2, qrY + qrSize + 70);
 
       // Instructions
       ctx.fillStyle = '#6b7280';
@@ -129,7 +156,7 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `qr-regu-${regu?.join_code}.png`;
+        a.download = `qr-regu-${code}.png`;
         a.click();
         URL.revokeObjectURL(url);
         toast.success('QR Code berhasil diunduh!');
@@ -144,7 +171,8 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
   const handleShareWhatsApp = () => {
     if (!regu) return;
 
-    const message = `🕌 *Gabung ${regu.name}!*\n\nAyo bergabung dengan regu kami!\n\n📱 Cara Join:\n1. Buka aplikasi ZISWAF Manager\n2. Pilih "Gabung Regu"\n3. Masukkan kode: *${regu.join_code}*\n\nAtau scan QR code yang terlampir.\n\n👥 Pembimbing: ${regu.pembimbing_name}\n✅ Member: ${members.length} relawan`;
+    const code = getJoinCode();
+    const message = `🕌 *Gabung ${regu.name}!*\\n\\nAyo bergabung dengan regu kami!\\n\\n📱 Cara Join:\\n1. Buka aplikasi ZISWAF Manager\\n2. Pilih \"Gabung Regu\"\\n3. Masukkan kode: *${code}*\\n\\nAtau scan QR code yang terlampir.\\n\\n👥 Pembimbing: ${regu.pembimbing_name}\\n✅ Member: ${members.length} relawan`;
     
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -154,9 +182,10 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
   const handleNativeShare = async () => {
     if (!regu) return;
 
+    const code = getJoinCode();
     const shareData = {
       title: `Gabung ${regu.name}`,
-      text: `Kode regu: ${regu.join_code}\n\nAyo bergabung dengan ${regu.name}!\nPembimbing: ${regu.pembimbing_name}`,
+      text: `Kode regu: ${code}\\n\\nAyo bergabung dengan ${regu.name}!\\nPembimbing: ${regu.pembimbing_name}`,
     };
 
     try {
@@ -287,6 +316,26 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
             {/* QR Code Card */}
             <Card className="p-8 mb-4">
               <div className="text-center">
+                {/* Debug Info (for troubleshooting) */}
+                {!getJoinCode() && !loading && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                    <p className="text-red-700 font-semibold mb-1">
+                      ⚠️ Join Code Tidak Ditemukan
+                    </p>
+                    <p className="text-red-600 text-sm mb-2">
+                      Regu ini belum memiliki kode join. Silakan hubungi admin.
+                    </p>
+                    <div className="text-xs text-left bg-red-100 p-2 rounded mt-2 font-mono">
+                      <p>Debug Info:</p>
+                      <p>Regu ID: {regu?.id || 'N/A'}</p>
+                      <p>Regu Name: {regu?.name || 'N/A'}</p>
+                      <p>Join Code: {regu?.join_code || 'MISSING'}</p>
+                      <p>QR Code (legacy): {regu?.qr_code || 'MISSING'}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* QR Code */}
                 {qrCodeUrl ? (
                   <div className="mb-6">
@@ -298,67 +347,86 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
                       />
                     </div>
                   </div>
-                ) : (
-                  <div className="w-64 h-64 mx-auto mb-6 flex items-center justify-center bg-gray-100 rounded-2xl">
+                ) : qrError ? (
+                  <div className="w-64 h-64 mx-auto mb-6 flex flex-col items-center justify-center bg-red-50 rounded-2xl border-2 border-red-200">
+                    <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
+                    <p className="text-red-600 text-sm">Gagal membuat QR Code</p>
+                  </div>
+                ) : getJoinCode() ? (
+                  <div className="w-64 h-64 mx-auto mb-6 flex flex-col items-center justify-center bg-gray-100 rounded-2xl">
                     <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
+                    <p className="text-gray-500 text-sm mt-2">Membuat QR Code...</p>
+                  </div>
+                ) : null}
+
+                {/* Code Display */}
+                {getJoinCode() && (
+                  <div className="mb-6">
+                    <p className="text-gray-600 text-sm mb-2">Atau masukkan kode:</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="px-6 py-3 bg-gray-100 rounded-lg">
+                        <span className="text-3xl font-mono font-bold text-primary-600 tracking-widest">
+                          {getJoinCode()}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={handleCopyCode}
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 h-auto"
+                      >
+                        {copied ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <span className="text-xs">Tersalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4" />
+                            <span className="text-xs">Salin</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                {/* Code Display */}
-                <div className="mb-6">
-                  <p className="text-gray-600 text-sm mb-2">Atau masukkan kode:</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="px-6 py-3 bg-gray-100 rounded-lg">
-                      <span className="text-3xl font-mono font-bold text-primary-600 tracking-widest">
-                        {regu?.join_code}
-                      </span>
+                {/* Action Buttons - Only show if join_code exists */}
+                {getJoinCode() && (
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleShareWhatsApp}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      size="lg"
+                      disabled={!qrCodeUrl}
+                    >
+                      <Share2 className="h-5 w-5 mr-2" />
+                      Share via WhatsApp
+                    </Button>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        onClick={handleDownloadQR}
+                        variant="outline"
+                        className="w-full"
+                        disabled={!qrCodeUrl}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+
+                      <Button
+                        onClick={handleNativeShare}
+                        variant="outline"
+                        className="w-full"
+                        disabled={!qrCodeUrl}
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
                     </div>
-                    <Button
-                      onClick={handleCopyCode}
-                      size="sm"
-                      variant="outline"
-                      className="p-2"
-                    >
-                      {copied ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <Copy className="h-5 w-5" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <Button
-                    onClick={handleShareWhatsApp}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    <Share2 className="h-5 w-5 mr-2" />
-                    Share via WhatsApp
-                  </Button>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      onClick={handleDownloadQR}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-
-                    <Button
-                      onClick={handleNativeShare}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  </div>
-                </div>
+                )}
               </div>
             </Card>
 

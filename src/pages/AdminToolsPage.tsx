@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Shield, UserCog, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Shield, UserCog, CheckCircle2, Database } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -11,9 +11,10 @@ import { useAuth } from '../hooks/useAuth';
 
 interface AdminToolsPageProps {
   onBack?: () => void;
+  onNavigate?: (page: string) => void;
 }
 
-export function AdminToolsPage({ onBack }: AdminToolsPageProps) {
+export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
   const [phone, setPhone] = useState('');
   const [selectedRole, setSelectedRole] = useState<'relawan' | 'pembimbing' | 'admin'>('pembimbing');
   const [isLoading, setIsLoading] = useState(false);
@@ -223,6 +224,31 @@ export function AdminToolsPage({ onBack }: AdminToolsPageProps) {
               Set 081316056909 → Pembimbing
             </Button>
           </div>
+        </Card>
+
+        {/* Database Management */}
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-red-100 rounded-xl">
+              <Database className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-gray-900">Database Management</h3>
+              <p className="text-gray-600 text-sm">⚠️ Danger Zone - Admin Only</p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => onNavigate?.('database-reset')}
+            variant="outline"
+            className="w-full border-red-300 text-red-700 hover:bg-red-50"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            Reset & Seed Database
+          </Button>
+          <p className="text-xs text-gray-500 mt-2">
+            Menghapus semua data dan mengisi dengan data sample
+          </p>
         </Card>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, DollarSign, Users, TrendingUp, Award, RefreshCcw, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, DollarSign, Users, TrendingUp, Award, RefreshCcw, Download, Loader2, Settings } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -12,9 +12,10 @@ import { StatsCardSkeleton, LeaderboardSkeleton } from '../components/LoadingSta
 
 interface AdminDashboardPageProps {
   onBack?: () => void;
+  onNavigate?: (page: string) => void;
 }
 
-export function AdminDashboardPage({ onBack }: AdminDashboardPageProps) {
+export function AdminDashboardPage({ onBack, onNavigate }: AdminDashboardPageProps) {
   const { globalStats, reguStats, loading, error, refetch } = useAdminStats();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -227,14 +228,25 @@ export function AdminDashboardPage({ onBack }: AdminDashboardPageProps) {
               </TabsContent>
             </Tabs>
 
-            {/* Export Button */}
-            <Button
-              onClick={handleExport}
-              className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Ekspor Laporan Lengkap
-            </Button>
+            {/* Admin Tools & Export Buttons */}
+            <div className="space-y-3 mt-4">
+              <Button
+                onClick={() => onNavigate?.('admin-tools')}
+                variant="outline"
+                className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Admin Tools
+              </Button>
+
+              <Button
+                onClick={handleExport}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Ekspor Laporan Lengkap
+              </Button>
+            </div>
           </>
         )}
       </div>

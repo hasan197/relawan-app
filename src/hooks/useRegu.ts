@@ -18,7 +18,8 @@ export interface Regu {
   member_count: number;
   total_donations: number;
   target_amount?: number;
-  join_code?: string;
+  join_code?: string; // New field
+  qr_code?: string; // Legacy field - for backward compatibility
   created_at: string;
 }
 
