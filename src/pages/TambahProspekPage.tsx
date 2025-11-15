@@ -6,6 +6,8 @@ import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner@2.0.3';
+import { useAppContext } from '../contexts/AppContext';
+import { useAddMuzakki } from '../hooks/useMuzakki';
 
 interface TambahProspekPageProps {
   onBack?: () => void;
@@ -13,6 +15,9 @@ interface TambahProspekPageProps {
 }
 
 export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
+  const { user } = useAppContext();
+  const { addMuzakki, adding } = useAddMuzakki();
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -21,9 +26,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
     status: 'baru' as const
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.phone) {
@@ -31,14 +34,18 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
       return;
     }
 
-    setIsLoading(true);
+    if (!user?.id) {
+      toast.error('User tidak ditemukan. Silakan login kembali.');
+      return;
+    }
 
-    // Simulate save
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await addMuzakki(user.id, formData);
       toast.success('Prospek berhasil ditambahkan!');
       onSave?.();
-    }, 1000);
+    } catch (error: any) {
+      toast.error(`Gagal menambahkan prospek: ${error.message}`);
+    }
   };
 
   return (
@@ -68,7 +75,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                 placeholder="Masukkan nama lengkap"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                disabled={isLoading}
+                disabled={adding}
               />
             </div>
 
@@ -81,7 +88,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                 placeholder="08123456789"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                disabled={isLoading}
+                disabled={adding}
               />
               <p className="text-gray-500 mt-1">
                 Format: 08xxxxxxxxxx atau +62xxxxxxxxxx
@@ -97,7 +104,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                 placeholder="Contoh: Jakarta Selatan"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                disabled={isLoading}
+                disabled={adding}
               />
             </div>
 
@@ -115,7 +122,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                    disabled={isLoading}
+                    disabled={adding}
                   >
                     {status === 'baru' ? 'Baru' : status === 'follow-up' ? 'Follow Up' : 'Donasi'}
                   </button>
@@ -132,7 +139,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={4}
-                disabled={isLoading}
+                disabled={adding}
               />
               <p className="text-gray-500 mt-1">
                 Contoh: Bertemu di acara X, tertarik untuk zakat profesi, dll
@@ -146,17 +153,17 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
                 variant="outline"
                 className="flex-1"
                 onClick={onBack}
-                disabled={isLoading}
+                disabled={adding}
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 className="flex-1 bg-primary-600 hover:bg-primary-700"
-                disabled={isLoading}
+                disabled={adding}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isLoading ? 'Menyimpan...' : 'Simpan'}
+                {adding ? 'Menyimpan...' : 'Simpan'}
               </Button>
             </div>
           </form>

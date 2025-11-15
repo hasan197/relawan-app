@@ -87,7 +87,7 @@ type Page =
   | 'offline';
 
 function AppContent() {
-  const { isAuthenticated, loading, user, logout } = useAppContext();
+  const { isAuthenticated, loading, user, logout, refetchAll } = useAppContext();
   const { isDesktop } = useResponsive();
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     // Check if there's a ?test query param
@@ -101,6 +101,7 @@ function AppContent() {
   const [errorType, setErrorType] = useState<'error' | 'no-user-id' | 'offline' | '404'>('error');
   const [navigationHistory, setNavigationHistory] = useState<Page[]>([]);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const [selectedMuzakkiId, setSelectedMuzakkiId] = useState<string | null>(null);
 
   // Track navigation history when page changes (excluding back navigation)
   useEffect(() => {
@@ -234,7 +235,10 @@ function AppContent() {
         return <DashboardPage onNavigate={handleNavigation} />;
       
       case 'donatur':
-        return <DonaturPage onNavigate={handleNavigation} />;
+        return <DonaturPage onNavigate={handleNavigation} onSelectMuzakki={(id) => {
+          setSelectedMuzakkiId(id);
+          handleNavigation('detail-prospek');
+        }} />;
       
       case 'laporan':
         return <LaporanPage onNavigate={handleNavigation} />;
@@ -255,13 +259,16 @@ function AppContent() {
         return <DetailProgramPage onBack={() => setCurrentPage('program')} />;
       
       case 'detail-prospek':
-        return <DetailProspekPage onBack={() => setCurrentPage('donatur')} />;
+        return <DetailProspekPage muzakkiId={selectedMuzakkiId || undefined} onBack={() => setCurrentPage('donatur')} />;
       
       case 'tambah-prospek':
         return (
           <TambahProspekPage
             onBack={() => setCurrentPage('donatur')}
-            onSave={() => setCurrentPage('donatur')}
+            onSave={async () => {
+              await refetchAll();
+              setCurrentPage('donatur');
+            }}
           />
         );
       
@@ -393,7 +400,10 @@ function AppContent() {
               return <DesktopDashboardPage onNavigate={handleNavigation} />;
             
             case 'donatur':
-              return <DesktopDonaturPage onNavigate={handleNavigation} />;
+              return <DesktopDonaturPage onNavigate={handleNavigation} onSelectMuzakki={(id) => {
+                setSelectedMuzakkiId(id);
+                handleNavigation('detail-prospek');
+              }} />;
             
             case 'laporan':
               return <DesktopLaporanPage onNavigate={handleNavigation} />;
@@ -428,10 +438,11 @@ function AppContent() {
     <>
       {isDesktop ? renderDesktopPage() : renderMobilePage()}
       <Toaster 
-        position="top-center" 
+        position="bottom-center" 
         closeButton
         richColors
         expand={false}
+        offset="80px"
         toastOptions={{
           duration: 4000,
           className: 'toast-custom',

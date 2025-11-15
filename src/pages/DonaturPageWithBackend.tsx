@@ -9,12 +9,14 @@ import { Badge } from '../components/ui/badge';
 import { getInitials, formatRelativeTime } from '../lib/utils';
 import { useAppContext } from '../contexts/AppContext';
 import { toast } from 'sonner@2.0.3';
+import { MuzakkiListSkeleton } from '../components/LoadingState';
 
 interface DonaturPageWithBackendProps {
   onNavigate?: (page: string) => void;
+  onSelectMuzakki?: (id: string) => void;
 }
 
-export function DonaturPageWithBackend({ onNavigate }: DonaturPageWithBackendProps) {
+export function DonaturPageWithBackend({ onNavigate, onSelectMuzakki }: DonaturPageWithBackendProps) {
   const { muzakkiList, loading } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'baru' | 'follow-up' | 'donasi'>('all');
@@ -125,10 +127,7 @@ export function DonaturPageWithBackend({ onNavigate }: DonaturPageWithBackendPro
 
           {/* Loading State */}
           {loading && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="text-gray-500 mt-2">Memuat data...</p>
-            </div>
+            <MuzakkiListSkeleton />
           )}
 
           {/* Empty State */}
@@ -149,7 +148,7 @@ export function DonaturPageWithBackend({ onNavigate }: DonaturPageWithBackendPro
               <Card 
                 key={muzakki.id} 
                 className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => onNavigate?.('detail-prospek')}
+                onClick={() => onSelectMuzakki?.(muzakki.id)}
               >
                 <div className="flex items-start gap-3">
                   <Avatar className="h-12 w-12">

@@ -69,7 +69,7 @@ export function ChatReguPageWithBackend({ onBack }: ChatReguPageWithBackendProps
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 shadow-lg">
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 shadow-lg">
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
@@ -155,7 +155,7 @@ export function ChatReguPageWithBackend({ onBack }: ChatReguPageWithBackendProps
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="sticky bottom-0 z-30 bg-white border-t border-gray-200 p-4">
         {!user?.regu_id ? (
           <div className="text-center py-4">
             <p className="text-gray-500">Anda belum tergabung dalam regu</p>

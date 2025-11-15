@@ -142,3 +142,251 @@ export function useMuzakki(relawanId: string | null) {
     refetch: fetchMuzakki
   };
 }
+
+// Hook for single muzakki detail
+export function useSingleMuzakki(muzakkiId: string | null) {
+  const [muzakki, setMuzakki] = useState<Muzakki | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMuzakki = async () => {
+    if (!muzakkiId) {
+      console.log('⏭️ Skipping fetchMuzakki: No muzakki ID');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log('🔄 Fetching single muzakki:', muzakkiId);
+      setLoading(true);
+      const response = await apiCall(`/muzakki/${muzakkiId}`);
+      console.log('✅ Muzakki fetched:', response.data);
+      setMuzakki(response.data);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.message || 'Gagal memuat data muzakki';
+      setError(errorMessage);
+      console.error('❌ Error fetching muzakki:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMuzakki();
+  }, [muzakkiId]);
+
+  return {
+    muzakki,
+    loading,
+    error,
+    refetch: fetchMuzakki
+  };
+}
+
+// Hook for muzakki communications
+interface Communication {
+  id: string;
+  muzakki_id: string;
+  relawan_id: string;
+  type: 'call' | 'whatsapp' | 'meeting' | 'other';
+  notes: string;
+  created_at: string;
+}
+
+export function useCommunications(muzakkiId: string | null) {
+  const [communications, setCommunications] = useState<Communication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCommunications = async () => {
+    if (!muzakkiId) {
+      console.log('⏭️ Skipping fetchCommunications: No muzakki ID');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log('🔄 Fetching communications for muzakki:', muzakkiId);
+      setLoading(true);
+      const response = await apiCall(`/communications/${muzakkiId}`);
+      console.log('✅ Communications fetched:', response.data?.length || 0, 'items');
+      setCommunications(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.message || 'Gagal memuat riwayat komunikasi';
+      setError(errorMessage);
+      console.error('❌ Error fetching communications:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommunications();
+  }, [muzakkiId]);
+
+  const addCommunication = async (
+    data: {
+      type: 'call' | 'whatsapp' | 'meeting' | 'other';
+      notes: string;
+    },
+    relawanId: string
+  ) => {
+    if (!muzakkiId) throw new Error('Muzakki ID tidak ditemukan');
+    if (!relawanId) throw new Error('Relawan ID tidak ditemukan');
+
+    try {
+      const response = await apiCall('/communications', {
+        method: 'POST',
+        body: JSON.stringify({
+          relawan_id: relawanId,
+          muzakki_id: muzakkiId,
+          ...data
+        })
+      });
+
+      await fetchCommunications();
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return {
+    communications,
+    loading,
+    error,
+    addCommunication,
+    refetch: fetchCommunications
+  };
+}
+
+// Hook for updating muzakki
+export function useUpdateMuzakki() {
+  const [updating, setUpdating] = useState(false);
+
+  const updateMuzakki = async (muzakkiId: string, updates: Partial<Muzakki>) => {
+    setUpdating(true);
+    try {
+      const response = await apiCall(`/muzakki/${muzakkiId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return {
+    updateMuzakki,
+    updating
+  };
+}
+
+// Hook for adding communication
+export function useAddCommunication() {
+  const [adding, setAdding] = useState(false);
+
+  const addCommunication = async (
+    muzakkiId: string,
+    relawanId: string,
+    data: {
+      type: 'call' | 'whatsapp' | 'meeting' | 'other';
+      notes: string;
+    }
+  ) => {
+    setAdding(true);
+    try {
+      if (!relawanId) {
+        throw new Error('Relawan ID tidak ditemukan');
+      }
+      
+      const response = await apiCall('/communications', {
+        method: 'POST',
+        body: JSON.stringify({
+          relawan_id: relawanId,
+          muzakki_id: muzakkiId,
+          ...data
+        })
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return {
+    addCommunication,
+    adding
+  };
+}
+
+// Hook for deleting muzakki
+export function useDeleteMuzakki() {
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteMuzakki = async (muzakkiId: string) => {
+    setDeleting(true);
+    try {
+      await apiCall(`/muzakki/${muzakkiId}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      throw error;
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return {
+    deleteMuzakki,
+    deleting
+  };
+}
+
+// Hook for adding muzakki
+export function useAddMuzakki() {
+  const [adding, setAdding] = useState(false);
+
+  const addMuzakki = async (
+    relawanId: string,
+    data: {
+      name: string;
+      phone: string;
+      city?: string;
+      notes?: string;
+      status?: 'baru' | 'follow-up' | 'donasi';
+    }
+  ) => {
+    setAdding(true);
+    try {
+      if (!relawanId) {
+        throw new Error('Relawan ID tidak ditemukan');
+      }
+      
+      const response = await apiCall('/muzakki', {
+        method: 'POST',
+        body: JSON.stringify({
+          relawan_id: relawanId,
+          ...data
+        })
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return {
+    addMuzakki,
+    adding
+  };
+}

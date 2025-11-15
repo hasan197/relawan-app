@@ -3,6 +3,7 @@ import { cors } from 'npm:hono/cors';
 import { logger } from 'npm:hono/logger';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import * as kv from './kv_store.tsx';
+import { runSeeder } from './seed.tsx';
 
 const app = new Hono();
 
@@ -19,6 +20,31 @@ const supabase = createClient(
 // ============================================
 // AUTHENTICATION HELPER
 // ============================================
+
+// Normalize phone number format (ensure it starts with +)
+const normalizePhone = (phone: string): string => {
+  if (!phone) return phone;
+  
+  // Remove all spaces, dashes, and parentheses
+  let normalized = phone.replace(/[\s\-\(\)]/g, '');
+  
+  // If starts with 0, replace with +62
+  if (normalized.startsWith('0')) {
+    normalized = '+62' + normalized.substring(1);
+  }
+  
+  // If starts with 62 but no +, add +
+  if (normalized.startsWith('62') && !normalized.startsWith('+')) {
+    normalized = '+' + normalized;
+  }
+  
+  // If doesn't start with +, assume it needs +
+  if (!normalized.startsWith('+')) {
+    normalized = '+' + normalized;
+  }
+  
+  return normalized;
+};
 
 // Validate access token (simple custom token format)
 const validateAccessToken = async (token: string) => {
@@ -126,11 +152,58 @@ app.post('/make-server-f689ca3f/auth/register', async (c) => {
 // Send OTP
 app.post('/make-server-f689ca3f/auth/send-otp', async (c) => {
   try {
-    const { phone } = await c.req.json();
+    const { phone: rawPhone } = await c.req.json();
 
-    if (!phone) {
-      return c.json({ error: 'Nomor WhatsApp harus diisi' }, 400);
+    if (!rawPhone) {
+      return c.json({ error: 'Nomor WhatsApp harus diisi' }, 400)
     }
+
+    // 🔧 NORMALIZE phone number
+    const phone = normalizePhone(rawPhone);
+
+    console.log('\n🔍 ===== DEBUG SEND OTP =====');
+    console.log('📞 Phone input (raw):', rawPhone);
+    console.log('📞 Phone normalized:', phone);
+    console.log('🔑 Looking for key:', `user:phone:${phone}`);
+
+    // 🔧 CHECK if user exists first
+    const existingUser = await kv.get(`user:phone:${phone}`);
+    
+    console.log('📦 KV get result:', existingUser);
+    console.log('❓ Is null?', existingUser === null);
+    console.log('❓ Is undefined?', existingUser === undefined);
+    console.log('❓ Type:', typeof existingUser);
+    
+    if (!existingUser) {
+      console.log('❌ User NOT found in database');
+      console.log('💡 Trying to check all users with similar phone...');
+      
+      // Debug: Get all users to see what's in database
+      const allUsers = await kv.getByPrefix('user:phone:');
+      console.log('📊 Total user:phone: entries:', allUsers.length);
+      
+      // Show first 5 phone numbers
+      allUsers.slice(0, 5).forEach((u: any) => {
+        console.log(`  - Phone: ${u.phone}, Name: ${u.full_name}`);
+      });
+      
+      return c.json({ 
+        error: 'Nomor ini belum terdaftar. Silakan daftar terlebih dahulu.',
+        needsRegistration: true,
+        debug: {
+          searchedPhone: phone,
+          totalUsersInDB: allUsers.length,
+          hint: 'Check if phone format matches exactly'
+        }
+      }, 404);
+    }
+
+    console.log('✅ User found for OTP:', {
+      phone: existingUser.phone,
+      name: existingUser.full_name,
+      role: existingUser.role,
+      id: existingUser.id
+    });
 
     // In production, this would send OTP via SMS/WhatsApp
     // For demo, we'll use Supabase's phone OTP (but it needs Twilio setup)
@@ -150,6 +223,8 @@ app.post('/make-server-f689ca3f/auth/send-otp', async (c) => {
     console.log('📱 OTP VERIFICATION CODE');
     console.log('═══════════════════════════════════════════');
     console.log(`Phone: ${phone}`);
+    console.log(`Name: ${existingUser.full_name}`);
+    console.log(`Role: ${existingUser.role}`);
     console.log(`OTP Code: ${otp}`);
     console.log(`Expires: 5 minutes`);
     console.log('═══════════════════════════════════════════');
@@ -159,10 +234,14 @@ app.post('/make-server-f689ca3f/auth/send-otp', async (c) => {
       success: true,
       message: 'Kode OTP telah dikirim',
       // For demo purposes - OTP akan terlihat di console log server
-      demo_otp: otp
+      demo_otp: otp,
+      user: {
+        name: existingUser.full_name,
+        role: existingUser.role
+      }
     });
   } catch (error) {
-    console.log('Send OTP error:', error);
+    console.log('❌ Send OTP error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
@@ -170,11 +249,14 @@ app.post('/make-server-f689ca3f/auth/send-otp', async (c) => {
 // Verify OTP and login
 app.post('/make-server-f689ca3f/auth/verify-otp', async (c) => {
   try {
-    const { phone, otp } = await c.req.json();
+    const { phone: rawPhone, otp } = await c.req.json();
 
-    if (!phone || !otp) {
+    if (!rawPhone || !otp) {
       return c.json({ error: 'Nomor WhatsApp dan OTP harus diisi' }, 400);
     }
+
+    // 🔧 NORMALIZE phone number
+    const phone = normalizePhone(rawPhone);
 
     // Get stored OTP
     const storedOtpData = await kv.get(`otp:${phone}`);
@@ -355,6 +437,33 @@ app.get('/make-server-f689ca3f/muzakki', async (c) => {
   }
 });
 
+// Get single muzakki by ID
+app.get('/make-server-f689ca3f/muzakki/:id', async (c) => {
+  try {
+    const muzakkiId = c.req.param('id');
+    
+    console.log('📥 GET /muzakki/:id request:', muzakkiId);
+
+    // Find muzakki across all relawans
+    const allMuzakki = await kv.getByPrefix('muzakki:');
+    const muzakki = allMuzakki.find((m: any) => m.id === muzakkiId);
+
+    if (!muzakki) {
+      return c.json({ error: 'Muzakki tidak ditemukan' }, 404);
+    }
+
+    console.log('✅ Found muzakki:', muzakki);
+
+    return c.json({
+      success: true,
+      data: muzakki
+    });
+  } catch (error) {
+    console.error('❌ Get single muzakki error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
 // Add new muzakki
 app.post('/make-server-f689ca3f/muzakki', async (c) => {
   try {
@@ -417,10 +526,23 @@ app.put('/make-server-f689ca3f/muzakki/:id', async (c) => {
   try {
     const muzakkiId = c.req.param('id');
     const updates = await c.req.json();
-    const relawanId = updates.relawan_id;
+    
+    console.log('📝 Update Muzakki Request:', { muzakkiId, updates });
 
+    // Try to get relawan_id from updates or find muzakki to get relawan_id
+    let relawanId = updates.relawan_id;
+    
     if (!relawanId) {
-      return c.json({ error: 'Relawan ID diperlukan' }, 400);
+      // Find muzakki across all relawans to get relawan_id
+      const allMuzakki = await kv.getByPrefix('muzakki:');
+      const muzakki = allMuzakki.find((m: any) => m.id === muzakkiId);
+      
+      if (!muzakki) {
+        return c.json({ error: 'Muzakki tidak ditemukan' }, 404);
+      }
+      
+      relawanId = muzakki.relawan_id;
+      console.log('🔍 Found relawan_id from existing muzakki:', relawanId);
     }
 
     const existing = await kv.get(`muzakki:${relawanId}:${muzakkiId}`);
@@ -432,10 +554,14 @@ app.put('/make-server-f689ca3f/muzakki/:id', async (c) => {
     const updated = {
       ...existing,
       ...updates,
+      id: muzakkiId, // Preserve ID
+      relawan_id: relawanId, // Preserve relawan_id
       updated_at: new Date().toISOString()
     };
 
     await kv.set(`muzakki:${relawanId}:${muzakkiId}`, updated);
+
+    console.log('✅ Muzakki updated successfully:', updated);
 
     return c.json({
       success: true,
@@ -443,7 +569,7 @@ app.put('/make-server-f689ca3f/muzakki/:id', async (c) => {
       data: updated
     });
   } catch (error) {
-    console.log('Update muzakki error:', error);
+    console.error('❌ Update muzakki error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
@@ -452,10 +578,19 @@ app.put('/make-server-f689ca3f/muzakki/:id', async (c) => {
 app.delete('/make-server-f689ca3f/muzakki/:id', async (c) => {
   try {
     const muzakkiId = c.req.param('id');
-    const relawanId = c.req.query('relawan_id');
+    let relawanId = c.req.query('relawan_id');
 
     if (!relawanId) {
-      return c.json({ error: 'Relawan ID diperlukan' }, 400);
+      // Find muzakki across all relawans to get relawan_id
+      const allMuzakki = await kv.getByPrefix('muzakki:');
+      const muzakki = allMuzakki.find((m: any) => m.id === muzakkiId);
+      
+      if (!muzakki) {
+        return c.json({ error: 'Muzakki tidak ditemukan' }, 404);
+      }
+      
+      relawanId = muzakki.relawan_id;
+      console.log('🔍 Found relawan_id from existing muzakki for delete:', relawanId);
     }
 
     await kv.del(`muzakki:${relawanId}:${muzakkiId}`);
@@ -478,12 +613,22 @@ app.delete('/make-server-f689ca3f/muzakki/:id', async (c) => {
 app.get('/make-server-f689ca3f/donations', async (c) => {
   try {
     const relawanId = c.req.query('relawan_id');
+    const muzakkiId = c.req.query('muzakki_id');
 
-    if (!relawanId) {
-      return c.json({ error: 'Relawan ID diperlukan' }, 400);
+    if (!relawanId && !muzakkiId) {
+      return c.json({ error: 'Relawan ID atau Muzakki ID diperlukan' }, 400);
     }
 
-    const donations = await kv.getByPrefix(`donation:${relawanId}:`);
+    let donations = [];
+
+    if (muzakkiId) {
+      // Get donations for specific muzakki
+      const allDonations = await kv.getByPrefix('donation:');
+      donations = allDonations.filter((d: any) => d.muzakki_id === muzakkiId);
+    } else if (relawanId) {
+      // Get donations for relawan
+      donations = await kv.getByPrefix(`donation:${relawanId}:`);
+    }
     
     return c.json({
       success: true,
@@ -801,9 +946,45 @@ app.get('/make-server-f689ca3f/regu/:id/members', async (c) => {
     console.log('✅ Members found (before dedup):', members.length);
     console.log('✅ Unique members (after dedup):', uniqueMembers.length);
     
+    // 🔥 NEW: Calculate statistics for each member
+    const membersWithStats = await Promise.all(
+      uniqueMembers.map(async (member: any) => {
+        // Get all donations for this member
+        const donations = await kv.getByPrefix(`donation:${member.id}:`);
+        
+        // Calculate total donations (only incoming)
+        const totalDonations = donations.reduce((sum: number, donation: any) => {
+          if (!donation || typeof donation !== 'object') return sum;
+          const isIncoming = !donation.type || donation.type === 'incoming';
+          return isIncoming ? sum + (donation.amount || 0) : sum;
+        }, 0);
+        
+        // Get all muzakki for this member
+        const muzakkiList = await kv.getByPrefix(`muzakki:${member.id}:`);
+        const totalMuzakki = muzakkiList.length;
+        
+        console.log(`📊 ${member.full_name}: ${totalDonations} donations, ${totalMuzakki} muzakki`);
+        
+        return {
+          id: member.id,
+          full_name: member.full_name,
+          phone: member.phone,
+          role: member.role,
+          total_donations: totalDonations,
+          total_muzakki: totalMuzakki,
+          joined_at: member.created_at || new Date().toISOString()
+        };
+      })
+    );
+    
+    // Sort by total donations (highest first) for leaderboard
+    membersWithStats.sort((a, b) => b.total_donations - a.total_donations);
+    
+    console.log('✅ Members with stats calculated:', membersWithStats.length);
+    
     return c.json({
       success: true,
-      data: uniqueMembers
+      data: membersWithStats
     });
   } catch (error) {
     console.error('❌ Get regu members error:', error);
@@ -975,27 +1156,87 @@ app.get('/make-server-f689ca3f/statistics/:relawan_id', async (c) => {
   try {
     const relawanId = c.req.param('relawan_id');
 
+    console.log('📊 Fetching statistics for relawan:', relawanId);
+
     // Get all donations
     const donations = await kv.getByPrefix(`donation:${relawanId}:`);
+    console.log('💰 Donations found:', donations.length);
     
     // Get all muzakki
     const muzakkiList = await kv.getByPrefix(`muzakki:${relawanId}:`);
+    console.log('👥 Muzakki found:', muzakkiList.length);
 
-    // Calculate statistics
-    const totalDonations = donations.reduce((sum: number, item: any) => {
-      return item.value.type === 'incoming' ? sum + item.value.amount : sum;
+    // Get all communications
+    const allComms = await kv.getByPrefix('communication:');
+    const relawanComms = allComms.filter((comm: any) => comm.relawan_id === relawanId);
+    console.log('💬 Communications found:', relawanComms.length);
+
+    // Calculate statistics - donations is already array of values from getByPrefix
+    const totalDonations = donations.reduce((sum: number, donation: any) => {
+      // getByPrefix returns array of values directly (not { key, value })
+      if (!donation || typeof donation !== 'object') {
+        return sum;
+      }
+      // Check type field, default to 'incoming' if not specified
+      const isIncoming = !donation.type || donation.type === 'incoming';
+      return isIncoming ? sum + (donation.amount || 0) : sum;
     }, 0);
 
-    const totalDistributed = donations.reduce((sum: number, item: any) => {
-      return item.value.type === 'outgoing' ? sum + item.value.amount : sum;
+    console.log('💵 Total donations calculated:', totalDonations);
+
+    const totalDistributed = donations.reduce((sum: number, donation: any) => {
+      if (!donation || typeof donation !== 'object') {
+        return sum;
+      }
+      return donation.type === 'outgoing' ? sum + (donation.amount || 0) : sum;
     }, 0);
 
-    const byCategory = donations.reduce((acc: any, item: any) => {
-      if (item.value.type === 'incoming') {
-        acc[item.value.category] = (acc[item.value.category] || 0) + item.value.amount;
+    const byCategory = donations.reduce((acc: any, donation: any) => {
+      if (!donation || typeof donation !== 'object') {
+        return acc;
+      }
+      const isIncoming = !donation.type || donation.type === 'incoming';
+      if (isIncoming && donation.category) {
+        acc[donation.category] = (acc[donation.category] || 0) + (donation.amount || 0);
       }
       return acc;
     }, {});
+
+    console.log('📊 Donations by category (raw):', byCategory);
+    console.log('📊 Sample donations:', donations.slice(0, 3).map((d: any) => ({
+      id: d.id,
+      category: d.category,
+      amount: d.amount,
+      type: d.type
+    })));
+
+    // Combine donations and communications for recent activities
+    const donationActivities = donations
+      .filter((d: any) => d && (!d.type || d.type === 'incoming'))
+      .map((d: any) => ({
+        id: d.id,
+        type: 'donation',
+        title: `Donasi ${d.category || 'ZISWAF'}`,
+        muzakki_name: d.muzakki_name || 'Donatur',
+        amount: d.amount || 0,
+        category: d.category,
+        time: d.created_at || new Date().toISOString()
+      }));
+
+    const commActivities = relawanComms.map((comm: any) => ({
+      id: comm.id,
+      type: 'follow-up',
+      title: `Follow up ${comm.type === 'call' ? 'Telepon' : comm.type === 'whatsapp' ? 'WhatsApp' : 'Pertemuan'}`,
+      muzakki_name: comm.notes || 'Komunikasi',
+      time: comm.created_at || new Date().toISOString()
+    }));
+
+    // Combine and sort by time (most recent first)
+    const allActivities = [...donationActivities, ...commActivities]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 10);
+
+    console.log('📋 Recent activities:', allActivities.length);
 
     return c.json({
       success: true,
@@ -1003,12 +1244,22 @@ app.get('/make-server-f689ca3f/statistics/:relawan_id', async (c) => {
         total_donations: totalDonations,
         total_distributed: totalDistributed,
         total_muzakki: muzakkiList.length,
-        by_category: byCategory,
-        balance: totalDonations - totalDistributed
+        donations_by_category: {
+          zakat: byCategory.zakat || 0,
+          infaq: byCategory.infaq || 0,
+          sedekah: byCategory.sedekah || 0,
+          wakaf: byCategory.wakaf || 0
+        },
+        balance: totalDonations - totalDistributed,
+        monthly_target: 15000000, // Default monthly target
+        muzakki_target: 100, // Default muzakki target
+        monthly_progress: (totalDonations / 15000000) * 100,
+        muzakki_progress: (muzakkiList.length / 100) * 100,
+        recent_activities: allActivities
       }
     });
   } catch (error) {
-    console.log('Get statistics error:', error);
+    console.error('❌ Get statistics error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });
@@ -1209,6 +1460,126 @@ app.patch('/make-server-f689ca3f/notifications/:user_id/:notif_id/read', async (
 // TEMPLATE ENDPOINTS
 // ============================================
 
+// Get admin global statistics
+app.get('/make-server-f689ca3f/admin/stats/global', async (c) => {
+  try {
+    console.log('📊 Fetching admin global statistics...');
+
+    // Get all data
+    const allDonations = await kv.getByPrefix('donation:');
+    const allMuzakki = await kv.getByPrefix('muzakki:');
+    const allUsers = await kv.getByPrefix('user:');
+    const allRegus = await kv.getByPrefix('regu:');
+
+    // Deduplicate users (since we have user:{id} and user:phone:{phone})
+    const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+      if (!acc.some((u: any) => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, []);
+
+    // Calculate total donations
+    const totalDonations = allDonations
+      .filter((d: any) => d.type === 'incoming')
+      .reduce((sum: number, d: any) => sum + d.amount, 0);
+
+    // Calculate by category
+    const byCategory = allDonations
+      .filter((d: any) => d.type === 'incoming')
+      .reduce((acc: any, d: any) => {
+        acc[d.category] = (acc[d.category] || 0) + d.amount;
+        return acc;
+      }, { zakat: 0, infaq: 0, sedekah: 0, wakaf: 0 });
+
+    // Count relawans
+    const totalRelawan = uniqueUsers.filter((u: any) => u.role === 'relawan').length;
+
+    const stats = {
+      total_donations: totalDonations,
+      total_muzakki: allMuzakki.length,
+      total_relawan: totalRelawan,
+      total_regu: allRegus.filter((r: any) => r.id && !r.id.startsWith('code:')).length,
+      by_category: byCategory
+    };
+
+    console.log('✅ Global stats calculated:', stats);
+
+    return c.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('❌ Get admin global stats error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Get admin regu statistics
+app.get('/make-server-f689ca3f/admin/stats/regu', async (c) => {
+  try {
+    console.log('📊 Fetching admin regu statistics...');
+
+    // Get all regus
+    const allRegus = await kv.getByPrefix('regu:');
+    
+    // Filter out code mappings (regu:code:XXX)
+    const realRegus = allRegus.filter((r: any) => r.id && !r.id.includes('code:'));
+
+    // Get all users and donations for enrichment
+    const allUsers = await kv.getByPrefix('user:');
+    const allDonations = await kv.getByPrefix('donation:');
+    const allMuzakki = await kv.getByPrefix('muzakki:');
+
+    // Deduplicate users
+    const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+      if (user.id && !acc.some((u: any) => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, []);
+
+    // Calculate stats for each regu
+    const reguStats = realRegus.map((regu: any) => {
+      // Count members in this regu
+      const members = uniqueUsers.filter((u: any) => u.regu_id === regu.id);
+      
+      // Calculate total donations from members
+      const memberIds = members.map((m: any) => m.id);
+      const reguDonations = allDonations.filter((d: any) => 
+        d.type === 'incoming' && memberIds.includes(d.relawan_id)
+      );
+      const totalDonations = reguDonations.reduce((sum: number, d: any) => sum + d.amount, 0);
+
+      // Count muzakki from members
+      const reguMuzakki = allMuzakki.filter((m: any) => memberIds.includes(m.relawan_id));
+
+      return {
+        id: regu.id,
+        name: regu.name,
+        pembimbing_name: regu.pembimbing_name,
+        total_donations: totalDonations,
+        total_muzakki: reguMuzakki.length,
+        member_count: members.length,
+        target: regu.target_amount || 60000000
+      };
+    });
+
+    // Sort by total donations (descending)
+    reguStats.sort((a, b) => b.total_donations - a.total_donations);
+
+    console.log('✅ Regu stats calculated:', reguStats.length, 'regus');
+
+    return c.json({
+      success: true,
+      data: reguStats
+    });
+  } catch (error) {
+    console.error('❌ Get admin regu stats error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
 // Get all templates
 app.get('/make-server-f689ca3f/templates', async (c) => {
   try {
@@ -1227,9 +1598,10 @@ app.get('/make-server-f689ca3f/templates', async (c) => {
 // Add new template
 app.post('/make-server-f689ca3f/templates', async (c) => {
   try {
-    const { title, category, content, variables } = await c.req.json();
+    const { title, category, content, message, variables } = await c.req.json();
 
-    if (!title || !category || !content) {
+    const templateContent = message || content; // Support both message and content fields
+    if (!title || !category || !templateContent) {
       return c.json({ error: 'Title, category, dan content harus diisi' }, 400);
     }
 
@@ -1238,7 +1610,8 @@ app.post('/make-server-f689ca3f/templates', async (c) => {
       id: templateId,
       title,
       category,
-      content,
+      content: templateContent,
+      message: templateContent, // Store in both fields for compatibility
       variables: variables || [],
       created_at: new Date().toISOString()
     };
@@ -1264,186 +1637,63 @@ app.get('/make-server-f689ca3f/health', (c) => {
 // Seed database with initial data
 app.post('/make-server-f689ca3f/seed', async (c) => {
   try {
-    console.log('🌱 Seeding database...');
+    console.log('🌱 Running database seeder...');
     
-    // Helper function to generate unique regu code
-    const generateReguCode = () => {
-      return Math.random().toString(36).substring(2, 8).toUpperCase();
-    };
+    // Optional: Add a simple protection key
+    const protectionKey = c.req.query('key');
+    if (protectionKey && protectionKey !== 'ziswaf-dev-2025') {
+      return c.json({ 
+        success: false,
+        error: 'Invalid protection key' 
+      }, 403);
+    }
     
-    // Seed Regus
-    const regus = [
-      {
-        id: 'regu1',
-        name: 'Regu Ar-Rahman',
-        pembimbing_name: 'Ustadz Abdullah',
-        member_count: 8,
-        total_donations: 52000000,
-        target_amount: 60000000,
-        join_code: generateReguCode(),
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'regu2',
-        name: 'Regu Al-Karim',
-        pembimbing_name: 'Ustadz Muhammad',
-        member_count: 6,
-        total_donations: 38000000,
-        target_amount: 50000000,
-        join_code: generateReguCode(),
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'regu3',
-        name: 'Regu An-Nur',
-        pembimbing_name: 'Ustadzah Fatimah',
-        member_count: 7,
-        total_donations: 45000000,
-        target_amount: 55000000,
-        join_code: generateReguCode(),
-        created_at: new Date().toISOString()
-      }
-    ];
-
-    for (const regu of regus) {
-      await kv.set(`regu:${regu.id}`, regu);
-      // Also create reverse lookup: code -> regu_id
-      await kv.set(`regu:code:${regu.join_code}`, regu.id);
-    }
-
-    // Seed Programs
-    const programs = [
-      {
-        id: crypto.randomUUID(),
-        title: 'Bantu Pendidikan Anak Yatim',
-        category: 'zakat',
-        description: 'Program beasiswa untuk 100 anak yatim di seluruh Indonesia',
-        target: 500000000,
-        collected: 325000000,
-        contributors: 1250,
-        location: 'Seluruh Indonesia',
-        endDate: '2025-12-31',
-        image: '',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Wakaf Quran untuk Pesantren',
-        category: 'wakaf',
-        description: 'Pengadaan 1000 Al-Quran untuk pesantren di daerah terpencil',
-        target: 200000000,
-        collected: 145000000,
-        contributors: 580,
-        location: 'Papua, NTT',
-        endDate: '2025-11-30',
-        image: '',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Infaq Pembangunan Masjid',
-        category: 'infaq',
-        description: 'Renovasi masjid di desa tertinggal',
-        target: 300000000,
-        collected: 180000000,
-        contributors: 720,
-        location: 'Jawa Tengah',
-        endDate: '2026-01-31',
-        image: '',
-        created_at: new Date().toISOString()
-      }
-    ];
-
-    for (const program of programs) {
-      await kv.set(`program:${program.id}`, program);
-    }
-
-    // Seed Templates
-    const templates = [
-      {
-        id: crypto.randomUUID(),
-        title: 'Ucapan Terima Kasih Donasi',
-        category: 'terima-kasih',
-        content: 'Assalamualaikum {nama},\n\nBarakallahu fiikum atas donasi {kategori} sebesar {nominal} yang telah Bapak/Ibu salurkan.\n\nSemoga menjadi amal jariyah dan berkah untuk keluarga.\n\nJazakumullahu khairan.',
-        variables: ['nama', 'kategori', 'nominal'],
-        created_at: new Date().toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Reminder Follow Up',
-        category: 'follow-up',
-        content: 'Assalamualaikum {nama},\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu.\n\nKami ingin mengingatkan tentang kesempatan berbagi kebaikan di bulan {bulan} ini.\n\nTerima kasih atas perhatiannya.',
-        variables: ['nama', 'bulan'],
-        created_at: new Date().toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Laporan Penyaluran',
-        category: 'laporan',
-        content: 'Assalamualaikum {nama},\n\nAlhamdulillah, donasi Bapak/Ibu sebesar {nominal} telah disalurkan untuk program {program}.\n\nTerlampir bukti penyaluran.\n\nBarakallahu fiikum.',
-        variables: ['nama', 'nominal', 'program'],
-        created_at: new Date().toISOString()
-      }
-    ];
-
-    for (const template of templates) {
-      await kv.set(`template:${template.id}`, template);
-    }
-
-    // Seed Demo Users (for testing role-based access)
-    const demoUsers = [
-      {
-        id: 'demo-pembimbing-1',
-        full_name: 'Ustadz Abdullah (Pembimbing)',
-        phone: '+6281111111111',
-        email: 'pembimbing1@demo.com',
-        city: 'Jakarta',
-        regu_id: 'regu1',
-        role: 'pembimbing',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'demo-admin-1',
-        full_name: 'Admin ZISWAF',
-        phone: '+6282222222222',
-        email: 'admin@demo.com',
-        city: 'Jakarta',
-        regu_id: null,
-        role: 'admin',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'demo-relawan-1',
-        full_name: 'Ahmad Relawan',
-        phone: '+6283333333333',
-        email: 'relawan1@demo.com',
-        city: 'Bandung',
-        regu_id: 'regu1',
-        role: 'relawan',
-        created_at: new Date().toISOString()
-      }
-    ];
-
-    for (const user of demoUsers) {
-      await kv.set(`user:${user.id}`, user);
-      await kv.set(`user:phone:${user.phone}`, user);
-    }
-
-    console.log('✅ Database seeded successfully');
-
-    return c.json({
-      success: true,
-      message: 'Database seeded successfully',
-      data: {
-        regus: regus.length,
-        programs: programs.length,
-        templates: templates.length,
-        demo_users: demoUsers.length
-      }
-    });
+    const result = await runSeeder();
+    
+    return c.json(result);
   } catch (error) {
     console.error('❌ Seed error:', error);
-    return c.json({ error: `Seed error: ${error.message}` }, 500);
+    return c.json({ 
+      success: false,
+      error: `Seed error: ${error.message}` 
+    }, 500);
+  }
+});
+
+// DEBUG: Check user in database
+app.get('/make-server-f689ca3f/debug/user/:phone', async (c) => {
+  try {
+    const phone = c.req.param('phone');
+    
+    console.log('🔍 DEBUG: Checking user with phone:', phone);
+    
+    // Try to get user
+    const user = await kv.get(`user:phone:${phone}`);
+    
+    console.log('🔍 DEBUG: User data:', user);
+    
+    if (!user) {
+      return c.json({
+        found: false,
+        key: `user:phone:${phone}`,
+        message: 'User not found in database'
+      });
+    }
+    
+    return c.json({
+      found: true,
+      key: `user:phone:${phone}`,
+      user: user,
+      hasId: !!user.id,
+      hasPhone: !!user.phone,
+      hasName: !!user.full_name,
+      hasRole: !!user.role
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    return c.json({ 
+      error: `Debug error: ${error.message}` 
+    }, 500);
   }
 });
 

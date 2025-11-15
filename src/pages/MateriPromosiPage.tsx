@@ -185,27 +185,27 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
 
                 <div className="p-4">
                   <div className="flex items-start gap-2 mb-2">
-                    {material.type === 'image' && <ImageIcon className="h-5 w-5 text-gray-400 mt-0.5" />}
-                    {material.type === 'video' && <Video className="h-5 w-5 text-gray-400 mt-0.5" />}
-                    {material.type === 'text' && <FileText className="h-5 w-5 text-gray-400 mt-0.5" />}
-                    <div className="flex-1">
-                      <h4 className="text-gray-900 mb-1">{material.title}</h4>
-                      <p className="text-gray-600">{material.description}</p>
+                    {material.type === 'image' && <ImageIcon className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />}
+                    {material.type === 'video' && <Video className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />}
+                    {material.type === 'text' && <FileText className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-gray-900 mb-1 break-words">{material.title}</h4>
+                      <p className="text-gray-600 break-words">{material.description}</p>
                     </div>
                   </div>
 
                   {material.caption && (
-                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-gray-700">{material.caption}</p>
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                      <p className="text-gray-700 break-words whitespace-pre-wrap">{material.caption}</p>
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {material.type === 'image' && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 min-w-[100px]"
                         onClick={() => handleDownload(material)}
                       >
                         <Download className="h-4 w-4 mr-2" />
@@ -217,7 +217,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 min-w-[100px]"
                         onClick={() => handleCopyCaption(material.caption!)}
                       >
                         <FileText className="h-4 w-4 mr-2" />
@@ -227,7 +227,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
                     
                     <Button
                       size="sm"
-                      className="flex-1 bg-primary-600 hover:bg-primary-700"
+                      className="flex-1 min-w-[100px] bg-primary-600 hover:bg-primary-700"
                       onClick={() => handleShare(material)}
                     >
                       <Share2 className="h-4 w-4 mr-2" />

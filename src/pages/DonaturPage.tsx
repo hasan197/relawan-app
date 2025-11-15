@@ -13,9 +13,10 @@ import { Upload } from 'lucide-react';
 
 interface DonaturPageProps {
   onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'notifikasi' | 'import-kontak' | 'tambah-prospek') => void;
+  onSelectMuzakki?: (id: string) => void;
 }
 
-export function DonaturPage({ onNavigate }: DonaturPageProps) {
+export function DonaturPage({ onNavigate, onSelectMuzakki }: DonaturPageProps) {
   const { muzakkiList, loading } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'semua' | Muzakki['status']>('semua');
@@ -124,7 +125,7 @@ export function DonaturPage({ onNavigate }: DonaturPageProps) {
                 <Card 
                   key={muzakki.id} 
                   className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => onNavigate?.('detail-prospek')}
+                  onClick={() => onSelectMuzakki?.(muzakki.id)}
                 >
                   <div className="flex items-start gap-3">
                     <Avatar className="h-12 w-12">

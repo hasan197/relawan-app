@@ -31,6 +31,7 @@ import { TargetProgressCard } from "../components/TargetProgressCard";
 import { useAppContext } from "../contexts/AppContext";
 import { useStatistics } from "../hooks/useStatistics";
 import { motion } from "motion/react";
+import { DashboardSkeleton, StatsCardSkeleton } from "../components/LoadingState";
 
 interface DashboardPageProps {
   onNavigate?: (page: any) => void;
@@ -74,6 +75,9 @@ export function DashboardPage({
   const monthlyProgress =
     (totalDonations / monthlyTarget) * 100;
 
+  // Show loading skeleton while data is being fetched
+  // REMOVED: Full page loading - now showing per section loading
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-24">
       {/* Header */}
@@ -92,124 +96,139 @@ export function DashboardPage({
             className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <Bell className="h-5 w-5 text-white" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
         </div>
 
         {/* Total Donasi Card - PREMIUM DESIGN */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="relative overflow-hidden p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-none shadow-xl">
-            {/* Decorative Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
-              <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white rounded-full"></div>
-            </div>
-
-            {/* Sparkle Icon */}
-            <div className="absolute top-4 right-4">
-              <motion.div
-                animate={{
-                  rotate: [0, 10, 0, -10, 0],
-                  scale: [1, 1.1, 1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <Sparkles className="h-6 w-6 text-yellow-300" />
-              </motion.div>
-            </div>
-
-            <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-white/25 backdrop-blur-sm rounded-lg shadow-lg">
-                      <DollarSign className="h-5 w-5 text-white" />
-                    </div>
-                    <p className="text-white/95 text-sm">
-                      Total Donasi Terkumpul
-                    </p>
-                  </div>
-
-                  <motion.h3
-                    className="text-white text-3xl mb-2 drop-shadow-lg"
-                    initial={{ scale: 0.5 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
-                  >
-                    {loading
-                      ? "..."
-                      : formatCurrency(totalDonations)}
-                  </motion.h3>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-400/40 backdrop-blur-sm rounded-full border border-white/20">
-                      <TrendingUp className="h-3 w-3 text-white" />
-                      <span className="text-white text-xs">
-                        +12%
-                      </span>
-                    </div>
-                    <span className="text-white/90 text-xs">
-                      bulan ini
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats Mini Cards */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
-                  <p className="text-white/90 text-xs mb-1">
-                    Muzakki Aktif
-                  </p>
-                  <p className="text-white text-lg drop-shadow">
-                    {loading ? "..." : totalMuzakki}
-                  </p>
-                </div>
-                <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
-                  <p className="text-white/90 text-xs mb-1">
-                    Target Bulan Ini
-                  </p>
-                  <p className="text-white text-lg drop-shadow">
-                    {Math.round(monthlyProgress)}%
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
+        {loading ? (
+          // Loading state for stats card
+          <Card className="p-6 bg-white/10 backdrop-blur-sm border-white/20">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-4 bg-white/20 rounded w-1/2"></div>
+              <div className="h-8 bg-white/20 rounded w-3/4"></div>
               <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={() => onNavigate?.("tambah-prospek")}
-                  className="bg-white text-indigo-600 hover:bg-white/90 shadow-lg"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Tambah Donatur
-                </Button>
-                <Button
-                  onClick={() => handleNavigation("laporan")}
-                  className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg"
-                  size="sm"
-                >
-                  <ArrowUpRight className="h-4 w-4 mr-1" />
-                  Lihat Laporan
-                </Button>
+                <div className="h-16 bg-white/20 rounded"></div>
+                <div className="h-16 bg-white/20 rounded"></div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="h-9 bg-white/20 rounded"></div>
+                <div className="h-9 bg-white/20 rounded"></div>
               </div>
             </div>
           </Card>
-        </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="relative overflow-hidden p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-none shadow-xl">
+              {/* Decorative Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white rounded-full"></div>
+              </div>
+
+              {/* Sparkle Icon */}
+              <div className="absolute top-4 right-4">
+                <motion.div
+                  animate={{
+                    rotate: [0, 10, 0, -10, 0],
+                    scale: [1, 1.1, 1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Sparkles className="h-6 w-6 text-yellow-300" />
+                </motion.div>
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-white/25 backdrop-blur-sm rounded-lg shadow-lg">
+                        <DollarSign className="h-5 w-5 text-white" />
+                      </div>
+                      <p className="text-white/95 text-sm">
+                        Total Donasi Terkumpul
+                      </p>
+                    </div>
+
+                    <motion.h3
+                      className="text-white text-3xl mb-2 drop-shadow-lg"
+                      initial={{ scale: 0.5 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15,
+                      }}
+                    >
+                      {formatCurrency(totalDonations)}
+                    </motion.h3>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-400/40 backdrop-blur-sm rounded-full border border-white/20">
+                        <TrendingUp className="h-3 w-3 text-white" />
+                        <span className="text-white text-xs">
+                          +12%
+                        </span>
+                      </div>
+                      <span className="text-white/90 text-xs">
+                        bulan ini
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Mini Cards */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
+                    <p className="text-white/90 text-xs mb-1">
+                      Muzakki Aktif
+                    </p>
+                    <p className="text-white text-lg drop-shadow">
+                      {totalMuzakki}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/15 backdrop-blur-sm rounded-lg border border-white/25 shadow-lg">
+                    <p className="text-white/90 text-xs mb-1">
+                      Target Bulan Ini
+                    </p>
+                    <p className="text-white text-lg drop-shadow">
+                      {Math.round(monthlyProgress)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => onNavigate?.("tambah-prospek")}
+                    className="bg-white text-indigo-600 hover:bg-white/90 shadow-lg"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Tambah Donatur
+                  </Button>
+                  <Button
+                    onClick={() => handleNavigation("laporan")}
+                    className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg"
+                    size="sm"
+                  >
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                    Lihat Laporan
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
       </div>
 
       {/* Quick Menu - 8 Shortcuts */}

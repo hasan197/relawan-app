@@ -117,3 +117,44 @@ export function useDonations(relawanId: string | null) {
     refetch: fetchDonations
   };
 }
+
+// Hook for donations by muzakki
+export function useMuzakkiDonations(muzakkiId: string | null) {
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDonations = async () => {
+    if (!muzakkiId) {
+      console.log('⏭️ Skipping fetchDonations: No muzakki ID');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log('🔄 Fetching donations for muzakki:', muzakkiId);
+      setLoading(true);
+      const response = await apiCall(`/donations?muzakki_id=${muzakkiId}`);
+      console.log('✅ Muzakki donations fetched:', response.data?.length || 0, 'items');
+      setDonations(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.message || 'Gagal memuat data donasi';
+      setError(errorMessage);
+      console.error('❌ Error fetching donations:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDonations();
+  }, [muzakkiId]);
+
+  return {
+    donations,
+    loading,
+    error,
+    refetch: fetchDonations
+  };
+}

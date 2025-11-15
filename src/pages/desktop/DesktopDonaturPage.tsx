@@ -12,9 +12,10 @@ import { toast } from 'sonner@2.0.3';
 
 interface DesktopDonaturPageProps {
   onNavigate?: (page: string) => void;
+  onSelectMuzakki?: (id: string) => void;
 }
 
-export function DesktopDonaturPage({ onNavigate }: DesktopDonaturPageProps) {
+export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonaturPageProps) {
   const { muzakkiList, deleteMuzakki, loading } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'baru' | 'follow-up' | 'donasi'>('all');
@@ -248,7 +249,7 @@ export function DesktopDonaturPage({ onNavigate }: DesktopDonaturPageProps) {
                             <MessageCircle className="h-4 w-4 text-green-600" />
                           </button>
                           <button
-                            onClick={() => onNavigate?.('detail-prospek')}
+                            onClick={() => onSelectMuzakki?.(muzakki.id)}
                             className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
                             title="Detail"
                           >

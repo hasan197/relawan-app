@@ -7,6 +7,7 @@ import { Progress } from '../components/ui/progress';
 import { formatCurrency } from '../lib/utils';
 import { usePrograms } from '../hooks/usePrograms';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { ProgramCardSkeleton } from '../components/LoadingState';
 
 interface ProgramPageProps {
   onBack?: () => void;
@@ -91,8 +92,10 @@ export function ProgramPage({ onBack, onNavigate }: ProgramPageProps) {
 
         {/* Programs List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <ProgramCardSkeleton key={index} />
+            ))}
           </div>
         ) : filteredPrograms.length === 0 ? (
           <Card className="p-8 text-center">

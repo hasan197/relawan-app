@@ -1,131 +1,28 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Users, DollarSign, TrendingUp, Award, Download, RefreshCcw } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, DollarSign, Users, TrendingUp, Award, RefreshCcw, Download, Loader2 } from 'lucide-react';
 import { Card } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Progress } from '../components/ui/progress';
 import { formatCurrency, getInitials } from '../lib/utils';
-import { apiCall } from '../lib/supabase';
 import { toast } from 'sonner@2.0.3';
+import { useAdminStats } from '../hooks/useAdminStats';
+import { StatsCardSkeleton, LeaderboardSkeleton } from '../components/LoadingState';
 
 interface AdminDashboardPageProps {
   onBack?: () => void;
 }
 
-interface ReguStats {
-  id: string;
-  name: string;
-  pembimbing_name: string;
-  total_donations: number;
-  total_muzakki: number;
-  member_count: number;
-  target: number;
-}
-
 export function AdminDashboardPage({ onBack }: AdminDashboardPageProps) {
-  const [loading, setLoading] = useState(true);
+  const { globalStats, reguStats, loading, error, refetch } = useAdminStats();
   const [refreshing, setRefreshing] = useState(false);
-  const [globalStats, setGlobalStats] = useState({
-    total_donations: 0,
-    total_muzakki: 0,
-    total_relawan: 0,
-    total_regu: 0,
-    by_category: {
-      zakat: 0,
-      infaq: 0,
-      sedekah: 0,
-      wakaf: 0
-    }
-  });
-  const [reguStats, setReguStats] = useState<ReguStats[]>([]);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      // In a real implementation, this would fetch from admin endpoints
-      // For now, we'll simulate with mock data
-      
-      const mockGlobalStats = {
-        total_donations: 125750000,
-        total_muzakki: 487,
-        total_relawan: 35,
-        total_regu: 5,
-        by_category: {
-          zakat: 75000000,
-          infaq: 30250000,
-          sedekah: 15000000,
-          wakaf: 5500000
-        }
-      };
-
-      const mockReguStats: ReguStats[] = [
-        {
-          id: '1',
-          name: 'Regu Sabilillah',
-          pembimbing_name: 'Ustadz Abdullah',
-          total_donations: 43000000,
-          total_muzakki: 150,
-          member_count: 8,
-          target: 50000000
-        },
-        {
-          id: '2',
-          name: 'Regu Al-Ikhlas',
-          pembimbing_name: 'Ustadzah Fatimah',
-          total_donations: 38500000,
-          total_muzakki: 120,
-          member_count: 7,
-          target: 45000000
-        },
-        {
-          id: '3',
-          name: 'Regu Al-Muttaqin',
-          pembimbing_name: 'Ustadz Muhammad',
-          total_donations: 25750000,
-          total_muzakki: 98,
-          member_count: 6,
-          target: 40000000
-        },
-        {
-          id: '4',
-          name: 'Regu Ash-Shidiq',
-          pembimbing_name: 'Ustadzah Aisyah',
-          total_donations: 12000000,
-          total_muzakki: 75,
-          member_count: 8,
-          target: 35000000
-        },
-        {
-          id: '5',
-          name: 'Regu An-Nur',
-          pembimbing_name: 'Ustadz Umar',
-          total_donations: 6500000,
-          total_muzakki: 44,
-          member_count: 6,
-          target: 30000000
-        }
-      ];
-
-      setGlobalStats(mockGlobalStats);
-      setReguStats(mockReguStats.sort((a, b) => b.total_donations - a.total_donations));
-    } catch (error: any) {
-      toast.error(error.message || 'Gagal memuat statistik');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchStats();
+    await refetch();
     setRefreshing(false);
-    toast.success('Data berhasil diperbarui');
+    toast.success('Data berhasil diperbarui!');
   };
 
   const handleExport = () => {
@@ -166,159 +63,180 @@ export function AdminDashboardPage({ onBack }: AdminDashboardPageProps) {
       </div>
 
       <div className="px-4 -mt-4 pb-6">
-        {/* Global Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Card className="p-4">
-            <DollarSign className="h-8 w-8 text-green-600 mb-2" />
-            <p className="text-gray-500 mb-1">Total Donasi</p>
-            <h3 className="text-gray-900">{formatCurrency(globalStats.total_donations)}</h3>
-          </Card>
-          
-          <Card className="p-4">
-            <Users className="h-8 w-8 text-blue-600 mb-2" />
-            <p className="text-gray-500 mb-1">Total Muzakki</p>
-            <h3 className="text-gray-900">{globalStats.total_muzakki}</h3>
-          </Card>
-          
-          <Card className="p-4">
-            <Award className="h-8 w-8 text-purple-600 mb-2" />
-            <p className="text-gray-500 mb-1">Total Relawan</p>
-            <h3 className="text-gray-900">{globalStats.total_relawan}</h3>
-          </Card>
-          
-          <Card className="p-4">
-            <TrendingUp className="h-8 w-8 text-orange-600 mb-2" />
-            <p className="text-gray-500 mb-1">Total Regu</p>
-            <h3 className="text-gray-900">{globalStats.total_regu}</h3>
-          </Card>
-        </div>
-
-        {/* Global Progress */}
-        <Card className="p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-gray-900">Progress Global</h4>
-            <span className="text-purple-600">{Math.round(globalProgress)}%</span>
-          </div>
-          <Progress value={globalProgress} className="h-3 mb-3" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500">Tercapai</p>
-              <p className="text-green-600">{formatCurrency(totalAchieved)}</p>
+        {loading ? (
+          <>
+            {/* Loading Stats */}
+            <StatsCardSkeleton count={4} />
+            
+            {/* Loading Leaderboard */}
+            <div className="mt-6">
+              <LeaderboardSkeleton count={5} />
             </div>
-            <div className="text-right">
-              <p className="text-gray-500">Target</p>
-              <p className="text-gray-900">{formatCurrency(totalTarget)}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs defaultValue="regu" className="w-full">
-          <TabsList className="w-full grid grid-cols-2 mb-4">
-            <TabsTrigger value="regu">Leaderboard Regu</TabsTrigger>
-            <TabsTrigger value="category">Per Kategori</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="regu" className="space-y-3">
-            {reguStats.map((regu, index) => {
-              const progress = (regu.total_donations / regu.target) * 100;
-              const ranking = index + 1;
+          </>
+        ) : error ? (
+          <Card className="p-8 text-center">
+            <p className="text-red-600 mb-2">❌ {error}</p>
+            <Button onClick={refetch} variant="outline" size="sm">
+              Coba Lagi
+            </Button>
+          </Card>
+        ) : (
+          <>
+            {/* Global Stats */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <Card className="p-4">
+                <DollarSign className="h-8 w-8 text-green-600 mb-2" />
+                <p className="text-gray-500 mb-1">Total Donasi</p>
+                <h3 className="text-gray-900">{formatCurrency(globalStats.total_donations)}</h3>
+              </Card>
               
-              return (
-                <Card key={regu.id} className="p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      ranking === 1 ? 'bg-yellow-100' :
-                      ranking === 2 ? 'bg-gray-100' :
-                      ranking === 3 ? 'bg-orange-100' :
-                      'bg-blue-50'
-                    }`}>
-                      {ranking <= 3 ? (
-                        <span className="text-xl">
-                          {ranking === 1 ? '🥇' : ranking === 2 ? '🥈' : '🥉'}
-                        </span>
-                      ) : (
-                        <span className="text-gray-600">#{ranking}</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <h4 className="text-gray-900 mb-1">{regu.name}</h4>
-                      <p className="text-gray-600 mb-2">
-                        Pembimbing: {regu.pembimbing_name}
-                      </p>
-                      
-                      <div className="flex gap-3 mb-3">
-                        <Badge className="bg-blue-100 text-blue-700 border-none">
-                          {regu.member_count} Anggota
-                        </Badge>
-                        <Badge className="bg-green-100 text-green-700 border-none">
-                          {regu.total_muzakki} Muzakki
-                        </Badge>
-                      </div>
+              <Card className="p-4">
+                <Users className="h-8 w-8 text-blue-600 mb-2" />
+                <p className="text-gray-500 mb-1">Total Muzakki</p>
+                <h3 className="text-gray-900">{globalStats.total_muzakki}</h3>
+              </Card>
+              
+              <Card className="p-4">
+                <Award className="h-8 w-8 text-purple-600 mb-2" />
+                <p className="text-gray-500 mb-1">Total Relawan</p>
+                <h3 className="text-gray-900">{globalStats.total_relawan}</h3>
+              </Card>
+              
+              <Card className="p-4">
+                <TrendingUp className="h-8 w-8 text-orange-600 mb-2" />
+                <p className="text-gray-500 mb-1">Total Regu</p>
+                <h3 className="text-gray-900">{globalStats.total_regu}</h3>
+              </Card>
+            </div>
 
-                      <Progress value={progress} className="h-2 mb-2" />
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-green-600">
-                          {formatCurrency(regu.total_donations)}
-                        </span>
-                        <span className="text-gray-500">
-                          Target: {formatCurrency(regu.target)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </TabsContent>
+            {/* Global Progress */}
+            <Card className="p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-gray-900">Progress Global</h4>
+                <span className="text-purple-600">{Math.round(globalProgress)}%</span>
+              </div>
+              <Progress value={globalProgress} className="h-3 mb-3" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500">Tercapai</p>
+                  <p className="text-green-600">{formatCurrency(totalAchieved)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-500">Target</p>
+                  <p className="text-gray-900">{formatCurrency(totalTarget)}</p>
+                </div>
+              </div>
+            </Card>
 
-          <TabsContent value="category" className="space-y-3">
-            {Object.entries(globalStats.by_category).map(([category, amount]) => {
-              const percentage = (amount / globalStats.total_donations) * 100;
-              const colors = {
-                zakat: { bg: 'bg-green-100', text: 'text-green-700', bar: 'bg-green-600' },
-                infaq: { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: 'bg-yellow-600' },
-                sedekah: { bg: 'bg-blue-100', text: 'text-blue-700', bar: 'bg-blue-600' },
-                wakaf: { bg: 'bg-gray-100', text: 'text-gray-700', bar: 'bg-gray-600' }
-              };
-              const color = colors[category as keyof typeof colors];
+            {/* Tabs */}
+            <Tabs defaultValue="regu" className="w-full">
+              <TabsList className="w-full grid grid-cols-2 mb-4">
+                <TabsTrigger value="regu">Leaderboard Regu</TabsTrigger>
+                <TabsTrigger value="category">Per Kategori</TabsTrigger>
+              </TabsList>
 
-              return (
-                <Card key={category} className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-full ${color.bg} flex items-center justify-center`}>
-                        <span className="capitalize">{category.charAt(0).toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <h4 className="text-gray-900 capitalize">{category}</h4>
-                        <p className={`${color.text}`}>{Math.round(percentage)}%</p>
-                      </div>
-                    </div>
-                    <p className="text-gray-900">{formatCurrency(amount)}</p>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${color.bar} transition-all`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </Card>
-              );
-            })}
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="regu" className="space-y-3">
+                {reguStats.map((regu, index) => {
+                  const progress = (regu.total_donations / regu.target) * 100;
+                  const ranking = index + 1;
+                  
+                  return (
+                    <Card key={regu.id} className="p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          ranking === 1 ? 'bg-yellow-100' :
+                          ranking === 2 ? 'bg-gray-100' :
+                          ranking === 3 ? 'bg-orange-100' :
+                          'bg-blue-50'
+                        }`}>
+                          {ranking <= 3 ? (
+                            <span className="text-xl">
+                              {ranking === 1 ? '🥇' : ranking === 2 ? '🥈' : '🥉'}
+                            </span>
+                          ) : (
+                            <span className="text-gray-600">#{ranking}</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h4 className="text-gray-900 mb-1">{regu.name}</h4>
+                          <p className="text-gray-600 mb-2">
+                            Pembimbing: {regu.pembimbing_name}
+                          </p>
+                          
+                          <div className="flex gap-3 mb-3">
+                            <Badge className="bg-blue-100 text-blue-700 border-none">
+                              {regu.member_count} Anggota
+                            </Badge>
+                            <Badge className="bg-green-100 text-green-700 border-none">
+                              {regu.total_muzakki} Muzakki
+                            </Badge>
+                          </div>
 
-        {/* Export Button */}
-        <Button
-          onClick={handleExport}
-          className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Ekspor Laporan Lengkap
-        </Button>
+                          <Progress value={progress} className="h-2 mb-2" />
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-green-600">
+                              {formatCurrency(regu.total_donations)}
+                            </span>
+                            <span className="text-gray-500">
+                              Target: {formatCurrency(regu.target)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </TabsContent>
+
+              <TabsContent value="category" className="space-y-3">
+                {Object.entries(globalStats.by_category).map(([category, amount]) => {
+                  const percentage = (amount / globalStats.total_donations) * 100;
+                  const colors = {
+                    zakat: { bg: 'bg-green-100', text: 'text-green-700', bar: 'bg-green-600' },
+                    infaq: { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: 'bg-yellow-600' },
+                    sedekah: { bg: 'bg-blue-100', text: 'text-blue-700', bar: 'bg-blue-600' },
+                    wakaf: { bg: 'bg-gray-100', text: 'text-gray-700', bar: 'bg-gray-600' }
+                  };
+                  const color = colors[category as keyof typeof colors];
+
+                  return (
+                    <Card key={category} className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-full ${color.bg} flex items-center justify-center`}>
+                            <span className="capitalize">{category.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-gray-900 capitalize">{category}</h4>
+                            <p className={`${color.text}`}>{Math.round(percentage)}%</p>
+                          </div>
+                        </div>
+                        <p className="text-gray-900">{formatCurrency(amount)}</p>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${color.bar} transition-all`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </Card>
+                  );
+                })}
+              </TabsContent>
+            </Tabs>
+
+            {/* Export Button */}
+            <Button
+              onClick={handleExport}
+              className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Ekspor Laporan Lengkap
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
