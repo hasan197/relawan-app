@@ -41,15 +41,14 @@ export function useAuth() {
     setLoading(false);
   }, []);
 
-  const register = async (fullName: string, phone: string, city: string, reguId?: string) => {
+  const register = async (fullName: string, phone: string, city: string) => {
     try {
       const response = await apiCall('/auth/register', {
         method: 'POST',
         body: JSON.stringify({
           fullName,
           phone,
-          city,
-          reguId
+          city
         })
       });
 
