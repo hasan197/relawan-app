@@ -1,6 +1,33 @@
 import { useState, useEffect } from 'react';
 import { apiCall } from '../lib/supabase';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { Id } from '../../convex/_generated/dataModel';
 
+// Add type for Vite environment variables
+declare global {
+  interface ImportMetaEnv {
+    VITE_BACKEND?: 'supabase' | 'convex';
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
+// User type that matches Convex schema
+interface ConvexUser {
+  _id: Id<'users'>;
+  _creationTime: number;
+  tokenIdentifier?: string;
+  fullName: string;
+  phone: string;
+  city: string;
+  role: string;
+  createdAt: number;
+  regu_id?: string | null;
+}
+
+// Unified User type for the application
 interface User {
   id: string;
   full_name: string;
@@ -8,50 +35,133 @@ interface User {
   city: string;
   regu_id: string | null;
   role: string;
+  tokenIdentifier?: string;
 }
+
+// Helper to convert Convex user to our app's User type
+const toAppUser = (convexUser: ConvexUser | null): User | null => {
+  if (!convexUser) return null;
+  return {
+    id: convexUser._id,
+    full_name: convexUser.fullName,
+    phone: convexUser.phone,
+    city: convexUser.city,
+    regu_id: convexUser.regu_id || null,
+    role: convexUser.role,
+    tokenIdentifier: convexUser.tokenIdentifier
+  };
+};
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [backendType, setBackendType] = useState<'supabase' | 'convex'>(
+    (import.meta.env.VITE_BACKEND as 'supabase' | 'convex') || 'supabase'
+  );
 
+  // Convex queries and mutations
+  const currentUser = useQuery(api.auth.getCurrentUser);
+  const loginMutation = useMutation(api.auth.login);
+  const registerMutation = useMutation(api.auth.register);
+  const sendOtpMutation = useMutation(api.auth.sendOtp);
+  const verifyOtpMutation = useMutation(api.auth.verifyOtp as any); // Temporary type assertion
+  const logoutMutation = useMutation(api.auth.logout);
+
+  // Check auth status on mount and when backend type changes
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('access_token');
-    const userStr = localStorage.getItem('user');
-    
-    console.log('🔐 Auth Check:', {
-      hasToken: !!token,
-      hasUser: !!userStr
-    });
-    
-    if (token && userStr) {
-      const parsedUser = JSON.parse(userStr);
-      console.log('✅ User loaded from localStorage:', {
-        id: parsedUser.id,
-        name: parsedUser.full_name,
-        phone: parsedUser.phone
-      });
-      setAccessToken(token);
-      setUser(parsedUser);
-    } else {
-      console.log('⚠️ No user found in localStorage');
-    }
-    
-    setLoading(false);
-  }, []);
+    const checkAuth = async () => {
+      if (backendType === 'convex') {
+        // For Convex, check both currentUser query and localStorage
+        setLoading(true);
+        
+        // First check localStorage (for compatibility with verifyOTP)
+        const token = localStorage.getItem('access_token');
+        const userStr = localStorage.getItem('user');
+        
+        if (token && userStr) {
+          const parsedUser = JSON.parse(userStr);
+          console.log('🔐 Convex: User loaded from localStorage:', {
+            id: parsedUser.id,
+            name: parsedUser.full_name,
+            phone: parsedUser.phone
+          });
+          setAccessToken(token);
+          setUser(parsedUser);
+        } else if (currentUser && '_id' in currentUser) {
+          // Fallback to Convex currentUser query
+          const appUser = toAppUser(currentUser as ConvexUser);
+          console.log('🔐 Convex: User authenticated via query', { 
+            id: appUser?.id, 
+            name: appUser?.full_name 
+          });
+          setUser(appUser);
+          setAccessToken('convex-token');
+        } else {
+          console.log('🔐 Convex: No authenticated user');
+          setUser(null);
+          setAccessToken(null);
+        }
+        setLoading(false);
+      } else {
+        // Supabase implementation
+        const token = localStorage.getItem('access_token');
+        const userStr = localStorage.getItem('user');
+        
+        console.log('🔐 Supabase Auth Check:', { hasToken: !!token, hasUser: !!userStr });
+        
+        if (token && userStr) {
+          const parsedUser = JSON.parse(userStr);
+          console.log('✅ User loaded from localStorage:', {
+            id: parsedUser.id,
+            name: parsedUser.full_name,
+            phone: parsedUser.phone
+          });
+          setAccessToken(token);
+          setUser(parsedUser);
+        } else {
+          console.log('⚠️ No user found in localStorage');
+        }
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [backendType, currentUser]);
 
   const register = async (fullName: string, phone: string, city: string) => {
+    if (backendType === 'convex') {
+      try {
+        const result = await registerMutation({ 
+          fullName, 
+          phone, 
+          city,
+          role: 'relawan' // Default role
+        });
+        
+        if (result) {
+          // Convert Convex user to app user
+          const appUser = toAppUser(result as unknown as ConvexUser);
+          if (appUser) {
+            setUser(appUser);
+            setAccessToken('convex-token');
+            return { success: true, user: appUser };
+          }
+        }
+        
+        return { success: false, error: 'Failed to register user' };
+      } catch (error) {
+        console.error('Convex register error:', error);
+        throw error;
+      }
+    }
+
+    // Supabase implementation
     try {
       const response = await apiCall('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({
-          fullName,
-          phone,
-          city
-        })
+        body: JSON.stringify({ fullName, phone, city })
       });
-
       return response;
     } catch (error) {
       throw error;
@@ -59,12 +169,22 @@ export function useAuth() {
   };
 
   const sendOTP = async (phone: string) => {
+    if (backendType === 'convex') {
+      try {
+        const result = await sendOtpMutation({ phone });
+        return result;
+      } catch (error) {
+        console.error('Convex sendOTP error:', error);
+        throw error;
+      }
+    }
+
+    // Supabase implementation
     try {
       const response = await apiCall('/auth/send-otp', {
         method: 'POST',
         body: JSON.stringify({ phone })
       });
-
       return response;
     } catch (error) {
       throw error;
@@ -72,6 +192,35 @@ export function useAuth() {
   };
 
   const verifyOTP = async (phone: string, otp: string) => {
+    if (backendType === 'convex') {
+      try {
+        console.log('🔐 Convex: Verifying OTP for phone:', phone);
+        const result = await verifyOtpMutation({ phone, otp });
+        
+        if (result && result.success) {
+          console.log('✅ Convex: OTP verified successfully');
+          
+          // Store token and user data in localStorage for Convex
+          if (result.access_token) {
+            localStorage.setItem('access_token', result.access_token);
+          }
+          if (result.user) {
+            localStorage.setItem('user', JSON.stringify(result.user));
+            setUser(result.user);
+            setAccessToken(result.access_token);
+          }
+          
+          return { success: true, user: result.user };
+        }
+        
+        return { success: false, error: 'Verification failed' };
+      } catch (error) {
+        console.error('❌ Convex verify OTP error:', error);
+        throw error;
+      }
+    }
+
+    // Supabase implementation
     try {
       console.log('🔐 Verifying OTP for phone:', phone);
       
@@ -85,34 +234,16 @@ export function useAuth() {
       if (response.success) {
         console.log('✅ OTP Verified successfully');
         console.log('👤 User data:', response.user);
-        console.log('🆔 User ID:', response.user?.id);
-        console.log('🔑 Access Token:', response.access_token);
-
+        
         if (!response.user?.id) {
           console.error('❌ CRITICAL: User ID is missing from response!');
           throw new Error('User ID tidak ditemukan dalam response. Silakan hubungi admin.');
         }
 
-        console.log('💾 Saving to localStorage...');
         localStorage.setItem('access_token', response.access_token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        
-        console.log('✅ Saved to localStorage');
-        console.log('🔍 Verifying localStorage save...');
-        
-        const savedUser = localStorage.getItem('user');
-        const parsedSavedUser = savedUser ? JSON.parse(savedUser) : null;
-        console.log('📦 Saved user from localStorage:', parsedSavedUser);
-        console.log('🆔 Saved user ID:', parsedSavedUser?.id);
-
-        // IMPORTANT: Update state immediately
         setAccessToken(response.access_token);
         setUser(response.user);
-        
-        console.log('✅ State updated');
-        
-        // Force a small delay to ensure state propagates
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       return response;
@@ -122,7 +253,16 @@ export function useAuth() {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (backendType === 'convex') {
+      try {
+        await logoutMutation({});
+      } catch (error) {
+        console.error('Convex logout error:', error);
+      }
+    }
+    
+    // Clear local storage and state in any case
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     setAccessToken(null);
@@ -130,6 +270,13 @@ export function useAuth() {
   };
 
   const refreshUser = async () => {
+    if (backendType === 'convex') {
+      // Convex automatically handles user state
+      // The currentUser query will update when the user changes
+      return currentUser;
+    }
+
+    // Supabase implementation
     try {
       const token = localStorage.getItem('access_token');
       const userStr = localStorage.getItem('user');
@@ -142,12 +289,9 @@ export function useAuth() {
       const currentUser = JSON.parse(userStr);
       console.log('🔄 Refreshing user data for:', currentUser.phone);
 
-      // Get fresh user data from backend
       const response = await apiCall(`/users/phone/${currentUser.phone}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.success && response.user) {
@@ -162,15 +306,21 @@ export function useAuth() {
     }
   };
 
+  // Determine loading state based on backend
+  const isLoading = backendType === 'convex' 
+    ? loading || (currentUser === undefined) 
+    : loading;
+
   return {
     user,
-    loading,
+    loading: isLoading,
     accessToken,
     register,
     sendOTP,
     verifyOTP,
     logout,
     refreshUser,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    backend: backendType
   };
 }

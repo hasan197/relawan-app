@@ -1,0 +1,72 @@
+import { createClient } from '@supabase/supabase-js';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
+
+// Create a single supabase client for interacting with your database
+export const supabase = createClient(
+  `https://${projectId}.supabase.co`,
+  publicAnonKey
+);
+
+// Server URL for API calls
+export const SERVER_URL = `https://${projectId}.supabase.co/functions/v1/make-server-f689ca3f`;
+
+// Helper function to make authenticated API calls
+export async function apiCall(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<any> {
+  // For GET requests (read-only), use publicAnonKey
+  // For POST/PUT/DELETE, use user's access token
+  const method = options.method || 'GET';
+  const isReadOnly = method === 'GET';
+  
+  // Use publicAnonKey for all requests since backend doesn't validate JWT
+  const token = publicAnonKey;
+  
+  console.log(`📡 API Call: ${method} ${endpoint}`, {
+    isReadOnly,
+    usingPublicKey: true
+  });
+  
+  try {
+    const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorMessage = data.error || data.message || 'Terjadi kesalahan';
+      console.error(`❌ API Error [${response.status}]:`, {
+        endpoint,
+        status: response.status,
+        error: errorMessage,
+        fullResponse: data
+      });
+      throw new Error(errorMessage);
+    }
+
+    return data;
+  } catch (error: any) {
+    // If it's a network error (not JSON response)
+    if (error.message === 'Failed to fetch') {
+      console.error('❌ Network Error:', {
+        endpoint,
+        message: 'Cannot connect to server. Please check your connection.'
+      });
+      throw new Error('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+    }
+    
+    // Re-throw the error with context
+    console.error('❌ API Call Failed:', {
+      endpoint,
+      error: error.message
+    });
+    throw error;
+  }
+}
