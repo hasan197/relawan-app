@@ -7,9 +7,14 @@ export const seedDatabase = mutation({
     const now = Date.now();
     
     console.log("🌱 Starting database seeding...");
+    console.log("🔍 Deployment Info:");
+    console.log("   - Convex URL:", process.env.CONVEX_URL || "Not set");
+    console.log("   - Convex Deployment:", process.env.CONVEX_DEPLOYMENT || "Not set");
+    console.log("   - Environment:", process.env.NODE_ENV || "Not set");
+    console.log("   - Current deployment endpoint: quixotic-rhinoceros-311");
 
-    // Clear existing data (optional - use with caution)
-    // await clearExistingData(ctx);
+    // Clear existing data
+    await clearExistingData(ctx);
 
     // Create admin user
     const adminId = await ctx.db.insert("users", {
@@ -318,15 +323,25 @@ export const seedDatabase = mutation({
   },
 });
 
-// Optional: Function to clear existing data (use with caution)
+// Function to clear existing data
 async function clearExistingData(ctx: any) {
   const tables = ["users", "regus", "muzakkis", "donations", "activities", "targets", "messageTemplates", "programs", "otpLogs"];
   
+  console.log("🗑️ Starting to clear existing data...");
+  
   for (const table of tables) {
-    const documents = await ctx.db.query(table).collect();
-    for (const doc of documents) {
-      await ctx.db.delete(doc._id);
+    try {
+      const documents = await ctx.db.query(table).collect();
+      console.log(`🗑️ Found ${documents.length} documents in ${table}`);
+      
+      for (const doc of documents) {
+        await ctx.db.delete(doc._id);
+      }
+      console.log(`✅ Cleared ${table}`);
+    } catch (error) {
+      console.error(`❌ Error clearing ${table}:`, error);
     }
   }
-  console.log("🗑️ Cleared existing data");
+  
+  console.log("✅ All existing data cleared");
 }

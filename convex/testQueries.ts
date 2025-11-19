@@ -16,3 +16,10 @@ export const getAllUsers = query({
     return await ctx.db.query("users").collect();
   },
 });
+
+// Test query to get all regus
+export const getAllRegus = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("regus").collect();
+  },
+});

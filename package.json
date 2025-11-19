@@ -66,6 +66,8 @@
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "seed:dev": "npx convex run seed:seedDatabase",
+            "seed:prod": "npx convex run seed:seedDatabase --prod"
       }
 }
