@@ -18,10 +18,10 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_phone", ["phone"])
-  .index("by_token", ["tokenIdentifier"])
-  .index("by_otp", ["phone", "otp"])
-  .index("by_regu", ["regu_id"]),
+    .index("by_phone", ["phone"])
+    .index("by_token", ["tokenIdentifier"])
+    .index("by_otp", ["phone", "otp"])
+    .index("by_regu", ["regu_id"]),
 
   // Table for OTP logs and audit trail
   otpLogs: defineTable({
@@ -44,10 +44,10 @@ export default defineSchema({
     metadata: v.optional(v.any()),
     createdAt: v.number(),
   })
-  .index("by_user", ["userId"])
-  .index("by_phone", ["phone"])
-  .index("by_status", ["status"])
-  .index("by_created_at", ["createdAt"]),
+    .index("by_user", ["userId"])
+    .index("by_phone", ["phone"])
+    .index("by_status", ["status"])
+    .index("by_created_at", ["createdAt"]),
 
   // Regu/Team table
   regus: defineTable({
@@ -57,7 +57,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_pembimbing", ["pembimbingId"]),
+    .index("by_pembimbing", ["pembimbingId"]),
 
   // Muzakki (donors) table
   muzakkis: defineTable({
@@ -75,9 +75,9 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_phone", ["phone"])
-  .index("by_status", ["status"])
-  .index("by_created_by", ["createdBy"]),
+    .index("by_phone", ["phone"])
+    .index("by_status", ["status"])
+    .index("by_created_by", ["createdBy"]),
 
   // Donations table
   donations: defineTable({
@@ -99,10 +99,10 @@ export default defineSchema({
     notes: v.optional(v.string()),
     createdAt: v.number(),
   })
-  .index("by_relawan", ["relawanId"])
-  .index("by_category", ["category"])
-  .index("by_type", ["type"])
-  .index("by_created_at", ["createdAt"]),
+    .index("by_relawan", ["relawanId"])
+    .index("by_category", ["category"])
+    .index("by_type", ["type"])
+    .index("by_created_at", ["createdAt"]),
 
   // Activities table
   activities: defineTable({
@@ -120,9 +120,9 @@ export default defineSchema({
     time: v.number(),
     createdAt: v.number(),
   })
-  .index("by_relawan", ["relawanId"])
-  .index("by_type", ["type"])
-  .index("by_time", ["time"]),
+    .index("by_relawan", ["relawanId"])
+    .index("by_type", ["type"])
+    .index("by_time", ["time"]),
 
   // Targets table
   targets: defineTable({
@@ -135,8 +135,8 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_relawan", ["relawanId"])
-  .index("by_period", ["period"]),
+    .index("by_relawan", ["relawanId"])
+    .index("by_period", ["period"]),
 
   // Message templates table
   messageTemplates: defineTable({
@@ -154,8 +154,8 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_category", ["category"])
-  .index("by_active", ["isActive"]),
+    .index("by_category", ["category"])
+    .index("by_active", ["isActive"]),
 
   // Programs table
   programs: defineTable({
@@ -175,6 +175,17 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-  .index("by_category", ["category"])
-  .index("by_active", ["isActive"]),
+    .index("by_category", ["category"])
+    .index("by_active", ["isActive"]),
+
+  // Chat messages table
+  chatMessages: defineTable({
+    regu_id: v.string(),
+    sender_id: v.string(),
+    sender_name: v.string(),
+    message: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_regu", ["regu_id"])
+    .index("by_created_at", ["createdAt"]),
 });

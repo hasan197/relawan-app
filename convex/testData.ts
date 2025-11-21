@@ -1,4 +1,88 @@
 import { query } from "./_generated/server";
+import { v } from "convex/values";
+
+export const getUserData = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) {
+      return { error: "User not found", userId: args.userId };
+    }
+
+    const donations = await ctx.db
+      .query("donations")
+      .withIndex("by_relawan", (q) => q.eq("relawanId", args.userId))
+      .collect();
+
+    const targets = await ctx.db
+      .query("targets")
+      .withIndex("by_relawan", (q) => q.eq("relawanId", args.userId))
+      .collect();
+
+    const muzakkis = await ctx.db
+      .query("muzakkis")
+      .withIndex("by_created_by", (q) => q.eq("createdBy", args.userId))
+      .collect();
+
+    const activities = await ctx.db
+      .query("activities")
+      .withIndex("by_relawan", (q) => q.eq("relawanId", args.userId))
+      .collect();
+
+    return {
+      user: {
+        id: user._id,
+        name: user.fullName,
+        phone: user.phone,
+        role: user.role,
+        regu_id: user.regu_id,
+      },
+      donations: {
+        count: donations.length,
+        data: donations,
+      },
+      targets: {
+        count: targets.length,
+        data: targets,
+      },
+      muzakkis: {
+        count: muzakkis.length,
+        data: muzakkis,
+      },
+      activities: {
+        count: activities.length,
+        data: activities,
+      },
+    };
+  },
+});
+
+export const testMuzakki = query({
+  args: { relawanId: v.id("users") },
+  handler: async (ctx, args) => {
+    const muzakkis = await ctx.db
+      .query("muzakkis")
+      .withIndex("by_created_by", (q) => q.eq("createdBy", args.relawanId))
+      .collect();
+
+    return {
+      count: muzakkis.length,
+      items: muzakkis
+    };
+  },
+});
+
+export const getAllMuzakkis = query({
+  args: {},
+  handler: async (ctx) => {
+    const muzakkis = await ctx.db.query("muzakkis").take(10);
+    return {
+      count: muzakkis.length,
+      items: muzakkis
+    };
+  },
+});
 
 export const getDatabaseStats = query({
   args: {},
@@ -11,6 +95,7 @@ export const getDatabaseStats = query({
     const targets = await ctx.db.query("targets").collect();
     const templates = await ctx.db.query("messageTemplates").collect();
     const programs = await ctx.db.query("programs").collect();
+    const chatMessages = await ctx.db.query("chatMessages").collect();
 
     // Count users by role
     const usersByRole = users.reduce((acc, user) => {
@@ -40,6 +125,7 @@ export const getDatabaseStats = query({
         totalTargets: targets.length,
         totalTemplates: templates.length,
         totalPrograms: programs.length,
+        totalChatMessages: chatMessages.length,
       },
       breakdown: {
         usersByRole,

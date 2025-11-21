@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { BACKEND_PROVIDER } from './backendConfig';
+import { routeToConvex } from './convexRouter';
 
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(
@@ -15,19 +17,28 @@ export async function apiCall(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> {
+  // Route to Convex if configured
+  if (BACKEND_PROVIDER === 'convex') {
+    console.log(`🔀 Backend: Convex (${endpoint})`);
+    return routeToConvex(endpoint, options);
+  }
+
+  // Otherwise, use Supabase Edge Functions (default)
+  console.log(`🔀 Backend: Supabase (${endpoint})`);
+
   // For GET requests (read-only), use publicAnonKey
   // For POST/PUT/DELETE, use user's access token
   const method = options.method || 'GET';
   const isReadOnly = method === 'GET';
-  
+
   // Use publicAnonKey for all requests since backend doesn't validate JWT
   const token = publicAnonKey;
-  
+
   console.log(`📡 API Call: ${method} ${endpoint}`, {
     isReadOnly,
     usingPublicKey: true
   });
-  
+
   try {
     const response = await fetch(`${SERVER_URL}${endpoint}`, {
       ...options,
@@ -61,7 +72,7 @@ export async function apiCall(
       });
       throw new Error('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
     }
-    
+
     // Re-throw the error with context
     console.error('❌ API Call Failed:', {
       endpoint,

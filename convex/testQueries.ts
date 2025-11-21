@@ -23,3 +23,24 @@ export const getAllRegus = query({
     return await ctx.db.query("regus").collect();
   },
 });
+
+// Get all donations
+export const getAllDonations = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("donations").collect();
+  },
+});
+
+// Get all targets
+export const getAllTargets = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("targets").collect();
+  },
+});
+
+// Get all muzakkis
+export const getAllMuzakkis = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("muzakkis").collect();
+  },
+});
