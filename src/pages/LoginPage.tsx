@@ -19,7 +19,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!phoneNumber) {
       toast.error('Nomor WhatsApp harus diisi');
       return;
@@ -27,23 +27,23 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
     // Improved phone validation - accept various formats
     const cleanPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-    
+
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       toast.error('Nomor WhatsApp harus 10-15 digit');
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const response = await sendOTP(cleanPhone);
-      
+
       // Show demo OTP for development - karena belum ada third party SMS
       if (response.demo_otp) {
         toast.success('Kode OTP berhasil dikirim!');
-        toast.info(`🔑 Demo OTP: ${response.demo_otp}`, { 
+        toast.info(`🔑 Demo OTP: ${response.demo_otp}`, {
           duration: 15000,
-          description: 'Salin kode ini untuk verifikasi (belum ada SMS service)' 
+          description: 'Salin kode ini untuk verifikasi (belum ada SMS service)'
         });
         console.log('\n═══════════════════════════════════════════');
         console.log('📱 KODE OTP LOGIN');
@@ -54,11 +54,11 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
       } else {
         toast.success('Kode OTP telah dikirim ke WhatsApp Anda');
       }
-      
+
       onSendOTP?.(cleanPhone);
     } catch (error: any) {
       console.error('❌ Login error:', error);
-      
+
       // Handle specific error for unregistered phone
       if (error.message?.includes('belum terdaftar') || error.message?.includes('not found')) {
         toast.error('Nomor belum terdaftar', {
@@ -85,7 +85,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-500/20 rounded-full blur-3xl"></div>
-          
+
           <div className="relative z-10">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-16">
@@ -104,7 +104,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
                 Kelola Donasi ZISWAF dengan Mudah & Profesional
               </h1>
               <p className="text-primary-100 text-lg leading-relaxed">
-                Platform lengkap untuk relawan dalam mengelola zakat, infaq, sedekah, dan wakaf. 
+                Platform lengkap untuk relawan dalam mengelola zakat, infaq, sedekah, dan wakaf.
                 Tingkatkan efektivitas fundraising Anda dengan tools digital yang modern.
               </p>
             </div>
@@ -218,7 +218,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-center text-gray-600 text-sm">
                   Belum punya akun?{' '}
-                  <button 
+                  <button
                     onClick={onRegister}
                     className="text-primary-600 hover:text-primary-700 font-semibold"
                   >

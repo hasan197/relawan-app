@@ -188,4 +188,39 @@ export default defineSchema({
   })
     .index("by_regu", ["regu_id"])
     .index("by_created_at", ["createdAt"]),
+
+  // Notifications table
+  notifications: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    message: v.string(),
+    type: v.union(
+      v.literal("info"),
+      v.literal("success"),
+      v.literal("warning"),
+      v.literal("reminder")
+    ),
+    read: v.boolean(),
+    action_url: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "read"]),
+
+  // Communications table
+  communications: defineTable({
+    muzakkiId: v.id("muzakkis"),
+    relawanId: v.id("users"),
+    type: v.union(
+      v.literal("call"),
+      v.literal("whatsapp"),
+      v.literal("meeting"),
+      v.literal("other")
+    ),
+    notes: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_muzakki", ["muzakkiId"])
+    .index("by_relawan", ["relawanId"])
+    .index("by_created_at", ["createdAt"]),
 });

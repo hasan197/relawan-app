@@ -6,7 +6,7 @@ export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    
+
     if (identity) {
       try {
         const user = await ctx.db
@@ -16,6 +16,13 @@ export const getCurrentUser = query({
 
         if (user) {
           console.log('Found user via Convex identity:', user._id);
+
+          let reguName = undefined;
+          if (user.regu_id) {
+            const regu = await ctx.db.get(user.regu_id as any);
+            reguName = regu?.name;
+          }
+
           return {
             _id: user._id,
             fullName: user.fullName,
@@ -23,6 +30,7 @@ export const getCurrentUser = query({
             city: user.city,
             role: user.role,
             regu_id: user.regu_id || null,
+            regu_name: reguName,
             isPhoneVerified: user.isPhoneVerified,
             tokenIdentifier: user.tokenIdentifier,
             _creationTime: user._creationTime,
@@ -33,7 +41,7 @@ export const getCurrentUser = query({
         console.error('Error fetching user via identity:', error);
       }
     }
-    
+
     console.log('No valid Convex identity found');
     return null;
   },
@@ -54,7 +62,7 @@ export const login = mutation({
 
     // Verify OTP
     const now = Date.now();
-    
+
     // Check if OTP is valid and not expired
     if (!user.otp || user.otp !== args.otp) {
       throw new Error("Invalid OTP");
@@ -84,6 +92,12 @@ export const login = mutation({
       throw new Error("Failed to update user");
     }
 
+    let reguName = undefined;
+    if (updatedUser.regu_id) {
+      const regu = await ctx.db.get(updatedUser.regu_id as any);
+      reguName = regu?.name;
+    }
+
     return {
       success: true,
       user: {
@@ -93,6 +107,7 @@ export const login = mutation({
         city: updatedUser.city,
         role: updatedUser.role,
         regu_id: updatedUser.regu_id || null,
+        regu_name: reguName,
         isPhoneVerified: true,
         tokenIdentifier,
         backend: process.env.CONVEX_CLOUD_ENVIRONMENT || 'development'
@@ -122,7 +137,7 @@ async function findUserByPhone(ctx: any, phone: string) {
 }
 
 export const sendOtp = mutation({
-  args: { 
+  args: {
     phone: v.string(),
     type: v.optional(v.union(v.literal("login"), v.literal("verify_phone")))
   },
@@ -133,7 +148,7 @@ export const sendOtp = mutation({
 
     // Find user by phone (with format handling)
     const user = await findUserByPhone(ctx, args.phone);
-    
+
     // For login, user must exist
     const otpType = args.type || 'login';
     if (otpType === "login" && !user) {
@@ -183,21 +198,19 @@ export const sendOtp = mutation({
       createdAt: now
     });
 
-    // In development, log the OTP to console
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`OTP for ${args.phone}: ${otp} (valid for 5 minutes)`);
-    }
+    // Always log the OTP to console for development
+    console.log(`OTP for ${args.phone}: ${otp} (valid for 5 minutes)`);
 
-    return { 
+    return {
       success: true,
-      demo_otp: process.env.NODE_ENV !== "production" ? otp : undefined,
-      message: 'OTP sent successfully' 
+      demo_otp: otp, // Always return OTP for development (no SMS service yet)
+      message: 'OTP sent successfully'
     };
   },
 });
 
 export const register = mutation({
-  args: { 
+  args: {
     fullName: v.string(),
     phone: v.string(),
     city: v.string(),
@@ -205,7 +218,7 @@ export const register = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     // Check if user already exists
     const existingUser = await findUserByPhone(ctx, args.phone);
 
@@ -229,7 +242,7 @@ export const register = mutation({
     if (!user) {
       throw new Error("Failed to create user");
     }
-    
+
     return {
       success: true,
       user: {
@@ -247,7 +260,7 @@ export const register = mutation({
 });
 
 export const verifyOtp = mutation({
-  args: { 
+  args: {
     phone: v.string(),
     otp: v.string()
   },
@@ -271,7 +284,7 @@ export const verifyOtp = mutation({
         throw new Error(`Too many attempts. Please try again in ${remaining} minutes.`);
       } else {
         // Reset attempts if block time has passed
-        await ctx.db.patch(user._id, { 
+        await ctx.db.patch(user._id, {
           otpAttempts: 0,
           updatedAt: now
         });
@@ -281,7 +294,7 @@ export const verifyOtp = mutation({
     // Check OTP validity
     if (!user.otp || user.otp !== args.otp) {
       const attemptsLeft = maxAttempts - (user.otpAttempts || 0) - 1;
-      await ctx.db.patch(user._id, { 
+      await ctx.db.patch(user._id, {
         otpAttempts: (user.otpAttempts || 0) + 1,
         updatedAt: now
       });
@@ -301,7 +314,7 @@ export const verifyOtp = mutation({
 
     // Check if OTP is expired
     if (!user.otpExpiresAt || user.otpExpiresAt < now) {
-      await ctx.db.patch(user._id, { 
+      await ctx.db.patch(user._id, {
         otp: null,
         otpExpiresAt: null,
         updatedAt: now
@@ -352,6 +365,12 @@ export const verifyOtp = mutation({
 
     console.log("User updated:", updatedUser);
 
+    let reguName = undefined;
+    if (updatedUser.regu_id) {
+      const regu = await ctx.db.get(updatedUser.regu_id as any);
+      reguName = regu?.name;
+    }
+
     // Return response format that matches frontend expectations
     const userResponse = {
       id: updatedUser._id,
@@ -360,6 +379,7 @@ export const verifyOtp = mutation({
       city: updatedUser.city,
       role: updatedUser.role,
       regu_id: updatedUser.regu_id || null,
+      regu_name: reguName,
       isPhoneVerified: true,
       tokenIdentifier
     };
@@ -377,7 +397,34 @@ export const verifyOtp = mutation({
 export const logout = mutation({
   args: {},
   handler: async (ctx) => {
-    // In a real app, you might want to invalidate the token here
     return { success: true };
   },
 });
+
+export const updatePhone = mutation({
+  args: {
+    oldPhone: v.string(),
+    newPhone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find user by old phone
+    const user = await findUserByPhone(ctx, args.oldPhone);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if new phone is already taken
+    const existing = await findUserByPhone(ctx, args.newPhone);
+    if (existing) {
+      throw new Error("Phone number already in use");
+    }
+
+    await ctx.db.patch(user._id, {
+      phone: args.newPhone,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+

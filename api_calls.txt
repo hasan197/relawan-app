@@ -1,0 +1,48 @@
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useChat.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useChat.ts:      const response = await apiCall(`/chat/${reguId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useChat.ts:      const response = await apiCall('/chat', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall(`/muzakki?relawan_id=${relawanId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall('/muzakki', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall(`/muzakki/${muzakkiId}`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      await apiCall(`/muzakki/${muzakkiId}?relawan_id=${relawanId}`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall(`/muzakki/${muzakkiId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall(`/communications/${muzakkiId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall('/communications', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall(`/muzakki/${muzakkiId}`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall('/communications', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      await apiCall(`/muzakki/${muzakkiId}`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useMuzakki.ts:      const response = await apiCall('/muzakki', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAdminStats.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAdminStats.ts:      const globalResponse = await apiCall('/admin/stats/global');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAdminStats.ts:      const reguResponse = await apiCall('/admin/stats/regu');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAuth.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAuth.ts:      const response = await apiCall('/auth/register', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAuth.ts:      const response = await apiCall('/auth/send-otp', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAuth.ts:      const response = await apiCall('/auth/verify-otp', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useAuth.ts:      const response = await apiCall(`/users/phone/${currentUser.phone}`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useDonations.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useDonations.ts:      const response = await apiCall(`/donations?relawan_id=${relawanId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useDonations.ts:      const response = await apiCall('/donations', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useDonations.ts:      const response = await apiCall(`/donations?muzakki_id=${muzakkiId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useNotifications.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useNotifications.ts:      const response = await apiCall(`/notifications/${userId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useNotifications.ts:      const response = await apiCall(`/notifications/${notificationId}/read`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useNotifications.ts:      const response = await apiCall('/notifications', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useTemplates.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useTemplates.ts:      const response = await apiCall('/templates');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useTemplates.ts:      const response = await apiCall('/templates', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useStatistics.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useStatistics.ts:      const response = await apiCall(`/statistics/${relawanId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:        response = await apiCall(`/regu/${reguId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:          response = await apiCall(`/regu/by-code/${reguId}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:      const response = await apiCall(`/regu/${idToUse}/members`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:      const response = await apiCall(`/regu/${reguId}/members`, {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:      const response = await apiCall('/regus');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:      const response = await apiCall('/regus', {
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/useRegu.ts:      const response = await apiCall('/regus');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/usePrograms.ts:import { apiCall } from '../lib/supabase';
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/usePrograms.ts:      const response = await apiCall('/programs');
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/usePrograms.ts:      const response = await apiCall(`/programs/${id}`);
+/Users/admin/Workspace/projects/relawan-app/source-code/src/hooks/usePrograms.ts:      const response = await apiCall('/programs', {

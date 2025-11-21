@@ -95,3 +95,75 @@ export const getRelawanStatistics = query({
         };
     },
 });
+
+export const getGlobalStats = query({
+    args: {},
+    handler: async (ctx) => {
+        const donations = await ctx.db.query("donations").collect();
+        const muzakkis = await ctx.db.query("muzakkis").collect();
+        const relawans = await ctx.db.query("users").filter(q => q.eq(q.field("role"), "relawan")).collect();
+        const regus = await ctx.db.query("regus").collect();
+
+        const totalDonations = donations
+            .filter((d) => !d.type || d.type === "incoming")
+            .reduce((sum, d) => sum + (d.amount || 0), 0);
+
+        return {
+            total_donations: totalDonations,
+            total_muzakki: muzakkis.length,
+            total_relawan: relawans.length,
+            total_regu: regus.length,
+        };
+    },
+});
+
+export const getReguStats = query({
+    args: {},
+    handler: async (ctx) => {
+        const regus = await ctx.db.query("regus").collect();
+        const stats = [];
+
+        for (const regu of regus) {
+            const members = await ctx.db
+                .query("users")
+                .withIndex("by_regu", (q) => q.eq("regu_id", regu._id))
+                .collect();
+
+            const memberIds = members.map(m => m._id);
+
+            // This is inefficient (N+1), but fine for small scale. 
+            // Ideally we'd aggregate or use a better query structure.
+            let reguDonations = 0;
+            let reguMuzakkis = 0;
+
+            for (const memberId of memberIds) {
+                const donations = await ctx.db
+                    .query("donations")
+                    .withIndex("by_relawan", (q) => q.eq("relawanId", memberId))
+                    .collect();
+
+                reguDonations += donations
+                    .filter((d) => !d.type || d.type === "incoming")
+                    .reduce((sum, d) => sum + (d.amount || 0), 0);
+
+                const muzakkis = await ctx.db
+                    .query("muzakkis")
+                    .withIndex("by_created_by", (q) => q.eq("createdBy", memberId))
+                    .collect();
+
+                reguMuzakkis += muzakkis.length;
+            }
+
+            stats.push({
+                id: regu._id,
+                name: regu.name,
+                member_count: members.length,
+                total_donations: reguDonations,
+                total_muzakki: reguMuzakkis,
+            });
+        }
+
+        return stats;
+    },
+});
+
