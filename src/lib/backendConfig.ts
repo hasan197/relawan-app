@@ -10,10 +10,11 @@ export type BackendProvider = 'supabase' | 'convex';
 
 /**
  * Get the active backend provider from environment variable
- * Defaults to 'supabase' if not set
+ * Defaults to 'convex' for production to ensure data access
  */
 export const BACKEND_PROVIDER: BackendProvider =
-    (import.meta.env.VITE_BACKEND_PROVIDER as BackendProvider) || 'supabase';
+    (import.meta.env.VITE_BACKEND_PROVIDER as BackendProvider) || 
+    (import.meta.env.PROD ? 'convex' : 'supabase');
 
 /**
  * Check if Convex is the active backend
