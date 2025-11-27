@@ -13,8 +13,7 @@ export type BackendProvider = 'supabase' | 'convex';
  * Check both VITE_BACKEND_PROVIDER and VITE_BACKEND for compatibility
  */
 export const BACKEND_PROVIDER: BackendProvider = 
-    (import.meta.env.VITE_BACKEND_PROVIDER as BackendProvider) || 
-    (import.meta.env.VITE_BACKEND as BackendProvider) || 
+    ((import.meta.env.VITE_BACKEND_PROVIDER || import.meta.env.VITE_BACKEND) as BackendProvider) || 
     'convex';
 
 /**
