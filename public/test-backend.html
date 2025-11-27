@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Test</title>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        // Test backend configuration
+        console.log('🔧 VITE_BACKEND_PROVIDER:', import.meta.env.VITE_BACKEND_PROVIDER);
+        console.log('🔧 VITE_CONVEX_URL:', import.meta.env.VITE_CONVEX_URL);
+        console.log('🔧 PROD:', import.meta.env.PROD);
+        
+        document.getElementById('results').innerHTML = `
+            <p>VITE_BACKEND_PROVIDER: ${import.meta.env.VITE_BACKEND_PROVIDER || 'undefined'}</p>
+            <p>VITE_CONVEX_URL: ${import.meta.env.VITE_CONVEX_URL || 'undefined'}</p>
+            <p>PROD: ${import.meta.env.PROD || 'undefined'}</p>
+        `;
+    </script>
+</body>
+</html>
