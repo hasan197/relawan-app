@@ -8,7 +8,7 @@ import { api } from '../../convex/_generated/api';
  * This allows apiCall() to route to Convex without changing any hooks
  */
 
-const convexUrl = import.meta.env.VITE_CONVEX_URL || 'https://quixotic-rhinoceros-311.convex.cloud';
+const convexUrl = (import.meta.env.VITE_CONVEX_URL as string) || 'https://quixotic-rhinoceros-311.convex.cloud';
 let convexClient: ConvexHttpClient | null = null;
 
 function getConvexClient(): ConvexHttpClient {
