@@ -56,9 +56,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     console.log('📊 AppContext - Muzakki list updated:', {
       count: muzakki.muzakkiList.length,
       loading: muzakki.loading,
-      data: muzakki.muzakkiList
+      error: muzakki.error,
+      userId: auth.user?.id,
+      data: muzakki.muzakkiList.slice(0, 3) // Show first 3 items
     });
-  }, [muzakki.muzakkiList, muzakki.loading]);
+  }, [muzakki.muzakkiList, muzakki.loading, muzakki.error, auth.user?.id]);
+
+  // Debug: Log donations list changes
+  useEffect(() => {
+    console.log('💰 AppContext - Donations list updated:', {
+      count: donations.donations.length,
+      loading: donations.loading,
+      error: donations.error,
+      userId: auth.user?.id,
+      data: donations.donations.slice(0, 3) // Show first 3 items
+    });
+  }, [donations.donations, donations.loading, donations.error, auth.user?.id]);
 
   useEffect(() => {
     setLoading(auth.loading);
