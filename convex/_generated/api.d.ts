@@ -26,6 +26,7 @@ import type * as templates from "../templates.js";
 import type * as testData from "../testData.js";
 import type * as testMuzakki from "../testMuzakki.js";
 import type * as testQueries from "../testQueries.js";
+import type * as verifyAllData from "../verifyAllData.js";
 import type * as verifySeed from "../verifySeed.js";
 import type * as verify_user_data from "../verify_user_data.js";
 
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   testData: typeof testData;
   testMuzakki: typeof testMuzakki;
   testQueries: typeof testQueries;
+  verifyAllData: typeof verifyAllData;
   verifySeed: typeof verifySeed;
   verify_user_data: typeof verify_user_data;
 }>;

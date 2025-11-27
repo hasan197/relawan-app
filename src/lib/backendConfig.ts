@@ -30,4 +30,6 @@ export const isSupabaseBackend = (): boolean => BACKEND_PROVIDER === 'supabase';
  */
 if (typeof window !== 'undefined') {
     console.log('🔧 Backend Provider:', BACKEND_PROVIDER);
+    console.log('🔧 VITE_BACKEND_PROVIDER:', import.meta.env.VITE_BACKEND_PROVIDER);
+    console.log('🔧 VITE_CONVEX_URL:', import.meta.env.VITE_CONVEX_URL);
 }
