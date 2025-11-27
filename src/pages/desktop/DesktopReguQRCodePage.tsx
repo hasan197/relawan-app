@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { useRegu } from '../../hooks/useRegu';
 import { copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useAppContext } from '../../contexts/AppContext';
 import QRCode from 'qrcode';
 

@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { getInitials, formatRelativeTime, formatCurrency } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useSingleMuzakki, useCommunications, useUpdateMuzakki, useAddCommunication, useDeleteMuzakki } from '../../hooks/useMuzakki';
 import { useMuzakkiDonations } from '../../hooks/useDonations';
 import { useState, useEffect } from 'react';

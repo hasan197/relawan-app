@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
 import { useAppContext } from '../../contexts/AppContext';
 import { useChat } from '../../hooks/useChat';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopChatReguPageProps {
   onBack?: () => void;

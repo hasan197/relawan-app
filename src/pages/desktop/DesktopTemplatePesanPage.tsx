@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useTemplates } from '../../hooks/useTemplates';
 
 interface DesktopTemplatePesanPageProps {
@@ -29,7 +29,7 @@ export function DesktopTemplatePesanPage({ onBack }: DesktopTemplatePesanPagePro
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         template.content.toLowerCase().includes(searchQuery.toLowerCase());
+                         template.message.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -108,11 +108,11 @@ export function DesktopTemplatePesanPage({ onBack }: DesktopTemplatePesanPagePro
                     </div>
                     
                     <p className="text-gray-600 text-sm mb-4 line-clamp-4 leading-relaxed">
-                      {template.content}
+                      {template.message}
                     </p>
                     
                     <Button 
-                      onClick={() => handleCopy(template.content)}
+                      onClick={() => handleCopy(template.message)}
                       size="sm"
                       variant="outline"
                       className="w-full"

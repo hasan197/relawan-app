@@ -4,7 +4,7 @@ import { Card } from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
 import { Switch } from '../../components/ui/switch';
 import { Button } from '../../components/ui/button';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopPengaturanPageProps {
   onBack?: () => void;

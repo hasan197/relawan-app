@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopMateriPromosiPageProps {
   onBack?: () => void;

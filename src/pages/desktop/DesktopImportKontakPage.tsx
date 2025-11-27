@@ -4,7 +4,9 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { useMuzakki } from '../../hooks/useMuzakki';
+import { useAuth } from '../../hooks/useAuth';
 
 interface DesktopImportKontakPageProps {
   onBack?: () => void;
@@ -23,38 +25,53 @@ export function DesktopImportKontakPage({ onBack, onImport }: DesktopImportKonta
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectAll, setSelectAll] = useState(true);
-
-  // Mock contacts for demo
-  const mockContacts: Contact[] = [
-    { id: '1', name: 'Abdullah Rahman', phone: '+628123456701', selected: true, isDuplicate: false },
-    { id: '2', name: 'Siti Khadijah', phone: '+628123456702', selected: true, isDuplicate: false },
-    { id: '3', name: 'Ahmad Syarif', phone: '+62812345001', selected: false, isDuplicate: true },
-    { id: '4', name: 'Umar bin Khattab', phone: '+628123456703', selected: true, isDuplicate: false },
-    { id: '5', name: 'Aisyah binti Abu Bakar', phone: '+628123456704', selected: true, isDuplicate: false },
-    { id: '6', name: 'Ali bin Abi Thalib', phone: '+628123456705', selected: true, isDuplicate: false },
-    { id: '7', name: 'Fatimah Az-Zahra', phone: '+628123456706', selected: true, isDuplicate: false },
-  ];
+  const { user } = useAuth();
+  const { muzakkiList } = useMuzakki(user?.id || null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Simulate file processing
+    // Simulate file processing - in real implementation, parse CSV/Excel
     toast.success('Memproses file...');
     setTimeout(() => {
-      setContacts(mockContacts);
+      // For demo, create sample contacts from file
+      const fileContacts: Contact[] = [
+        { id: 'file-1', name: 'Abdullah Rahman', phone: '+628123456701', selected: true, isDuplicate: false },
+        { id: 'file-2', name: 'Siti Khadijah', phone: '+628123456702', selected: true, isDuplicate: false },
+      ];
+      
+      // Check for duplicates against existing muzakki
+      const contactsWithDuplicates = fileContacts.map(contact => ({
+        ...contact,
+        isDuplicate: muzakkiList.some(m => m.phone === contact.phone)
+      }));
+      
+      setContacts(contactsWithDuplicates);
       setStep('review');
-      toast.success(`${mockContacts.length} kontak ditemukan`);
+      toast.success(`${fileContacts.length} kontak ditemukan`);
     }, 1500);
   };
 
   const handleRequestPermission = () => {
-    // Simulate permission request
+    // Simulate permission request - in real implementation, use Contacts API
     toast.success('Mengakses kontak...');
     setTimeout(() => {
-      setContacts(mockContacts);
+      // For demo, create sample contacts from phone
+      const phoneContacts: Contact[] = [
+        { id: 'phone-1', name: 'Umar bin Khattab', phone: '+628123456703', selected: true, isDuplicate: false },
+        { id: 'phone-2', name: 'Aisyah binti Abu Bakar', phone: '+628123456704', selected: true, isDuplicate: false },
+      ];
+      
+      // Check for duplicates against existing muzakki
+      const contactsWithDuplicates = phoneContacts.map(contact => ({
+        ...contact,
+        isDuplicate: muzakkiList.some(m => m.phone === contact.phone)
+      }));
+      
+      setContacts(contactsWithDuplicates);
       setStep('review');
-      toast.success(`${mockContacts.length} kontak ditemukan`);
+      toast.success(`${phoneContacts.length} kontak ditemukan`);
     }, 1500);
   };
 

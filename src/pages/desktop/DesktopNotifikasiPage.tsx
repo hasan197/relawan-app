@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { formatRelativeTime } from '../../lib/utils';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAppContext } from '../../contexts/AppContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopNotifikasiPageProps {
   onBack?: () => void;

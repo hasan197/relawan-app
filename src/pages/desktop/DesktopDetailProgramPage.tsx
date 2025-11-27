@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { formatCurrency, copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useSingleProgram } from '../../hooks/usePrograms.tsx';
 
 interface DesktopDetailProgramPageProps {
@@ -19,12 +19,14 @@ export function DesktopDetailProgramPage({ programId, onBack }: DesktopDetailPro
   const progress = program ? (program.collected / program.target) * 100 : 0;
   const daysLeft = program ? Math.ceil((new Date(program.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-  const handleShare = (programId: string) => {
-    const shareText = `Lihat program ${program.name} - ${program.description}. Target: Rp ${program.target.toLocaleString()}`;
+  const handleShare = () => {
+    if (!program) return;
+    
+    const shareText = `Lihat program ${program.title} - ${program.description}. Target: Rp ${program.target.toLocaleString()}`;
     
     if (navigator.share) {
       navigator.share({
-        title: program.name,
+        title: program.title,
         text: shareText,
         url: window.location.href
       }).then(() => {
@@ -111,7 +113,7 @@ export function DesktopDetailProgramPage({ programId, onBack }: DesktopDetailPro
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => handleShare(programId || '')} variant="outline" size="sm">
+              <Button onClick={handleShare} variant="outline" size="sm">
                 <Share2 className="h-4 w-4 mr-2" />
                 Bagikan
               </Button>

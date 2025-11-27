@@ -8,7 +8,7 @@ import { Badge } from '../../components/ui/badge';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopDonaturPageProps {
   onNavigate?: (page: string) => void;

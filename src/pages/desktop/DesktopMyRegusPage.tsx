@@ -1,7 +1,12 @@
+import { ArrowLeft, Plus, Users, Loader2, QrCode, TrendingUp } from 'lucide-react';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Progress } from '../../components/ui/progress';
 import { useAppContext } from '../../contexts/AppContext';
 import { usePembimbingRegus } from '../../hooks/useRegu';
 import { formatCurrency, copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface DesktopMyRegusPageProps {
   onBack?: () => void;

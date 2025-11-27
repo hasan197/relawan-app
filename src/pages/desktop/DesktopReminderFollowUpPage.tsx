@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { useAppContext } from '../../contexts/AppContext';
 
 interface DesktopReminderFollowUpPageProps {
   onBack?: () => void;
@@ -24,52 +25,56 @@ interface FollowUpItem {
 }
 
 export function DesktopReminderFollowUpPage({ onBack }: DesktopReminderFollowUpPageProps) {
-  const [followUps, setFollowUps] = useState<FollowUpItem[]>([
-    {
-      id: '1',
-      muzakkiId: '2',
-      muzakkiName: 'Fatimah Azzahra',
-      phone: '+62812345002',
-      lastContact: new Date('2025-11-05'),
-      daysSinceContact: 3,
-      priority: 'high',
-      status: 'follow-up',
-      notes: 'Tertarik untuk wakaf'
-    },
-    {
-      id: '2',
-      muzakkiId: '3',
-      muzakkiName: 'Muhammad Rizki',
-      phone: '+62812345003',
-      lastContact: new Date('2025-11-06'),
-      daysSinceContact: 2,
-      priority: 'high',
-      status: 'baru',
-      notes: 'Kontak dari acara sosialisasi'
-    },
-    {
-      id: '3',
-      muzakkiId: '4',
-      muzakkiName: 'Siti Nurhaliza',
-      phone: '+62812345004',
-      lastContact: new Date('2025-11-06'),
-      daysSinceContact: 2,
-      priority: 'medium',
-      status: 'follow-up',
-      notes: 'Butuh info lebih detail tentang zakat profesi'
-    },
-    {
-      id: '4',
-      muzakkiId: '5',
-      muzakkiName: 'Abdullah Rahman',
-      phone: '+62812345005',
-      lastContact: new Date('2025-11-04'),
-      daysSinceContact: 4,
-      priority: 'high',
-      status: 'follow-up',
-      notes: 'Sudah berkomitmen untuk donasi minggu depan'
-    }
-  ]);
+  const { user, muzakkiList } = useAppContext();
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
+
+  useEffect(() => {
+    // Generate follow-ups from muzakki data
+    const generateFollowUps = () => {
+      if (!muzakkiList.length) return;
+
+      const followUpData: FollowUpItem[] = muzakkiList
+        .filter(m => m.status === 'follow-up' || m.status === 'baru')
+        .map(m => {
+          const lastContact = m.last_contact ? new Date(m.last_contact) : new Date();
+          const daysSinceContact = Math.floor((new Date().getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Determine priority based on days since contact and status
+          let priority: 'high' | 'medium' | 'low' = 'medium';
+          if (daysSinceContact > 7 || m.status === 'baru') {
+            priority = 'high';
+          } else if (daysSinceContact > 3) {
+            priority = 'medium';
+          } else {
+            priority = 'low';
+          }
+
+          return {
+            id: m.id,
+            muzakkiId: m.id,
+            muzakkiName: m.name,
+            phone: m.phone,
+            lastContact,
+            daysSinceContact,
+            priority,
+            status: m.status,
+            notes: m.notes || ''
+          };
+        })
+        .sort((a, b) => {
+          // Sort by priority first, then by days since contact
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+          }
+          return b.daysSinceContact - a.daysSinceContact;
+        });
+
+      setFollowUps(followUpData);
+    };
+
+    generateFollowUps();
+  }, [muzakkiList]);
 
   const [filter, setFilter] = useState<'semua' | 'high' | 'medium' | 'low'>('semua');
 
