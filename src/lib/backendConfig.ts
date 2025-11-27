@@ -10,10 +10,12 @@ export type BackendProvider = 'supabase' | 'convex';
 
 /**
  * Get the active backend provider from environment variable
- * Defaults to 'convex' for production to ensure data access
+ * Check both VITE_BACKEND_PROVIDER and VITE_BACKEND for compatibility
  */
 export const BACKEND_PROVIDER: BackendProvider = 
-    (import.meta.env.VITE_BACKEND_PROVIDER as BackendProvider) || 'convex';
+    (import.meta.env.VITE_BACKEND_PROVIDER as BackendProvider) || 
+    (import.meta.env.VITE_BACKEND as BackendProvider) || 
+    'convex';
 
 /**
  * Check if Convex is the active backend
@@ -31,5 +33,7 @@ export const isSupabaseBackend = (): boolean => BACKEND_PROVIDER === 'supabase';
 if (typeof window !== 'undefined') {
     console.log('🔧 Backend Provider:', BACKEND_PROVIDER);
     console.log('🔧 VITE_BACKEND_PROVIDER:', import.meta.env.VITE_BACKEND_PROVIDER);
+    console.log('🔧 VITE_BACKEND:', import.meta.env.VITE_BACKEND);
     console.log('🔧 VITE_CONVEX_URL:', import.meta.env.VITE_CONVEX_URL);
+    console.log('🔧 NEXT_PUBLIC_CONVEX_URL:', import.meta.env.NEXT_PUBLIC_CONVEX_URL);
 }
