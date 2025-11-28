@@ -1,10 +1,18 @@
-import { useState } from 'react';
-import { Phone, ArrowRight, Users, TrendingUp, Award, Shield, Zap } from 'lucide-react';
-import { Card } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { toast } from 'sonner@2.0.3';
-import { useAuth } from '../hooks/useAuth';
+import { useState } from "react";
+import {
+  Phone,
+  ArrowRight,
+  Users,
+  TrendingUp,
+  Award,
+  Shield,
+  Zap,
+} from "lucide-react";
+import { Card } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { toast } from "sonner@2.0.3";
+import { useAuth } from "../hooks/useAuth";
 
 interface LoginPageProps {
   onLogin?: () => void;
@@ -12,8 +20,12 @@ interface LoginPageProps {
   onRegister?: () => void;
 }
 
-export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
-  const [phoneNumber, setPhoneNumber] = useState('');
+export function LoginPage({
+  onLogin,
+  onSendOTP,
+  onRegister,
+}: LoginPageProps) {
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { sendOTP } = useAuth();
 
@@ -21,15 +33,15 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
     e.preventDefault();
 
     if (!phoneNumber) {
-      toast.error('Nomor WhatsApp harus diisi');
+      toast.error("Nomor WhatsApp harus diisi");
       return;
     }
 
     // Improved phone validation - accept various formats
-    const cleanPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    const cleanPhone = phoneNumber.replace(/\D/g, ""); // Remove non-digits
 
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
-      toast.error('Nomor WhatsApp harus 10-15 digit');
+      toast.error("Nomor WhatsApp harus 10-15 digit");
       return;
     }
 
@@ -40,37 +52,56 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
       // Show demo OTP for development - karena belum ada third party SMS
       if (response.demo_otp) {
-        toast.success('Kode OTP berhasil dikirim!');
+        toast.success("Kode OTP berhasil dikirim!");
         toast.info(`🔑 Demo OTP: ${response.demo_otp}`, {
           duration: 15000,
-          description: 'Salin kode ini untuk verifikasi (belum ada SMS service)'
+          description:
+            "Salin kode ini untuk verifikasi (belum ada SMS service)",
         });
-        console.log('\n═══════════════════════════════════════════');
-        console.log('📱 KODE OTP LOGIN');
-        console.log('═══════════════════════════════════════════');
+        console.log(
+          "\n═══════════════════════════════════════════",
+        );
+        console.log("📱 KODE OTP LOGIN");
+        console.log(
+          "═══════════════════════════════════════════",
+        );
         console.log(`Phone: ${cleanPhone}`);
         console.log(`OTP: ${response.demo_otp}`);
-        console.log('═══════════════════════════════════════════\n');
+        console.log(
+          "═══════════════════════════════════════════\n",
+        );
       } else {
-        toast.success('Kode OTP telah dikirim ke WhatsApp Anda');
+        toast.success(
+          "Kode OTP telah dikirim ke WhatsApp Anda",
+        );
       }
 
       onSendOTP?.(cleanPhone);
     } catch (error: any) {
-      console.error('❌ Login error:', error);
+      console.error("❌ Login error:", error);
 
+      // Handle server unavailable error
+      if (error.message === "SERVER_UNAVAILABLE") {
+        toast.error("Server Backend Belum Aktif", {
+          description: "Mohon deploy Supabase Edge Function terlebih dahulu. Lihat console untuk instruksi.",
+          duration: 10000,
+        });
+      }
       // Handle specific error for unregistered phone
-      if (error.message?.includes('belum terdaftar') || error.message?.includes('not found')) {
-        toast.error('Nomor belum terdaftar', {
-          description: 'Silakan daftar terlebih dahulu',
+      else if (
+        error.message?.includes("belum terdaftar") ||
+        error.message?.includes("not found")
+      ) {
+        toast.error("Nomor belum terdaftar", {
+          description: "Silakan daftar terlebih dahulu",
           action: {
-            label: 'Daftar',
-            onClick: () => onRegister?.()
+            label: "Daftar",
+            onClick: () => onRegister?.(),
           },
-          duration: 5000
+          duration: 5000,
         });
       } else {
-        toast.error(error.message || 'Gagal mengirim OTP');
+        toast.error(error.message || "Gagal mengirim OTP");
       }
     } finally {
       setIsLoading(false);
@@ -93,8 +124,12 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
                 <span className="text-3xl">🕌</span>
               </div>
               <div>
-                <h2 className="text-white font-semibold">ZISWAF Manager</h2>
-                <p className="text-primary-100 text-sm">Platform Relawan Digital</p>
+                <h2 className="text-white font-semibold">
+                  ZISWAF Manager
+                </h2>
+                <p className="text-primary-100 text-sm">
+                  Platform Relawan Digital
+                </p>
               </div>
             </div>
 
@@ -104,8 +139,10 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
                 Kelola Donasi ZISWAF dengan Mudah & Profesional
               </h1>
               <p className="text-primary-100 text-lg leading-relaxed">
-                Platform lengkap untuk relawan dalam mengelola zakat, infaq, sedekah, dan wakaf.
-                Tingkatkan efektivitas fundraising Anda dengan tools digital yang modern.
+                Platform lengkap untuk relawan dalam mengelola
+                zakat, infaq, sedekah, dan wakaf. Tingkatkan
+                efektivitas fundraising Anda dengan tools
+                digital yang modern.
               </p>
             </div>
 
@@ -113,18 +150,30 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
             <div className="grid grid-cols-3 gap-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <Users className="h-8 w-8 text-accent-300 mb-2" />
-                <div className="text-2xl font-bold text-white">500+</div>
-                <div className="text-primary-100 text-sm">Relawan Aktif</div>
+                <div className="text-2xl font-bold text-white">
+                  500+
+                </div>
+                <div className="text-primary-100 text-sm">
+                  Relawan Aktif
+                </div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <TrendingUp className="h-8 w-8 text-accent-300 mb-2" />
-                <div className="text-2xl font-bold text-white">5M+</div>
-                <div className="text-primary-100 text-sm">Total Donasi</div>
+                <div className="text-2xl font-bold text-white">
+                  5M+
+                </div>
+                <div className="text-primary-100 text-sm">
+                  Total Donasi
+                </div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <Award className="h-8 w-8 text-accent-300 mb-2" />
-                <div className="text-2xl font-bold text-white">50+</div>
-                <div className="text-primary-100 text-sm">Regu Aktif</div>
+                <div className="text-2xl font-bold text-white">
+                  50+
+                </div>
+                <div className="text-primary-100 text-sm">
+                  Regu Aktif
+                </div>
               </div>
             </div>
           </div>
@@ -136,8 +185,12 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
                 <Shield className="h-5 w-5 text-accent-300" />
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-1">Aman & Terpercaya</h3>
-                <p className="text-primary-100 text-sm">Data terenkripsi dan sistem keamanan berlapis</p>
+                <h3 className="text-white font-semibold mb-1">
+                  Aman & Terpercaya
+                </h3>
+                <p className="text-primary-100 text-sm">
+                  Data terenkripsi dan sistem keamanan berlapis
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -145,8 +198,12 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
                 <TrendingUp className="h-5 w-5 text-accent-300" />
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-1">Real-time Analytics</h3>
-                <p className="text-primary-100 text-sm">Pantau performa dan target secara langsung</p>
+                <h3 className="text-white font-semibold mb-1">
+                  Real-time Analytics
+                </h3>
+                <p className="text-primary-100 text-sm">
+                  Pantau performa dan target secara langsung
+                </p>
               </div>
             </div>
           </div>
@@ -160,34 +217,46 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
               <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                 <span className="text-3xl">🕌</span>
               </div>
-              <h1 className="text-gray-900 text-xl font-bold mb-1">ZISWAF Manager</h1>
-              <p className="text-gray-600 text-sm">Platform Relawan Digital</p>
+              <h1 className="text-gray-900 text-xl font-bold mb-1">
+                ZISWAF Manager
+              </h1>
+              <p className="text-gray-600 text-sm">
+                Platform Relawan Digital
+              </p>
             </div>
 
             {/* Login Card */}
             <Card className="p-6 lg:p-8 shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
               <div className="mb-6">
-                <h2 className="text-gray-900 text-xl lg:text-2xl font-bold mb-2">Selamat Datang</h2>
+                <h2 className="text-gray-900 text-xl lg:text-2xl font-bold mb-2">
+                  Selamat Datang
+                </h2>
                 <p className="text-gray-600 text-sm">
-                  Masukkan nomor WhatsApp untuk menerima kode OTP
+                  Masukkan nomor WhatsApp untuk menerima kode
+                  OTP
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
                 <div>
                   <label className="block text-gray-700 font-medium mb-2 text-sm">
                     Nomor WhatsApp
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-9 lg:h-9 bg-primary-50 rounded-lg flex items-center justify-center">
-                      <Phone className="h-5 w-5 lg:h-4 lg:w-4 text-primary-600" />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-primary-600" />
                     </div>
                     <Input
                       type="tel"
                       placeholder="08123456789"
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-14 lg:pl-12 h-12 lg:h-11 text-base lg:text-sm border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-xl lg:rounded-lg"
+                      onChange={(e) =>
+                        setPhoneNumber(e.target.value)
+                      }
+                      className="pl-12 h-10 border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-lg"
                       disabled={isLoading}
                     />
                   </div>
@@ -198,7 +267,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 lg:h-11 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-base lg:text-sm font-semibold shadow-lg hover:shadow-xl transition-all rounded-xl lg:rounded-lg"
+                  className="w-full h-10 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 font-semibold shadow-lg hover:shadow-xl transition-all rounded-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -217,7 +286,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-center text-gray-600 text-sm">
-                  Belum punya akun?{' '}
+                  Belum punya akun?{" "}
                   <button
                     onClick={onRegister}
                     className="text-primary-600 hover:text-primary-700 font-semibold"
@@ -247,7 +316,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
             </div>
 
             <p className="text-center text-gray-500 text-xs mt-4">
-              Dengan masuk, Anda menyetujui{' '}
+              Dengan masuk, Anda menyetujui{" "}
               <button className="text-primary-600 hover:underline font-medium">
                 Syarat & Ketentuan
               </button>

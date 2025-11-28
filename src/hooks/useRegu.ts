@@ -18,8 +18,6 @@ export interface Regu {
   member_count: number;
   total_donations: number;
   target_amount?: number;
-  rank?: number;
-  achievements?: number;
   join_code?: string; // New field
   qr_code?: string; // Legacy field - for backward compatibility
   created_at: string;
@@ -40,7 +38,7 @@ export function useRegu(reguId: string | null) {
 
     try {
       console.log('🔄 Fetching regu:', reguId);
-
+      
       // Try to fetch by ID first
       let response;
       try {
@@ -54,7 +52,7 @@ export function useRegu(reguId: string | null) {
           throw err;
         }
       }
-
+      
       console.log('✅ Regu fetched:', response.data);
       setRegu(response.data);
       setActualReguId(response.data.id); // Save actual regu ID
@@ -71,7 +69,7 @@ export function useRegu(reguId: string | null) {
   const fetchMembers = useCallback(async () => {
     // Wait until we have actual regu ID
     const idToUse = actualReguId || reguId;
-
+    
     if (!idToUse) {
       return;
     }
@@ -181,7 +179,7 @@ export function useCreateRegu() {
 
     try {
       console.log('📝 Creating new regu:', { pembimbingId, name, targetAmount });
-
+      
       const response = await apiCall('/regus', {
         method: 'POST',
         body: JSON.stringify({
@@ -225,12 +223,12 @@ export function usePembimbingRegus(pembimbingId: string | null) {
     try {
       console.log('🔄 Fetching regus for pembimbing:', pembimbingId);
       const response = await apiCall('/regus');
-
+      
       // Filter regu yang pembimbing_id nya sesuai
       const pembimbingRegus = (response.data || []).filter(
         (regu: Regu) => regu.pembimbing_id === pembimbingId
       );
-
+      
       console.log('✅ Pembimbing regus fetched:', pembimbingRegus.length);
       setRegus(pembimbingRegus);
       setError(null);

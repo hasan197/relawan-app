@@ -89,8 +89,8 @@ export function DesktopRiwayatAktivitasPage({ onBack }: DesktopRiwayatAktivitasP
             {/* Stats Summary */}
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-primary-50 border-primary-200">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Total Aktivitas</p>
@@ -149,7 +149,7 @@ export function DesktopRiwayatAktivitasPage({ onBack }: DesktopRiwayatAktivitasP
           <div className="col-span-3">
             {loading ? (
               <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
+                <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
               </div>
             ) : filteredActivities.length === 0 ? (
               <Card className="p-16 text-center">

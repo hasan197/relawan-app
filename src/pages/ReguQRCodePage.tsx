@@ -292,7 +292,7 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
       <div className="px-4 py-6">
         {loading ? (
           <Card className="p-12 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary-600 mx-auto mb-4" />
             <p className="text-gray-600">Memuat QR Code...</p>
           </Card>
         ) : (
@@ -349,12 +349,12 @@ export function ReguQRCodePage({ onBack }: ReguQRCodePageProps) {
                   </div>
                 ) : qrError ? (
                   <div className="w-64 h-64 mx-auto mb-6 flex flex-col items-center justify-center bg-red-50 rounded-2xl border-2 border-red-200">
-                    <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
+                    <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
                     <p className="text-red-600 text-sm">Gagal membuat QR Code</p>
                   </div>
                 ) : getJoinCode() ? (
                   <div className="w-64 h-64 mx-auto mb-6 flex flex-col items-center justify-center bg-gray-100 rounded-2xl">
-                    <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
+                    <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
                     <p className="text-gray-500 text-sm mt-2">Membuat QR Code...</p>
                   </div>
                 ) : null}

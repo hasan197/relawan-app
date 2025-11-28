@@ -271,7 +271,7 @@ export function TestConnectionPage({ onBack }: TestConnectionPageProps) {
         <Button
           onClick={runTests}
           disabled={testing}
-          className="w-full bg-primary-600 hover:bg-primary-700 h-12"
+          className="w-full bg-primary-600 hover:bg-primary-700 h-10"
         >
           {testing ? (
             <>

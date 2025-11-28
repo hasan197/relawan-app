@@ -17,8 +17,8 @@ export function RegisterSuccessPage({ onComplete }: RegisterSuccessPageProps) {
       <div className="w-full max-w-md">
         <Card className="p-8 shadow-xl text-center">
           {/* Success Icon */}
-          <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <CheckCircle className="h-12 w-12 text-white" />
+          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <CheckCircle className="h-10 w-10 text-white" />
           </div>
 
           {/* Title */}

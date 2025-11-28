@@ -3,10 +3,12 @@ import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { useStatistics } from '../../hooks/useStatistics';
 import { formatCurrency, getInitials, formatRelativeTime } from '../../lib/utils';
+import { getMonthlyDonations, getWeeklyTrend, getTopMuzakki, getMonthlyTrend, calculatePercentageChange, getPreviousPeriodData } from '../../lib/dataAggregation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { ServerStatusBanner } from '../../components/ServerStatusBanner';
 import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface DesktopDashboardPageProps {
@@ -14,19 +16,32 @@ interface DesktopDashboardPageProps {
 }
 
 export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) {
-  const { donations, muzakkiList, getTotalDonations, getDonationsByCategory } = useAppContext();
+  const { donations, muzakkiList, muzakkiError, donationsError, getTotalDonations, getDonationsByCategory } = useAppContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const totalDonations = getTotalDonations();
   const categoryData = getDonationsByCategory();
 
-  // Stats Cards Data
+  // Use dataAggregation utilities
+  const monthlyData = useMemo(() => getMonthlyDonations(donations), [donations]);
+  const trendData = useMemo(() => getWeeklyTrend(donations), [donations]);
+  const topMuzakkiData = useMemo(() => getTopMuzakki(donations, muzakkiList, 5), [donations, muzakkiList]);
+  const monthlyTrendData = useMemo(() => getMonthlyTrend(donations), [donations]);
+
+  // Calculate percentage changes
+  const currentPeriodTotal = donations
+    .filter(d => d.type === 'incoming')
+    .reduce((sum, d) => sum + d.amount, 0);
+  const previousPeriodTotal = getPreviousPeriodData(donations, selectedPeriod);
+  const donationChange = calculatePercentageChange(currentPeriodTotal, previousPeriodTotal);
+
+  // Stats Cards Data with real calculations
   const statsCards = [
     {
       title: 'Total Donasi',
       value: formatCurrency(totalDonations),
-      change: '+12.5%',
-      trend: 'up' as const,
+      change: donationChange,
+      trend: donationChange.startsWith('+') ? 'up' as const : 'down' as const,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
@@ -60,86 +75,14 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
     }
   ];
 
-  // Chart Data
+  // Chart Data using dataAggregation
   const categoryChartData = [
     { name: 'Zakat', value: categoryData.zakat, color: '#10b981' },
     { name: 'Infaq', value: categoryData.infaq, color: '#fbbf24' },
     { name: 'Sedekah', value: categoryData.sedekah, color: '#3b82f6' },
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
-  ];
+  ].filter(item => item.value > 0);
 
-  // Calculate Monthly Data
-  const monthlyData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-
-    // Initialize last 6 months
-    const data: {
-      month: string;
-      monthIndex: number;
-      year: number;
-      zakat: number;
-      infaq: number;
-      sedekah: number;
-      wakaf: number;
-    }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(currentMonth - i);
-      const monthIndex = d.getMonth();
-      data.push({
-        month: months[monthIndex],
-        monthIndex: monthIndex,
-        year: d.getFullYear(),
-        zakat: 0,
-        infaq: 0,
-        sedekah: 0,
-        wakaf: 0
-      });
-    }
-
-    donations.forEach(d => {
-      if (d.type === 'incoming') {
-        const date = new Date(d.created_at);
-        const monthIndex = date.getMonth();
-        const year = date.getFullYear();
-
-        const monthData = data.find(m => m.monthIndex === monthIndex && m.year === year);
-        if (monthData) {
-          const category = d.category as 'zakat' | 'infaq' | 'sedekah' | 'wakaf';
-          if (monthData[category] !== undefined) {
-            monthData[category] += d.amount;
-          }
-        }
-      }
-    });
-
-    return data;
-  }, [donations]);
-
-  // Calculate Trend Data (Last 7 days)
-  const trendData = useMemo(() => {
-    const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    const data: { date: string; amount: number }[] = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      // Create date string in YYYY-MM-DD format for comparison
-      // Note: created_at is ISO string, so we compare date parts
-      const dateStr = date.toISOString().split('T')[0];
-      const dayName = days[date.getDay()];
-
-      const amount = donations
-        .filter(d => d.type === 'incoming' && d.created_at.startsWith(dateStr))
-        .reduce((sum, d) => sum + d.amount, 0);
-
-      data.push({ date: dayName, amount });
-    }
-    return data;
-  }, [donations]);
 
   // Recent Activities
   const recentActivities = donations.slice(0, 5).map(d => ({
@@ -158,13 +101,13 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
         onNavigate={onNavigate}
       />
 
-      <div className="p-8">
+      <div className="p-6">
         {/* Quick Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
             <Button
               onClick={() => onNavigate?.('tambah-prospek')}
-              className="bg-primary-600 hover:bg-primary-700 gap-2"
+              className="bg-primary-600 hover:bg-primary-700 gap-2 h-9"
             >
               <Plus className="h-4 w-4" />
               Tambah Muzakki
@@ -172,7 +115,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
             <Button
               onClick={() => onNavigate?.('generator-resi')}
               variant="outline"
-              className="gap-2"
+              className="gap-2 h-9"
             >
               <DollarSign className="h-4 w-4" />
               Catat Donasi
@@ -180,19 +123,19 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
             <Button
               onClick={() => onNavigate?.('template')}
               variant="outline"
-              className="gap-2"
+              className="gap-2 h-9"
             >
               <Download className="h-4 w-4" />
               Template WA
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {(['week', 'month', 'year'] as const).map((period) => (
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === period
+                className={`px-3 py-1.5 rounded-lg transition-colors ${selectedPeriod === period
                   ? 'bg-primary-600 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-100'
                   }`}
@@ -204,14 +147,14 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-5">
           {statsCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 ${stat.bgColor} rounded-xl`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
+              <Card key={index} className="p-4 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`p-2 ${stat.bgColor} rounded-lg`}>
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
                   <Badge className={`${stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                     } border-none gap-1`}>
@@ -227,20 +170,20 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-5">
           {/* Trend Chart */}
-          <Card className="col-span-2 p-6">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="col-span-2 p-5">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-900 mb-1">Trend Donasi</h3>
                 <p className="text-gray-500">7 hari terakhir</p>
               </div>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="h-8">
+                <Download className="h-3.5 w-3.5 mr-2" />
                 Export
               </Button>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={280}>
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="date" stroke="#9ca3af" />
@@ -260,17 +203,17 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
           </Card>
 
           {/* Category Distribution */}
-          <Card className="p-6">
+          <Card className="p-5">
             <h3 className="text-gray-900 mb-1">Distribusi Kategori</h3>
-            <p className="text-gray-500 mb-6">Total donasi per kategori</p>
-            <ResponsiveContainer width="100%" height={300}>
+            <p className="text-gray-500 mb-4">Total donasi per kategori</p>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
                   data={categoryChartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius={50}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -284,10 +227,10 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-2 gap-2 mt-3">
               {categoryChartData.map((cat) => (
                 <div key={cat.name} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                   <span className="text-gray-600">{cat.name}</span>
                 </div>
               ))}
@@ -296,10 +239,10 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
         </div>
 
         {/* Monthly Performance & Recent Activities */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-4">
           {/* Monthly Performance */}
-          <Card className="col-span-2 p-6">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="col-span-2 p-5">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-900 mb-1">Performa Bulanan</h3>
                 <p className="text-gray-500">6 bulan terakhir</p>
@@ -322,8 +265,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
           </Card>
 
           {/* Recent Activities */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-900">Aktivitas Terbaru</h3>
               <Button
                 variant="ghost"
@@ -351,7 +294,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <Activity className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <Activity className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">Belum ada aktivitas</p>
                 </div>
               )}

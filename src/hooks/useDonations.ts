@@ -33,7 +33,9 @@ export function useDonations(relawanId: string | null) {
       setDonations(response.data || []);
       setError(null);
     } catch (err: any) {
-      const errorMessage = err.message || 'Gagal memuat data donasi';
+      const errorMessage = err.message === 'SERVER_UNAVAILABLE' 
+        ? 'Server belum aktif. Mohon deploy Supabase Edge Function terlebih dahulu.'
+        : (err.message || 'Gagal memuat data donasi');
       setError(errorMessage);
       console.error('❌ Error fetching donations:', {
         relawanId,

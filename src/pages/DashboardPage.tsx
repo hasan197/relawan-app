@@ -28,6 +28,7 @@ import {
 import { MotivationalBanner } from "../components/MotivationalBanner";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { TargetProgressCard } from "../components/TargetProgressCard";
+import { ServerStatusBanner } from "../components/ServerStatusBanner";
 import { useAppContext } from "../contexts/AppContext";
 import { useStatistics } from "../hooks/useStatistics";
 import { motion } from "motion/react";
@@ -43,7 +44,7 @@ export function DashboardPage({
   const [activeNav, setActiveNav] = useState<
     "dashboard" | "donatur" | "laporan" | "profil"
   >("dashboard");
-  const { user } = useAppContext();
+  const { user, muzakkiError, donationsError } = useAppContext();
   const { statistics, loading } = useStatistics(
     user?.id || null,
   );
@@ -229,6 +230,11 @@ export function DashboardPage({
             </Card>
           </motion.div>
         )}
+      </div>
+
+      {/* Server Status Banner */}
+      <div className="px-4 mt-4">
+        <ServerStatusBanner error={muzakkiError || donationsError} />
       </div>
 
       {/* Quick Menu - 8 Shortcuts */}

@@ -1,87 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Calendar, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
+import { useFollowUp, FollowUpItem } from '../../hooks/useFollowUp';
+import { LoadingState } from '../../components/LoadingState';
 import { useAppContext } from '../../contexts/AppContext';
 
 interface DesktopReminderFollowUpPageProps {
   onBack?: () => void;
 }
 
-interface FollowUpItem {
-  id: string;
-  muzakkiId: string;
-  muzakkiName: string;
-  phone: string;
-  lastContact: Date;
-  daysSinceContact: number;
-  priority: 'high' | 'medium' | 'low';
-  status: 'baru' | 'follow-up' | 'donasi';
-  notes: string;
-}
-
 export function DesktopReminderFollowUpPage({ onBack }: DesktopReminderFollowUpPageProps) {
-  const { user, muzakkiList } = useAppContext();
-  const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
-
-  useEffect(() => {
-    // Generate follow-ups from muzakki data
-    const generateFollowUps = () => {
-      if (!muzakkiList.length) return;
-
-      const followUpData: FollowUpItem[] = muzakkiList
-        .filter(m => m.status === 'follow-up' || m.status === 'baru')
-        .map(m => {
-          const lastContact = m.last_contact ? new Date(m.last_contact) : new Date();
-          const daysSinceContact = Math.floor((new Date().getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
-          
-          // Determine priority based on days since contact and status
-          let priority: 'high' | 'medium' | 'low' = 'medium';
-          if (daysSinceContact > 7 || m.status === 'baru') {
-            priority = 'high';
-          } else if (daysSinceContact > 3) {
-            priority = 'medium';
-          } else {
-            priority = 'low';
-          }
-
-          return {
-            id: m.id,
-            muzakkiId: m.id,
-            muzakkiName: m.name,
-            phone: m.phone,
-            lastContact,
-            daysSinceContact,
-            priority,
-            status: m.status,
-            notes: m.notes || ''
-          };
-        })
-        .sort((a, b) => {
-          // Sort by priority first, then by days since contact
-          const priorityOrder = { high: 0, medium: 1, low: 2 };
-          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-          return b.daysSinceContact - a.daysSinceContact;
-        });
-
-      setFollowUps(followUpData);
-    };
-
-    generateFollowUps();
-  }, [muzakkiList]);
-
+  const { user } = useAppContext();
+  const { followUps, loading, error } = useFollowUp(user?.id || null);
   const [filter, setFilter] = useState<'semua' | 'high' | 'medium' | 'low'>('semua');
 
   const filteredFollowUps = followUps.filter(item => {
     if (filter === 'semua') return true;
     return item.priority === filter;
   });
+
+  if (loading) {
+    return <LoadingState message="Memuat data follow-up..." />;
+  }
 
   const getPriorityBadge = (priority: FollowUpItem['priority']) => {
     const variants = {
@@ -241,14 +186,14 @@ export function DesktopReminderFollowUpPage({ onBack }: DesktopReminderFollowUpP
                     <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow">
                       <div className="flex items-start gap-4 mb-4">
                         <Avatar className="h-14 w-14">
-                          <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.muzakkiName}`} />
+                          <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.muzakki_name}`} />
                           <AvatarFallback className="bg-primary-100 text-primary-700">
-                            {getInitials(item.muzakkiName)}
+                            {getInitials(item.muzakki_name)}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className="flex-1">
-                          <h4 className="text-gray-900 mb-2">{item.muzakkiName}</h4>
+                          <h4 className="text-gray-900 mb-2">{item.muzakki_name}</h4>
                           {getPriorityBadge(item.priority)}
                         </div>
                       </div>
@@ -257,8 +202,8 @@ export function DesktopReminderFollowUpPage({ onBack }: DesktopReminderFollowUpP
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="h-4 w-4 flex-shrink-0" />
                           <span className="text-sm">
-                            Terakhir dihubungi {formatRelativeTime(item.lastContact)} 
-                            <span className="text-gray-400"> ({item.daysSinceContact} hari lalu)</span>
+                            Terakhir dihubungi {formatRelativeTime(item.last_contact)} 
+                            <span className="text-gray-400"> ({item.days_since_contact} hari lalu)</span>
                           </span>
                         </div>
                         
@@ -274,14 +219,14 @@ export function DesktopReminderFollowUpPage({ onBack }: DesktopReminderFollowUpP
                       <div className="grid grid-cols-3 gap-2">
                         <Button
                           variant="outline"
-                          onClick={() => handleCall(item.phone, item.muzakkiName)}
+                          onClick={() => handleCall(item.muzakki_phone, item.muzakki_name)}
                         >
                           <Phone className="h-4 w-4" />
                         </Button>
                         
                         <Button
                           className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleWhatsApp(item.phone, item.muzakkiName)}
+                          onClick={() => handleWhatsApp(item.muzakki_phone, item.muzakki_name)}
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
                           WA

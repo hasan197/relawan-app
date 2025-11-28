@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { formatRelativeTime } from '../../lib/utils';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAppContext } from '../../contexts/AppContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopNotifikasiPageProps {
   onBack?: () => void;
@@ -107,7 +107,7 @@ export function DesktopNotifikasiPage({ onBack }: DesktopNotifikasiPageProps) {
               </div>
             ) : unreadNotifications.length === 0 ? (
               <Card className="p-12 text-center">
-                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <Bell className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">Tidak ada notifikasi baru</p>
               </Card>
             ) : (
@@ -122,7 +122,7 @@ export function DesktopNotifikasiPage({ onBack }: DesktopNotifikasiPageProps) {
           <TabsContent value="read" className="mt-0">
             {readNotifications.length === 0 ? (
               <Card className="p-12 text-center">
-                <Check className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <Check className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">Tidak ada notifikasi</p>
               </Card>
             ) : (

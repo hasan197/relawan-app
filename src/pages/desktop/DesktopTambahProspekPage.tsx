@@ -7,7 +7,7 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopTambahProspekPageProps {
   onNavigate?: (page: string) => void;

@@ -8,9 +8,9 @@ import { api } from '../../convex/_generated/api';
  * This allows apiCall() to route to Convex without changing any hooks
  */
 
-const convexUrl = (import.meta.env.VITE_CONVEX_URL as string) || 
-                   (import.meta.env.NEXT_PUBLIC_CONVEX_URL as string) || 
-                   'https://quixotic-rhinoceros-311.convex.cloud';
+const convexUrl = (import.meta.env.VITE_CONVEX_URL as string) ||
+    (import.meta.env.NEXT_PUBLIC_CONVEX_URL as string) ||
+    'https://quixotic-rhinoceros-311.convex.cloud';
 let convexClient: ConvexHttpClient | null = null;
 
 function getConvexClient(): ConvexHttpClient {
@@ -262,14 +262,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const body = JSON.parse(options.body as string);
             // @ts-ignore
             const result = await client.mutation(api.auth.sendOtp, body);
-            return { data: result };
+            return result; // Return directly without data wrapper
         }
         // POST /auth/verify-otp
         if (pathParts[0] === 'auth' && pathParts[1] === 'verify-otp' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
             const result = await client.mutation(api.auth.verifyOtp, body);
-            return { data: result };
+            return result; // Return directly without data wrapper
         }
         // PUT /users/phone/:phone
         if (pathParts[0] === 'users' && pathParts[1] === 'phone' && method === 'PUT') {

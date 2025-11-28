@@ -47,12 +47,12 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+    <div className="w-56 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
       {/* Logo & Brand */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-white" />
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-white" />
           </div>
           <div>
             <h2 className="text-gray-900">ZISWAF</h2>
@@ -62,9 +62,9 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3 p-3 bg-primary-50 rounded-xl">
-          <Avatar className="h-10 w-10">
+      <div className="p-3 border-b border-gray-200">
+        <div className="flex items-center gap-2 p-2 bg-primary-50 rounded-lg">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.full_name || 'User'}`} />
             <AvatarFallback className="bg-primary-600 text-white">
               {getInitials(user?.full_name || 'User')}
@@ -76,17 +76,17 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
           </div>
           <button 
             onClick={() => onNavigate('notifikasi')}
-            className="relative p-2 hover:bg-white rounded-lg transition-colors"
+            className="relative p-1.5 hover:bg-white rounded-lg transition-colors"
           >
-            <Bell className="h-4 w-4 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <Bell className="h-3.5 w-3.5 text-gray-600" />
+            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
           </button>
         </div>
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <div className="space-y-1">
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <div className="space-y-0.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -95,19 +95,14 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
                   isActive
                     ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
                 <span className={isActive ? '' : ''}>{item.label}</span>
-                {item.id === 'donatur' && (
-                  <Badge className="ml-auto bg-blue-100 text-blue-700 border-none">
-                    12
-                  </Badge>
-                )}
               </button>
             );
           })}
@@ -115,9 +110,9 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
 
         {/* Admin Section */}
         {user?.role === 'admin' && (
-          <div className="mt-6">
-            <p className="px-4 text-gray-400 mb-2">Admin</p>
-            <div className="space-y-1">
+          <div className="mt-4">
+            <p className="px-3 text-gray-400 mb-1.5">Admin</p>
+            <div className="space-y-0.5">
               {adminItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.id;
@@ -126,13 +121,13 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
                   <button
                     key={item.id}
                     onClick={() => onNavigate(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
                       isActive
                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
                     <span>{item.label}</span>
                   </button>
                 );
@@ -143,7 +138,7 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="p-4 border-t border-gray-200 space-y-1">
+      <div className="p-3 border-t border-gray-200 space-y-0.5">
         {bottomItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -152,13 +147,13 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
                 isActive
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+              <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
               <span>{item.label}</span>
             </button>
           );
@@ -166,9 +161,9 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
         
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-all"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </button>
       </div>

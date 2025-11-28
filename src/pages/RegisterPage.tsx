@@ -56,7 +56,16 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
       onRegister?.();
     } catch (error: any) {
       console.error('❌ Registration error:', error);
-      toast.error(error.message || 'Gagal mendaftar. Silakan coba lagi.');
+      
+      // Handle server unavailable error
+      if (error.message === "SERVER_UNAVAILABLE") {
+        toast.error("Server Backend Belum Aktif", {
+          description: "Mohon deploy Supabase Edge Function terlebih dahulu. Lihat console untuk instruksi.",
+          duration: 10000,
+        });
+      } else {
+        toast.error(error.message || 'Gagal mendaftar. Silakan coba lagi.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -95,8 +104,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
               {/* Benefits */}
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Heart className="h-6 w-6 text-accent-300" />
+                  <div className="w-10 h-10 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Heart className="h-5 w-5 text-accent-300" />
                   </div>
                   <div>
                     <h3 className="text-white font-semibold mb-1">Berbagi Keberkahan</h3>
@@ -104,8 +113,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Target className="h-6 w-6 text-accent-300" />
+                  <div className="w-10 h-10 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Target className="h-5 w-5 text-accent-300" />
                   </div>
                   <div>
                     <h3 className="text-white font-semibold mb-1">Sistem Target & Reward</h3>
@@ -113,8 +122,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Zap className="h-6 w-6 text-accent-300" />
+                  <div className="w-10 h-10 bg-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Zap className="h-5 w-5 text-accent-300" />
                   </div>
                   <div>
                     <h3 className="text-white font-semibold mb-1">Tools Digital Lengkap</h3>
@@ -172,8 +181,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                     Nama Lengkap *
                   </Label>
                   <div className="relative mt-2">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-9 lg:h-9 bg-primary-50 rounded-lg flex items-center justify-center">
-                      <User className="h-5 w-5 lg:h-4 lg:w-4 text-primary-600" />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary-600" />
                     </div>
                     <Input
                       id="fullName"
@@ -181,7 +190,7 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                       placeholder="Masukkan nama lengkap"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="pl-14 lg:pl-12 h-12 lg:h-11 text-base lg:text-sm border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-xl lg:rounded-lg"
+                      className="pl-12 h-10 border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-lg"
                       disabled={isLoading}
                     />
                   </div>
@@ -192,8 +201,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                     Nomor WhatsApp *
                   </Label>
                   <div className="relative mt-2">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-9 lg:h-9 bg-primary-50 rounded-lg flex items-center justify-center">
-                      <Phone className="h-5 w-5 lg:h-4 lg:w-4 text-primary-600" />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-primary-600" />
                     </div>
                     <Input
                       id="phone"
@@ -201,7 +210,7 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                       placeholder="08123456789"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="pl-14 lg:pl-12 h-12 lg:h-11 text-base lg:text-sm border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-xl lg:rounded-lg"
+                      className="pl-12 h-10 border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-lg"
                       disabled={isLoading}
                     />
                   </div>
@@ -212,8 +221,8 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                     Kota/Domisili *
                   </Label>
                   <div className="relative mt-2">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-9 lg:h-9 bg-primary-50 rounded-lg flex items-center justify-center">
-                      <MapPin className="h-5 w-5 lg:h-4 lg:w-4 text-primary-600" />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-primary-600" />
                     </div>
                     <Input
                       id="city"
@@ -221,7 +230,7 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
                       placeholder="Contoh: Jakarta Selatan"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="pl-14 lg:pl-12 h-12 lg:h-11 text-base lg:text-sm border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-xl lg:rounded-lg"
+                      className="pl-12 h-10 border-2 border-gray-200 focus:border-primary-500 focus:ring-primary-500 rounded-lg"
                       disabled={isLoading}
                     />
                   </div>
@@ -229,7 +238,7 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
 
                 <Button
                   type="submit"
-                  className="w-full h-12 lg:h-11 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-base lg:text-sm font-semibold shadow-lg hover:shadow-xl transition-all mt-6 rounded-xl lg:rounded-lg"
+                  className="w-full h-10 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 font-semibold shadow-lg hover:shadow-xl transition-all mt-6 rounded-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? (

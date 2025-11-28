@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { useTemplates } from '../../hooks/useTemplates';
 
 interface DesktopTemplatePesanPageProps {
@@ -29,7 +29,7 @@ export function DesktopTemplatePesanPage({ onBack }: DesktopTemplatePesanPagePro
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         template.message.toLowerCase().includes(searchQuery.toLowerCase());
+                         template.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -45,80 +45,82 @@ export function DesktopTemplatePesanPage({ onBack }: DesktopTemplatePesanPagePro
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-gray-900">Template Pesan</h1>
-                <p className="text-gray-600 text-sm">Kumpulan template pesan untuk fundraising</p>
-              </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header - Compact */}
+        <div className="mb-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={onBack}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-gray-900 text-xl">Template Pesan</h1>
+              <p className="text-gray-600 text-xs">Kumpulan template pesan untuk fundraising</p>
             </div>
           </div>
         </div>
 
-        {/* Search */}
-        <Card className="p-4 mb-6">
-          <div className="relative">
+        {/* Search & Tabs - Compact */}
+        <div className="flex gap-3 mb-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari template..."
-              className="pl-10"
+              className="pl-10 h-10"
             />
           </div>
-        </Card>
+          
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-shrink-0">
+            <TabsList className="grid grid-cols-5 h-10">
+              <TabsTrigger value="all" className="text-xs">Semua</TabsTrigger>
+              <TabsTrigger value="zakat" className="text-xs">Zakat</TabsTrigger>
+              <TabsTrigger value="infaq" className="text-xs">Infaq</TabsTrigger>
+              <TabsTrigger value="sedekah" className="text-xs">Sedekah</TabsTrigger>
+              <TabsTrigger value="wakaf" className="text-xs">Wakaf</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-        {/* Content */}
+        {/* Content - More Compact Grid */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 mb-6">
-            <TabsTrigger value="all">Semua</TabsTrigger>
-            <TabsTrigger value="zakat">Zakat</TabsTrigger>
-            <TabsTrigger value="infaq">Infaq</TabsTrigger>
-            <TabsTrigger value="sedekah">Sedekah</TabsTrigger>
-            <TabsTrigger value="wakaf">Wakaf</TabsTrigger>
-          </TabsList>
-
           <TabsContent value={selectedCategory} className="mt-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {filteredTemplates.map((template) => (
-                  <Card key={template.id} className="p-5 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(template.category)}
-                        <h3 className="text-gray-900 font-medium">{template.title}</h3>
+                  <Card key={template.id} className="p-3 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          {getCategoryIcon(template.category)}
+                        </div>
+                        <h3 className="text-gray-900 text-sm font-medium truncate">{template.title}</h3>
                       </div>
-                      <Badge className="bg-primary-100 text-primary-700 border-none text-xs capitalize">
+                      <Badge className="bg-primary-100 text-primary-700 border-none text-xs capitalize ml-2 flex-shrink-0">
                         {template.category}
                       </Badge>
                     </div>
                     
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-4 leading-relaxed">
-                      {template.message}
+                    <p className="text-gray-600 text-xs mb-3 line-clamp-3 leading-relaxed">
+                      {template.content}
                     </p>
                     
                     <Button 
-                      onClick={() => handleCopy(template.message)}
+                      onClick={() => handleCopy(template.content)}
                       size="sm"
                       variant="outline"
-                      className="w-full"
+                      className="w-full h-8 text-xs"
                     >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Salin Template
+                      <Copy className="h-3 w-3 mr-1" />
+                      Salin
                     </Button>
                   </Card>
                 ))}
@@ -126,9 +128,9 @@ export function DesktopTemplatePesanPage({ onBack }: DesktopTemplatePesanPagePro
             )}
 
             {!loading && filteredTemplates.length === 0 && (
-              <Card className="p-12 text-center">
-                <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">Tidak ada template ditemukan</p>
+              <Card className="p-8 text-center">
+                <MessageSquare className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Tidak ada template ditemukan</p>
               </Card>
             )}
           </TabsContent>

@@ -1,12 +1,7 @@
-import { ArrowLeft, Plus, Users, Loader2, QrCode, TrendingUp } from 'lucide-react';
-import { Card } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Progress } from '../../components/ui/progress';
 import { useAppContext } from '../../contexts/AppContext';
 import { usePembimbingRegus } from '../../hooks/useRegu';
 import { formatCurrency, copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopMyRegusPageProps {
   onBack?: () => void;
@@ -108,13 +103,13 @@ export function DesktopMyRegusPage({ onBack, onNavigate }: DesktopMyRegusPagePro
         {/* Loading State */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
           </div>
         ) : regus.length === 0 ? (
           /* Empty State */
           <Card className="p-16 text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="h-12 w-12 text-gray-400" />
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="h-10 w-10 text-gray-400" />
             </div>
             <h3 className="text-gray-900 mb-3">Belum Ada Regu</h3>
             <p className="text-gray-500 mb-8 max-w-md mx-auto">

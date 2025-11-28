@@ -225,7 +225,7 @@ Semoga menjadi amal jariyah yang berkah ✨
                     <p className="opacity-90 mb-1">Resi Donasi</p>
                     <h2 className="uppercase">{receipt.category}</h2>
                   </div>
-                  <CheckCircle className="h-12 w-12 opacity-90" />
+                  <CheckCircle className="h-10 w-10 opacity-90" />
                 </div>
 
                 <div className="space-y-3 bg-white/10 rounded-lg p-4 backdrop-blur-sm">

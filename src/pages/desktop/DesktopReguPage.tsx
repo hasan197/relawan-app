@@ -205,7 +205,7 @@ export function DesktopReguPage({ onBack, onNavigate }: DesktopReguPageProps) {
                             #{index + 1}
                           </div>
                           
-                          <Avatar className="h-12 w-12">
+                          <Avatar className="h-10 w-10">
                             <AvatarFallback className={
                               isCurrentUser 
                                 ? 'bg-primary-200 text-primary-700' 

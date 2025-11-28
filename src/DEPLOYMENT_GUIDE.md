@@ -2,6 +2,50 @@
 
 ## ✅ STATUS APLIKASI: 100% SELESAI & SIAP DIGUNAKAN
 
+## ⚠️ **PENTING: DEPLOY SERVER TERLEBIH DAHULU**
+
+**Jika melihat error "Cannot connect to server" atau "Server belum aktif":**
+
+Aplikasi ini memerlukan Supabase Edge Function untuk backend API. Anda HARUS deploy server terlebih dahulu.
+
+### **Quick Deploy (5 menit):**
+
+```bash
+# 1. Install Supabase CLI
+npm install -g supabase
+
+# 2. Login ke Supabase
+supabase login
+
+# 3. Link project
+supabase link --project-ref cqeranzfqkccdqadpica
+
+# 4. Deploy Edge Function
+supabase functions deploy make-server-f689ca3f
+
+# 5. Verify deployment
+curl https://cqeranzfqkccdqadpica.supabase.co/functions/v1/make-server-f689ca3f/health
+```
+
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-28T..."
+}
+```
+
+**Jika berhasil, refresh aplikasi dan error akan hilang!** ✅
+
+### **Alternative: Deploy via Supabase Dashboard**
+
+1. Buka [https://supabase.com/dashboard](https://supabase.com/dashboard)
+2. Pilih project `cqeranzfqkccdqadpica`
+3. Masuk ke **Edge Functions**
+4. Klik **Deploy New Function**
+5. Upload file dari `/supabase/functions/server/`
+6. Deploy!
+
 ---
 
 ## 📋 **Ringkasan Lengkap**

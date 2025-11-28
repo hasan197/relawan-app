@@ -175,7 +175,7 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
                 </div>
               ) : leaderboard.length === 0 ? (
                 <div className="text-center py-8">
-                  <Trophy className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <Trophy className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">Belum ada data leaderboard</p>
                 </div>
               ) : (
@@ -258,8 +258,8 @@ function CategoryCard({ title, amount, color, percentage }: CategoryCardProps) {
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 ${colorClasses[color]} rounded-xl flex items-center justify-center`}>
-            <span className="text-xl">🕌</span>
+          <div className={`w-10 h-10 ${colorClasses[color]} rounded-xl flex items-center justify-center`}>
+            <span className="text-lg">🕌</span>
           </div>
           <div>
             <h4 className="text-gray-900">{title}</h4>

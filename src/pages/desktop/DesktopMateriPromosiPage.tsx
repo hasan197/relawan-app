@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopMateriPromosiPageProps {
   onBack?: () => void;
@@ -133,9 +133,9 @@ export function DesktopMateriPromosiPage({ onBack }: DesktopMateriPromosiPagePro
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Desktop Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-8">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
+      {/* Desktop Header - Compact */}
+      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
           <button 
             onClick={onBack}
             className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
@@ -143,83 +143,82 @@ export function DesktopMateriPromosiPage({ onBack }: DesktopMateriPromosiPagePro
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
           <div>
-            <h1 className="text-white text-3xl mb-1">Materi Promosi</h1>
-            <p className="text-primary-100">
+            <h1 className="text-white text-xl">Materi Promosi</h1>
+            <p className="text-primary-100 text-xs">
               {filteredMaterials.length} materi tersedia
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        {/* Category Filter */}
-        <Card className="p-6 mb-6">
-          <h3 className="text-gray-900 mb-4">Filter Kategori</h3>
-          <div className="flex gap-3">
-            {(['semua', 'zakat', 'infaq', 'sedekah', 'wakaf', 'umum'] as const).map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-3 rounded-lg transition-all ${
-                  selectedCategory === category
-                    ? 'bg-primary-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </button>
-            ))}
-          </div>
-        </Card>
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        {/* Category Filter - Compact */}
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {(['semua', 'zakat', 'infaq', 'sedekah', 'wakaf', 'umum'] as const).map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-lg transition-all text-sm whitespace-nowrap ${
+                selectedCategory === category
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
+        </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="w-full max-w-2xl grid grid-cols-3 mb-6">
-            <TabsTrigger value="all">Semua Materi</TabsTrigger>
-            <TabsTrigger value="images">Gambar</TabsTrigger>
-            <TabsTrigger value="captions">Caption</TabsTrigger>
+          <TabsList className="w-full max-w-xl grid grid-cols-3 mb-4 h-9">
+            <TabsTrigger value="all" className="text-xs">Semua</TabsTrigger>
+            <TabsTrigger value="images" className="text-xs">Gambar</TabsTrigger>
+            <TabsTrigger value="captions" className="text-xs">Caption</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-4 gap-3">
               {filteredMaterials.map((material) => (
-                <Card key={material.id} className="overflow-hidden hover:shadow-xl transition-shadow">
+                <Card key={material.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   {material.type === 'image' && material.url && (
-                    <div className="relative h-56">
+                    <div className="relative h-32">
                       <ImageWithFallback
                         src={material.url}
                         alt={material.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-4 right-4">
+                      <div className="absolute top-2 right-2">
                         {getCategoryBadge(material.category)}
                       </div>
                     </div>
                   )}
 
-                  <div className="p-6">
-                    <div className="flex items-start gap-3 mb-3">
-                      {material.type === 'image' && <ImageIcon className="h-5 w-5 text-gray-400 mt-1 flex-shrink-0" />}
-                      {material.type === 'video' && <Video className="h-5 w-5 text-gray-400 mt-1 flex-shrink-0" />}
-                      {material.type === 'text' && <FileText className="h-5 w-5 text-gray-400 mt-1 flex-shrink-0" />}
+                  <div className="p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      {material.type === 'image' && <ImageIcon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />}
+                      {material.type === 'video' && <Video className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />}
+                      {material.type === 'text' && <FileText className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-gray-900 mb-2">{material.title}</h4>
-                        <p className="text-gray-600 text-sm">{material.description}</p>
+                        <h4 className="text-gray-900 text-sm font-medium truncate">{material.title}</h4>
+                        <p className="text-gray-600 text-xs line-clamp-1">{material.description}</p>
                       </div>
                     </div>
 
                     {material.caption && (
-                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <p className="text-gray-700 text-sm">{material.caption}</p>
+                      <div className="mb-2 p-2 bg-gray-50 rounded text-gray-700 text-xs line-clamp-2">
+                        {material.caption}
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1.5">
                       {material.type === 'image' && (
                         <Button
                           variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
                           onClick={() => handleDownload(material)}
                         >
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="h-3 w-3 mr-1" />
                           Unduh
                         </Button>
                       )}
@@ -227,18 +226,21 @@ export function DesktopMateriPromosiPage({ onBack }: DesktopMateriPromosiPagePro
                       {material.caption && material.type !== 'image' && (
                         <Button
                           variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
                           onClick={() => handleCopyCaption(material.caption!)}
                         >
-                          <FileText className="h-4 w-4 mr-2" />
+                          <FileText className="h-3 w-3 mr-1" />
                           Salin
                         </Button>
                       )}
                       
                       <Button
-                        className={`bg-primary-600 hover:bg-primary-700 ${material.type === 'image' ? '' : 'col-span-2'}`}
+                        className={`bg-primary-600 hover:bg-primary-700 h-7 text-xs ${material.type === 'image' ? '' : 'col-span-2'}`}
+                        size="sm"
                         onClick={() => handleShare(material)}
                       >
-                        <Share2 className="h-4 w-4 mr-2" />
+                        <Share2 className="h-3 w-3 mr-1" />
                         Bagikan
                       </Button>
                     </div>
@@ -249,40 +251,43 @@ export function DesktopMateriPromosiPage({ onBack }: DesktopMateriPromosiPagePro
           </TabsContent>
 
           <TabsContent value="images">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-4 gap-3">
               {filteredMaterials.filter(m => m.type === 'image').map((material) => (
-                <Card key={material.id} className="overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="relative h-56">
+                <Card key={material.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative h-32">
                     <ImageWithFallback
                       src={material.url}
                       alt={material.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-2 right-2">
                       {getCategoryBadge(material.category)}
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <h4 className="text-gray-900 mb-3">{material.title}</h4>
+                  <div className="p-3">
+                    <h4 className="text-gray-900 text-sm mb-2 truncate">{material.title}</h4>
                     {material.caption && (
-                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <p className="text-gray-700 text-sm">{material.caption}</p>
+                      <div className="mb-2 p-2 bg-gray-50 rounded text-gray-700 text-xs line-clamp-2">
+                        {material.caption}
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1.5">
                       <Button
                         variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
                         onClick={() => handleDownload(material)}
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="h-3 w-3 mr-1" />
                         Unduh
                       </Button>
                       <Button
-                        className="bg-primary-600 hover:bg-primary-700"
+                        className="bg-primary-600 hover:bg-primary-700 h-7 text-xs"
+                        size="sm"
                         onClick={() => handleShare(material)}
                       >
-                        <Share2 className="h-4 w-4 mr-2" />
+                        <Share2 className="h-3 w-3 mr-1" />
                         Bagikan
                       </Button>
                     </div>
@@ -293,34 +298,37 @@ export function DesktopMateriPromosiPage({ onBack }: DesktopMateriPromosiPagePro
           </TabsContent>
 
           <TabsContent value="captions">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-3">
               {filteredMaterials.filter(m => m.type === 'text').map((material) => (
-                <Card key={material.id} className="p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      <FileText className="h-5 w-5 text-gray-400 mt-1" />
-                      <h4 className="text-gray-900">{material.title}</h4>
+                <Card key={material.id} className="p-3 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <FileText className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <h4 className="text-gray-900 text-sm">{material.title}</h4>
                     </div>
                     {getCategoryBadge(material.category)}
                   </div>
                   
-                  <div className="p-5 bg-gray-50 rounded-lg mb-4">
-                    <p className="text-gray-700">{material.caption}</p>
+                  <div className="p-2 bg-gray-50 rounded mb-2">
+                    <p className="text-gray-700 text-xs line-clamp-3">{material.caption}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <Button
                       variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
                       onClick={() => handleCopyCaption(material.caption!)}
                     >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Salin Caption
+                      <FileText className="h-3 w-3 mr-1" />
+                      Salin
                     </Button>
                     <Button
-                      className="bg-primary-600 hover:bg-primary-700"
+                      className="bg-primary-600 hover:bg-primary-700 h-7 text-xs"
+                      size="sm"
                       onClick={() => handleShare(material)}
                     >
-                      <Share2 className="h-4 w-4 mr-2" />
+                      <Share2 className="h-3 w-3 mr-1" />
                       Bagikan
                     </Button>
                   </div>

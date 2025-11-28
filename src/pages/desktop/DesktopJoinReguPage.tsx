@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { useJoinRegu } from '../../hooks/useJoinRegu';
 import { useAppContext } from '../../contexts/AppContext';
 
@@ -58,8 +58,8 @@ export function DesktopJoinReguPage({ onBack, onSuccess }: DesktopJoinReguPagePr
 
         <Card className="p-8">
           <div className="text-center mb-8">
-            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="h-12 w-12 text-primary-600" />
+            <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="h-10 w-10 text-primary-600" />
             </div>
             <h3 className="text-gray-900 mb-2">Bergabung dengan Regu</h3>
             <p className="text-gray-600 text-sm">Dapatkan kode dari pembimbing regu Anda</p>

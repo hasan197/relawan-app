@@ -18,7 +18,7 @@ export function DesktopProgramPage({ onNavigate }: DesktopProgramPageProps) {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'zakat' | 'infaq' | 'sedekah' | 'wakaf'>('all');
   const { programs: apiPrograms, loading } = usePrograms();
 
-  // Use only API data from backend
+  // Use API data directly
   const programs = apiPrograms;
 
   const filteredPrograms = programs.filter(program => {

@@ -4,6 +4,9 @@ type BackendType = 'supabase' | 'convex';
 declare global {
   interface ImportMetaEnv {
     VITE_BACKEND?: string;
+    VITE_BACKEND_PROVIDER?: string;
+    VITE_CONVEX_URL?: string;
+    NEXT_PUBLIC_CONVEX_URL?: string;
   }
 }
 

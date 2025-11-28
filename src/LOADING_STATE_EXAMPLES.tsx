@@ -238,7 +238,7 @@ export function CustomSkeletonExample() {
           {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="p-4">
               <div className="flex gap-3">
-                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />

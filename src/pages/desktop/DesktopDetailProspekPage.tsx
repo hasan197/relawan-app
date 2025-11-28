@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { getInitials, formatRelativeTime, formatCurrency } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { useSingleMuzakki, useCommunications, useUpdateMuzakki, useAddCommunication, useDeleteMuzakki } from '../../hooks/useMuzakki';
 import { useMuzakkiDonations } from '../../hooks/useDonations';
 import { useState, useEffect } from 'react';
@@ -155,7 +155,7 @@ export function DesktopDetailProspekPage({ muzakkiId, onBack }: DesktopDetailPro
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-600">Memuat data muzakki...</p>
         </div>
       </div>
@@ -321,7 +321,7 @@ export function DesktopDetailProspekPage({ muzakkiId, onBack }: DesktopDetailPro
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                     {communications.length === 0 ? (
                       <div className="text-center py-8">
-                        <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <MessageCircle className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500 text-sm">Belum ada riwayat komunikasi</p>
                       </div>
                     ) : (
@@ -351,7 +351,7 @@ export function DesktopDetailProspekPage({ muzakkiId, onBack }: DesktopDetailPro
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                     {donations.length === 0 ? (
                       <div className="text-center py-8">
-                        <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <DollarSign className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500 text-sm">Belum ada riwayat donasi</p>
                       </div>
                     ) : (

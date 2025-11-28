@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
 import { useAppContext } from '../../contexts/AppContext';
 import { useChat } from '../../hooks/useChat';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopChatReguPageProps {
   onBack?: () => void;
@@ -129,7 +129,7 @@ export function DesktopChatReguPage({ onBack }: DesktopChatReguPageProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {loading && messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <Loader2 className="h-12 w-12 animate-spin mb-4" />
+              <Loader2 className="h-10 w-10 animate-spin mb-4" />
               <p className="text-lg">Memuat pesan...</p>
             </div>
           ) : error ? (
@@ -220,15 +220,14 @@ export function DesktopChatReguPage({ onBack }: DesktopChatReguPageProps) {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={sending}
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
 
               <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="bg-primary-600 hover:bg-primary-700 h-12 px-8"
-                size="lg"
+                className="bg-primary-600 hover:bg-primary-700 h-10 px-6"
               >
                 {sending ? (
                   <>

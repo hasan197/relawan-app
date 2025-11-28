@@ -94,7 +94,72 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <h2 className="text-white">Template Pesan</h2>
+          <div className="flex-1">
+            <h2 className="text-white">Template Pesan</h2>
+          </div>
+          {/* Add Template Button - Moved to Header */}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="sm" 
+                className="bg-white text-primary-600 hover:bg-white/90 shadow-md"
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Tambah</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Tambah Template Baru</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label>Judul Template</Label>
+                  <Input
+                    value={newTemplate.title}
+                    onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
+                    placeholder="Contoh: Ucapan Terima Kasih"
+                  />
+                </div>
+                <div>
+                  <Label>Kategori</Label>
+                  <select
+                    value={newTemplate.category}
+                    onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="terima-kasih">Terima Kasih</option>
+                    <option value="follow-up">Follow Up</option>
+                    <option value="laporan">Laporan</option>
+                    <option value="reminder">Reminder</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Isi Template</Label>
+                  <Textarea
+                    value={newTemplate.content}
+                    onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
+                    placeholder="Assalamualaikum..."
+                    rows={6}
+                  />
+                </div>
+                <Button
+                  onClick={handleAddTemplate}
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Menyimpan...
+                    </>
+                  ) : (
+                    'Simpan Template'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search Bar */}
@@ -112,15 +177,15 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
 
       <div className="px-4 py-4">
         {/* Category Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-all shadow-sm ${
                 selectedCategory === cat.id
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow'
               }`}
             >
               {cat.label}
@@ -128,74 +193,13 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
           ))}
         </div>
 
-        {/* Add Template Button */}
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full bg-primary-600 hover:bg-primary-700 mb-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Template Baru
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Tambah Template Baru</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <Label>Judul Template</Label>
-                <Input
-                  value={newTemplate.title}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
-                  placeholder="Contoh: Ucapan Terima Kasih"
-                />
-              </div>
-              <div>
-                <Label>Kategori</Label>
-                <select
-                  value={newTemplate.category}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="terima-kasih">Terima Kasih</option>
-                  <option value="follow-up">Follow Up</option>
-                  <option value="laporan">Laporan</option>
-                  <option value="reminder">Reminder</option>
-                </select>
-              </div>
-              <div>
-                <Label>Isi Template</Label>
-                <Textarea
-                  value={newTemplate.content}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
-                  placeholder="Assalamualaikum..."
-                  rows={6}
-                />
-              </div>
-              <Button
-                onClick={handleAddTemplate}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  'Simpan Template'
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Templates List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
           </div>
         ) : filteredTemplates.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center shadow-sm">
             <div className="text-gray-400 text-4xl mb-2">📝</div>
             <p className="text-gray-600 mb-1">
               {searchQuery || selectedCategory !== 'all' 
@@ -209,39 +213,37 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
             </p>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filteredTemplates.map((template) => (
-              <Card key={template.id} className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-gray-900 mb-1">{template.title}</h3>
-                    <Badge className="bg-primary-100 text-primary-700 border-none text-xs">
-                      {categories.find(c => c.id === template.category)?.label || template.category}
-                    </Badge>
-                  </div>
+              <Card key={template.id} className="p-3 hover:shadow-lg transition-shadow">
+                <div className="mb-2">
+                  <h3 className="text-gray-900 text-sm font-medium mb-1.5 line-clamp-2">{template.title}</h3>
+                  <Badge className="bg-primary-100 text-primary-700 border-none text-xs">
+                    {categories.find(c => c.id === template.category)?.label || template.category}
+                  </Badge>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-4 whitespace-pre-wrap">
+                <p className="text-gray-600 text-xs mb-3 whitespace-pre-wrap line-clamp-3">
                   {template.message || template.content || ''}
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-1.5">
                   <Button
                     onClick={() => handleCopyTemplate(template.message || template.content || '')}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="w-full h-8 text-xs"
                   >
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-3 w-3 mr-1" />
                     Salin
                   </Button>
                   <Button
                     onClick={() => handleSendTemplate(template)}
                     size="sm"
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="w-full h-8 text-xs bg-green-600 hover:bg-green-700"
                   >
-                    <Send className="h-4 w-4 mr-2" />
-                    Kirim WA
+                    <Send className="h-3 w-3 mr-1" />
+                    WA
                   </Button>
                 </div>
               </Card>

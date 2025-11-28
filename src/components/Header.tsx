@@ -24,7 +24,7 @@ export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
     <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-white shadow-md">
+          <Avatar className="h-10 w-10 border-2 border-white shadow-md">
             <AvatarFallback className="bg-primary-700 text-white">
               {getInitials(user?.full_name || 'Relawan')}
             </AvatarFallback>

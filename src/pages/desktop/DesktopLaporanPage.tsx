@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../lib/utils';
+import { getMonthlyDonations, getWeeklyTrend, getTopMuzakki, getMonthlyTrend, calculatePercentageChange, getPreviousPeriodData } from '../../lib/dataAggregation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 interface DesktopLaporanPageProps {
@@ -22,6 +23,19 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
   const categoryData = getDonationsByCategory();
   const balance = totalDonations - totalDistributed;
 
+  // Use dataAggregation utilities
+  const monthlyData = useMemo(() => getMonthlyDonations(donations), [donations]);
+  const trendData = useMemo(() => getWeeklyTrend(donations), [donations]);
+  const topMuzakkiData = useMemo(() => getTopMuzakki(donations, muzakkiList, 5), [donations, muzakkiList]);
+  const monthlyTrendData = useMemo(() => getMonthlyTrend(donations), [donations]);
+
+  // Calculate percentage changes
+  const currentPeriodTotal = donations
+    .filter(d => d.type === 'incoming')
+    .reduce((sum, d) => sum + d.amount, 0);
+  const previousPeriodTotal = getPreviousPeriodData(donations, selectedPeriod);
+  const donationChange = calculatePercentageChange(currentPeriodTotal, previousPeriodTotal);
+
   const categoryChartData = [
     { name: 'Zakat', value: categoryData.zakat, color: '#10b981' },
     { name: 'Infaq', value: categoryData.infaq, color: '#fbbf24' },
@@ -29,74 +43,6 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
   ].filter(item => item.value > 0);
 
-  // Calculate Monthly Trend
-  const monthlyTrend = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-
-    // Initialize last 6 months
-    const data: {
-      month: string;
-      monthIndex: number;
-      year: number;
-      donasi: number;
-      penyaluran: number;
-    }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(currentMonth - i);
-      const monthIndex = d.getMonth();
-      data.push({
-        month: months[monthIndex],
-        monthIndex: monthIndex,
-        year: d.getFullYear(),
-        donasi: 0,
-        penyaluran: 0
-      });
-    }
-
-    donations.forEach(d => {
-      const date = new Date(d.created_at);
-      const monthIndex = date.getMonth();
-      const year = date.getFullYear();
-
-      const monthData = data.find(m => m.monthIndex === monthIndex && m.year === year);
-      if (monthData) {
-        if (d.type === 'incoming') {
-          monthData.donasi += d.amount;
-        } else if (d.type === 'outgoing') {
-          monthData.penyaluran += d.amount;
-        }
-      }
-    });
-
-    return data;
-  }, [donations]);
-
-  // Calculate Top Muzakki
-  const topMuzakki = useMemo(() => {
-    const muzakkiStats = new Map<string, { name: string, total: number, count: number }>();
-
-    donations.forEach(d => {
-      if (d.type === 'incoming' && d.muzakki_id) {
-        const current = muzakkiStats.get(d.muzakki_id) || { name: '', total: 0, count: 0 };
-        // Find muzakki name from muzakkiList
-        if (!current.name) {
-          const muzakki = muzakkiList.find(m => m.id === d.muzakki_id);
-          current.name = muzakki ? muzakki.name : 'Unknown';
-        }
-
-        current.total += d.amount;
-        current.count += 1;
-        muzakkiStats.set(d.muzakki_id, current);
-      }
-    });
-
-    return Array.from(muzakkiStats.values())
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-  }, [donations, muzakkiList]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -115,8 +61,8 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
                 className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === period
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <Calendar className="h-4 w-4 inline mr-2" />
@@ -138,7 +84,7 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                 <DollarSign className="h-6 w-6 text-green-600" />
               </div>
               <Badge className="bg-green-100 text-green-700 border-none">
-                +12.5%
+                {donationChange}
               </Badge>
             </div>
             <h3 className="text-gray-900 mb-1">{formatCurrency(totalDonations)}</h3>
@@ -191,7 +137,7 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
           <Card className="col-span-2 p-6">
             <h3 className="text-gray-900 mb-6">Trend Donasi vs Penyaluran</h3>
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={monthlyTrend}>
+              <LineChart data={monthlyTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
@@ -290,13 +236,13 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {topMuzakki.map((muzakki, index) => (
+                  {topMuzakkiData.map((muzakki, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                            index === 1 ? 'bg-gray-100 text-gray-700' :
-                              index === 2 ? 'bg-orange-100 text-orange-700' :
-                                'bg-blue-50 text-blue-700'
+                              index === 1 ? 'bg-gray-100 text-gray-700' :
+                                index === 2 ? 'bg-orange-100 text-orange-700' :
+                                  'bg-blue-50 text-blue-700'
                             }`}>
                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                           </div>
@@ -333,18 +279,18 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
           <TabsContent value="kategori">
             <Card className="p-6">
               <div className="grid grid-cols-2 gap-6">
-                {Object.entries(categoryData as Record<string, number>).map(([category, amount]) => (
+                {Object.entries(categoryData).map(([category, amount]) => (
                   <Card key={category} className="p-6 bg-gray-50">
                     <h4 className="text-gray-600 mb-2 capitalize">{category}</h4>
-                    <h2 className="text-gray-900 mb-4">{formatCurrency(amount)}</h2>
+                    <h2 className="text-gray-900 mb-4">{formatCurrency(amount as number)}</h2>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary-600"
-                        style={{ width: `${(amount / totalDonations) * 100}%` }}
+                        style={{ width: `${((amount as number) / totalDonations) * 100}%` }}
                       />
                     </div>
                     <p className="text-gray-500 mt-2">
-                      {((amount / totalDonations) * 100).toFixed(1)}% dari total
+                      {(((amount as number) / totalDonations) * 100).toFixed(1)}% dari total
                     </p>
                   </Card>
                 ))}

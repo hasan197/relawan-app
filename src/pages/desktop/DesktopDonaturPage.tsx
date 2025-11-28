@@ -8,7 +8,7 @@ import { Badge } from '../../components/ui/badge';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { getInitials, formatRelativeTime } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface DesktopDonaturPageProps {
   onNavigate?: (page: string) => void;
@@ -88,29 +88,29 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
         onNavigate={onNavigate}
       />
 
-      <div className="p-8">
+      <div className="p-6">
         {/* Action Bar */}
-        <Card className="p-4 mb-6">
-          <div className="flex items-center gap-4">
+        <Card className="p-3 mb-5">
+          <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
                 placeholder="Cari nama, nomor, atau kota..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-9"
               />
             </div>
 
             {/* Status Filters */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {(['all', 'baru', 'follow-up', 'donasi'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
                     statusFilter === status
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -126,14 +126,14 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
               <Button
                 onClick={() => onNavigate?.('import-kontak')}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 h-9"
               >
                 <Upload className="h-4 w-4" />
                 Import
               </Button>
               <Button
                 onClick={() => onNavigate?.('tambah-prospek')}
-                className="bg-primary-600 hover:bg-primary-700 gap-2"
+                className="bg-primary-600 hover:bg-primary-700 gap-2 h-9"
               >
                 <UserPlus className="h-4 w-4" />
                 Tambah Muzakki
@@ -145,7 +145,7 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mx-auto"></div>
             <p className="text-gray-500 mt-4">Memuat data...</p>
           </div>
         )}
@@ -183,26 +183,26 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-gray-600">
+                    <th className="px-4 py-3 text-left text-gray-600">
                       <input type="checkbox" className="rounded" />
                     </th>
-                    <th className="px-6 py-4 text-left text-gray-600">Muzakki</th>
-                    <th className="px-6 py-4 text-left text-gray-600">Kontak</th>
-                    <th className="px-6 py-4 text-left text-gray-600">Kota</th>
-                    <th className="px-6 py-4 text-left text-gray-600">Status</th>
-                    <th className="px-6 py-4 text-left text-gray-600">Terakhir Kontak</th>
-                    <th className="px-6 py-4 text-right text-gray-600">Aksi</th>
+                    <th className="px-4 py-3 text-left text-gray-600">Muzakki</th>
+                    <th className="px-4 py-3 text-left text-gray-600">Kontak</th>
+                    <th className="px-4 py-3 text-left text-gray-600">Kota</th>
+                    <th className="px-4 py-3 text-left text-gray-600">Status</th>
+                    <th className="px-4 py-3 text-left text-gray-600">Terakhir Kontak</th>
+                    <th className="px-4 py-3 text-right text-gray-600">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredMuzakki.map((muzakki) => (
                     <tr key={muzakki.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <input type="checkbox" className="rounded" />
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
                             <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${muzakki.name}`} />
                             <AvatarFallback className="bg-primary-100 text-primary-700">
                               {getInitials(muzakki.name)}
@@ -218,55 +218,55 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <p className="text-gray-900">{muzakki.phone}</p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <p className="text-gray-600">{muzakki.city || '-'}</p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         {getStatusBadge(muzakki.status)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <p className="text-gray-600">
                           {formatRelativeTime(new Date(muzakki.last_contact))}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleCall(muzakki.phone, muzakki.name)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Call"
                           >
-                            <Phone className="h-4 w-4 text-gray-600" />
+                            <Phone className="h-3.5 w-3.5 text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleWhatsApp(muzakki.phone, muzakki.name)}
-                            className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
                             title="WhatsApp"
                           >
-                            <MessageCircle className="h-4 w-4 text-green-600" />
+                            <MessageCircle className="h-3.5 w-3.5 text-green-600" />
                           </button>
                           <button
                             onClick={() => onSelectMuzakki?.(muzakki.id)}
-                            className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
                             title="Detail"
                           >
-                            <Eye className="h-4 w-4 text-blue-600" />
+                            <Eye className="h-3.5 w-3.5 text-blue-600" />
                           </button>
                           <button
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Edit"
                           >
-                            <Edit className="h-4 w-4 text-gray-600" />
+                            <Edit className="h-3.5 w-3.5 text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleDelete(muzakki.id, muzakki.name)}
-                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
                             title="Hapus"
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <Trash2 className="h-3.5 w-3.5 text-red-600" />
                           </button>
                         </div>
                       </td>
@@ -277,18 +277,18 @@ export function DesktopDonaturPage({ onNavigate, onSelectMuzakki }: DesktopDonat
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
               <p className="text-gray-600">
                 Menampilkan {filteredMuzakki.length} dari {muzakkiList.length} muzakki
               </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled>
+              <div className="flex gap-1.5">
+                <Button variant="outline" size="sm" disabled className="h-8">
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" className="bg-primary-600 text-white">
+                <Button variant="outline" size="sm" className="bg-primary-600 text-white h-8">
                   1
                 </Button>
-                <Button variant="outline" size="sm" disabled>
+                <Button variant="outline" size="sm" disabled className="h-8">
                   Next
                 </Button>
               </div>

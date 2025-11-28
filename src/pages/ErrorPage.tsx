@@ -48,8 +48,8 @@ export function ErrorPage({ type = 'error', onRetry, onHome, onLogout }: ErrorPa
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 text-center shadow-xl">
         {/* Icon */}
-        <div className={`w-24 h-24 ${content.bgColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
-          <Icon className={`h-12 w-12 ${content.iconColor}`} />
+        <div className={`w-20 h-20 ${content.bgColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
+          <Icon className={`h-10 w-10 ${content.iconColor}`} />
         </div>
 
         {/* Title */}

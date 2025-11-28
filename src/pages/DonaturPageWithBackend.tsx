@@ -133,7 +133,7 @@ export function DonaturPageWithBackend({ onNavigate, onSelectMuzakki }: DonaturP
           {/* Empty State */}
           {!loading && filteredMuzakki.length === 0 && (
             <div className="text-center py-8">
-              <UserPlus className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <UserPlus className="h-10 w-10 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500">
                 {searchQuery || statusFilter !== 'all' 
                   ? 'Tidak ada muzakki yang sesuai filter'
@@ -151,7 +151,7 @@ export function DonaturPageWithBackend({ onNavigate, onSelectMuzakki }: DonaturP
                 onClick={() => onSelectMuzakki?.(muzakki.id)}
               >
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${muzakki.name}`} />
                     <AvatarFallback className="bg-primary-100 text-primary-700">
                       {getInitials(muzakki.name)}

@@ -168,7 +168,7 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
           {filteredFollowUps.map((item) => (
             <Card key={item.id} className="p-4">
               <div className="flex items-start gap-3 mb-3">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-10 w-10">
                   <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.muzakkiName}`} />
                   <AvatarFallback className="bg-primary-100 text-primary-700">
                     {getInitials(item.muzakkiName)}
@@ -228,7 +228,7 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
 
           {filteredFollowUps.length === 0 && (
             <div className="text-center py-12">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+              <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-3" />
               <p className="text-gray-500">Semua follow-up sudah selesai! 🎉</p>
             </div>
           )}

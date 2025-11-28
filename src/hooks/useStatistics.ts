@@ -43,7 +43,7 @@ export function useStatistics(relawanId: string | null) {
       console.log('🔄 Fetching statistics for relawan:', relawanId);
       const response = await apiCall(`/statistics/${relawanId}`);
       console.log('✅ Statistics fetched:', response.data);
-
+      
       // Convert activity times to Date objects
       if (response.data && response.data.recent_activities) {
         response.data.recent_activities = response.data.recent_activities.map((activity: any) => ({
@@ -51,7 +51,7 @@ export function useStatistics(relawanId: string | null) {
           time: new Date(activity.time)
         }));
       }
-
+      
       setStatistics(response.data);
       setError(null);
     } catch (err: any) {

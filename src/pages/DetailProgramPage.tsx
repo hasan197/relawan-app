@@ -49,7 +49,7 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-600">Memuat detail program...</p>
         </div>
       </div>

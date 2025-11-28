@@ -206,7 +206,7 @@ export function AdminDashboardPage({ onBack, onNavigate }: AdminDashboardPagePro
                     <Card key={category} className="p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-12 h-12 rounded-full ${color.bg} flex items-center justify-center`}>
+                          <div className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center`}>
                             <span className="capitalize">{category.charAt(0).toUpperCase()}</span>
                           </div>
                           <div>

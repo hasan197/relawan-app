@@ -233,8 +233,8 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
         {/* Info Card */}
         <Card className="p-6 mb-4 bg-gradient-to-br from-blue-50 to-primary-50 border-primary-200">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Users className="h-6 w-6 text-primary-600" />
+            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Users className="h-5 w-5 text-primary-600" />
             </div>
             <div>
               <h4 className="text-gray-900 mb-1">Tentang Regu</h4>

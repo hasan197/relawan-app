@@ -128,7 +128,7 @@ export function DonaturPage({ onNavigate, onSelectMuzakki }: DonaturPageProps) {
                   onClick={() => onSelectMuzakki?.(muzakki.id)}
                 >
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${muzakki.name}`} />
                       <AvatarFallback className="bg-primary-100 text-primary-700">
                         {getInitials(muzakki.name)}

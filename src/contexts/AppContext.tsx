@@ -14,12 +14,14 @@ interface AppContextType {
   
   // Muzakki
   muzakkiList: any[];
+  muzakkiError: string | null;
   addMuzakki: (data: any) => Promise<any>;
   updateMuzakki: (id: string, data: any) => Promise<any>;
   deleteMuzakki: (id: string) => Promise<void>;
   
   // Donations
   donations: any[];
+  donationsError: string | null;
   addDonation: (data: any) => Promise<any>;
   getTotalDonations: () => number;
   getTotalDistributed: () => number;
@@ -56,22 +58,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     console.log('📊 AppContext - Muzakki list updated:', {
       count: muzakki.muzakkiList.length,
       loading: muzakki.loading,
-      error: muzakki.error,
-      userId: auth.user?.id,
-      data: muzakki.muzakkiList.slice(0, 3) // Show first 3 items
+      data: muzakki.muzakkiList
     });
-  }, [muzakki.muzakkiList, muzakki.loading, muzakki.error, auth.user?.id]);
-
-  // Debug: Log donations list changes
-  useEffect(() => {
-    console.log('💰 AppContext - Donations list updated:', {
-      count: donations.donations.length,
-      loading: donations.loading,
-      error: donations.error,
-      userId: auth.user?.id,
-      data: donations.donations.slice(0, 3) // Show first 3 items
-    });
-  }, [donations.donations, donations.loading, donations.error, auth.user?.id]);
+  }, [muzakki.muzakkiList, muzakki.loading]);
 
   useEffect(() => {
     setLoading(auth.loading);
@@ -99,12 +88,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     // Muzakki
     muzakkiList: muzakki.muzakkiList,
+    muzakkiError: muzakki.error,
     addMuzakki: muzakki.addMuzakki,
     updateMuzakki: muzakki.updateMuzakki,
     deleteMuzakki: muzakki.deleteMuzakki,
     
     // Donations
     donations: donations.donations,
+    donationsError: donations.error,
     addDonation: donations.addDonation,
     getTotalDonations: donations.getTotalDonations,
     getTotalDistributed: donations.getTotalDistributed,

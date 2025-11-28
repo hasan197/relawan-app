@@ -8,6 +8,7 @@ export interface ReguMember {
   city?: string;
   regu_id: string;
   role: string;
+  status?: 'online' | 'offline';
 }
 
 export function useReguMembers(reguId: string | null | undefined) {
@@ -42,7 +43,13 @@ export function useReguMembers(reguId: string | null | undefined) {
         throw new Error(data.error || 'Failed to fetch members');
       }
 
-      setMembers(data.data || []);
+      // Add mock status (in real app, this would come from presence system)
+      const membersWithStatus = data.data.map((member: ReguMember, index: number) => ({
+        ...member,
+        status: index % 3 === 0 ? 'offline' : 'online' // Mock: every 3rd member is offline
+      }));
+
+      setMembers(membersWithStatus);
     } catch (err: any) {
       console.error('Fetch members error:', err);
       setError(err.message);

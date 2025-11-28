@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { formatCurrency, copyToClipboard } from '../../lib/utils';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { useSingleProgram } from '../../hooks/usePrograms.tsx';
 
 interface DesktopDetailProgramPageProps {
@@ -19,14 +19,12 @@ export function DesktopDetailProgramPage({ programId, onBack }: DesktopDetailPro
   const progress = program ? (program.collected / program.target) * 100 : 0;
   const daysLeft = program ? Math.ceil((new Date(program.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-  const handleShare = () => {
-    if (!program) return;
-    
-    const shareText = `Lihat program ${program.title} - ${program.description}. Target: Rp ${program.target.toLocaleString()}`;
+  const handleShare = (programId: string) => {
+    const shareText = `Lihat program ${program.name} - ${program.description}. Target: Rp ${program.target.toLocaleString()}`;
     
     if (navigator.share) {
       navigator.share({
-        title: program.title,
+        title: program.name,
         text: shareText,
         url: window.location.href
       }).then(() => {
@@ -50,7 +48,7 @@ export function DesktopDetailProgramPage({ programId, onBack }: DesktopDetailPro
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-600">Memuat detail program...</p>
         </div>
       </div>
@@ -113,7 +111,7 @@ export function DesktopDetailProgramPage({ programId, onBack }: DesktopDetailPro
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={handleShare} variant="outline" size="sm">
+              <Button onClick={() => handleShare(programId || '')} variant="outline" size="sm">
                 <Share2 className="h-4 w-4 mr-2" />
                 Bagikan
               </Button>
