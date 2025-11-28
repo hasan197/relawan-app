@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { useStatistics } from '../../hooks/useStatistics';
@@ -68,24 +68,78 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
   ];
 
-  const monthlyData = [
-    { month: 'Jan', zakat: 40, infaq: 24, sedekah: 12, wakaf: 8 },
-    { month: 'Feb', zakat: 52, infaq: 28, sedekah: 15, wakaf: 10 },
-    { month: 'Mar', zakat: 48, infaq: 32, sedekah: 18, wakaf: 12 },
-    { month: 'Apr', zakat: 61, infaq: 35, sedekah: 20, wakaf: 14 },
-    { month: 'Mei', zakat: 55, infaq: 38, sedekah: 22, wakaf: 16 },
-    { month: 'Jun', zakat: 67, infaq: 42, sedekah: 25, wakaf: 18 }
-  ];
+  // Calculate Monthly Data
+  const monthlyData = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
 
-  const trendData = [
-    { date: 'Sen', amount: 45 },
-    { date: 'Sel', amount: 52 },
-    { date: 'Rab', amount: 48 },
-    { date: 'Kam', amount: 61 },
-    { date: 'Jum', amount: 55 },
-    { date: 'Sab', amount: 67 },
-    { date: 'Min', amount: 72 }
-  ];
+    // Initialize last 6 months
+    const data: {
+      month: string;
+      monthIndex: number;
+      year: number;
+      zakat: number;
+      infaq: number;
+      sedekah: number;
+      wakaf: number;
+    }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(currentMonth - i);
+      const monthIndex = d.getMonth();
+      data.push({
+        month: months[monthIndex],
+        monthIndex: monthIndex,
+        year: d.getFullYear(),
+        zakat: 0,
+        infaq: 0,
+        sedekah: 0,
+        wakaf: 0
+      });
+    }
+
+    donations.forEach(d => {
+      if (d.type === 'incoming') {
+        const date = new Date(d.created_at);
+        const monthIndex = date.getMonth();
+        const year = date.getFullYear();
+
+        const monthData = data.find(m => m.monthIndex === monthIndex && m.year === year);
+        if (monthData) {
+          const category = d.category as 'zakat' | 'infaq' | 'sedekah' | 'wakaf';
+          if (monthData[category] !== undefined) {
+            monthData[category] += d.amount;
+          }
+        }
+      }
+    });
+
+    return data;
+  }, [donations]);
+
+  // Calculate Trend Data (Last 7 days)
+  const trendData = useMemo(() => {
+    const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const data: { date: string; amount: number }[] = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      // Create date string in YYYY-MM-DD format for comparison
+      // Note: created_at is ISO string, so we compare date parts
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = days[date.getDay()];
+
+      const amount = donations
+        .filter(d => d.type === 'incoming' && d.created_at.startsWith(dateStr))
+        .reduce((sum, d) => sum + d.amount, 0);
+
+      data.push({ date: dayName, amount });
+    }
+    return data;
+  }, [donations]);
 
   // Recent Activities
   const recentActivities = donations.slice(0, 5).map(d => ({
@@ -98,8 +152,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DesktopTopbar 
-        title="Dashboard Relawan" 
+      <DesktopTopbar
+        title="Dashboard Relawan"
         subtitle="Selamat datang kembali! Berikut ringkasan aktivitas Anda."
         onNavigate={onNavigate}
       />
@@ -108,14 +162,14 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
         {/* Quick Actions */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Button 
+            <Button
               onClick={() => onNavigate?.('tambah-prospek')}
               className="bg-primary-600 hover:bg-primary-700 gap-2"
             >
               <Plus className="h-4 w-4" />
               Tambah Muzakki
             </Button>
-            <Button 
+            <Button
               onClick={() => onNavigate?.('generator-resi')}
               variant="outline"
               className="gap-2"
@@ -123,7 +177,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
               <DollarSign className="h-4 w-4" />
               Catat Donasi
             </Button>
-            <Button 
+            <Button
               onClick={() => onNavigate?.('template')}
               variant="outline"
               className="gap-2"
@@ -138,11 +192,10 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedPeriod === period
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === period
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
               >
                 {period === 'week' ? 'Minggu Ini' : period === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
               </button>
@@ -160,9 +213,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                   <div className={`p-3 ${stat.bgColor} rounded-xl`}>
                     <Icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
-                  <Badge className={`${
-                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  } border-none gap-1`}>
+                  <Badge className={`${stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    } border-none gap-1`}>
                     {stat.trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                     {stat.change}
                   </Badge>
@@ -193,13 +245,13 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="date" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="#10b981" 
+                <Line
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#10b981"
                   strokeWidth={3}
                   dot={{ fill: '#10b981', r: 4 }}
                 />
@@ -226,7 +278,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
@@ -258,7 +310,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
                 <Bar dataKey="zakat" fill="#10b981" radius={[8, 8, 0, 0]} />
@@ -273,8 +325,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-gray-900">Aktivitas Terbaru</h3>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => onNavigate?.('riwayat-aktivitas')}
               >

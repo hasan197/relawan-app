@@ -100,7 +100,7 @@ export function LoginPage({ onLogin, onSendOTP, onRegister }: LoginPageProps) {
 
             {/* Main Hero Content */}
             <div className="mb-12">
-              <h1 className="text-white text-4xl xl:text-5xl font-bold mb-6 leading-tight">
+              <h1 className="text-white text-3xl xl:text-4xl font-bold mb-6 leading-tight">
                 Kelola Donasi ZISWAF dengan Mudah & Profesional
               </h1>
               <p className="text-primary-100 text-lg leading-relaxed">

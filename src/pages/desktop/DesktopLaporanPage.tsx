@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Download, TrendingUp, DollarSign, Users, Calendar, Filter, FileText } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -29,27 +29,79 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
   ].filter(item => item.value > 0);
 
-  const monthlyTrend = [
-    { month: 'Jan', donasi: 32, penyaluran: 28 },
-    { month: 'Feb', donasi: 45, penyaluran: 38 },
-    { month: 'Mar', donasi: 38, penyaluran: 35 },
-    { month: 'Apr', donasi: 52, penyaluran: 42 },
-    { month: 'Mei', donasi: 48, penyaluran: 45 },
-    { month: 'Jun', donasi: 61, penyaluran: 52 }
-  ];
+  // Calculate Monthly Trend
+  const monthlyTrend = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
 
-  const topMuzakki = [
-    { name: 'Ahmad Dahlan', total: 15000000, count: 8 },
-    { name: 'Siti Nurjanah', total: 12500000, count: 6 },
-    { name: 'Budi Santoso', total: 10000000, count: 5 },
-    { name: 'Fatimah Az-Zahra', total: 8500000, count: 4 },
-    { name: 'Muhammad Hasan', total: 7000000, count: 4 }
-  ];
+    // Initialize last 6 months
+    const data: {
+      month: string;
+      monthIndex: number;
+      year: number;
+      donasi: number;
+      penyaluran: number;
+    }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(currentMonth - i);
+      const monthIndex = d.getMonth();
+      data.push({
+        month: months[monthIndex],
+        monthIndex: monthIndex,
+        year: d.getFullYear(),
+        donasi: 0,
+        penyaluran: 0
+      });
+    }
+
+    donations.forEach(d => {
+      const date = new Date(d.created_at);
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+
+      const monthData = data.find(m => m.monthIndex === monthIndex && m.year === year);
+      if (monthData) {
+        if (d.type === 'incoming') {
+          monthData.donasi += d.amount;
+        } else if (d.type === 'outgoing') {
+          monthData.penyaluran += d.amount;
+        }
+      }
+    });
+
+    return data;
+  }, [donations]);
+
+  // Calculate Top Muzakki
+  const topMuzakki = useMemo(() => {
+    const muzakkiStats = new Map<string, { name: string, total: number, count: number }>();
+
+    donations.forEach(d => {
+      if (d.type === 'incoming' && d.muzakki_id) {
+        const current = muzakkiStats.get(d.muzakki_id) || { name: '', total: 0, count: 0 };
+        // Find muzakki name from muzakkiList
+        if (!current.name) {
+          const muzakki = muzakkiList.find(m => m.id === d.muzakki_id);
+          current.name = muzakki ? muzakki.name : 'Unknown';
+        }
+
+        current.total += d.amount;
+        current.count += 1;
+        muzakkiStats.set(d.muzakki_id, current);
+      }
+    });
+
+    return Array.from(muzakkiStats.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [donations, muzakkiList]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DesktopTopbar 
-        title="Laporan & Analytics" 
+      <DesktopTopbar
+        title="Laporan & Analytics"
         subtitle="Analisis lengkap performa donasi Anda"
         onNavigate={onNavigate}
       />
@@ -62,11 +114,10 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedPeriod === period
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === period
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
               >
                 <Calendar className="h-4 w-4 inline mr-2" />
                 {period === 'week' ? 'Minggu Ini' : period === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
@@ -144,22 +195,22 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => `Rp ${value}M`}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="donasi" 
-                  stroke="#10b981" 
+                <Line
+                  type="monotone"
+                  dataKey="donasi"
+                  stroke="#10b981"
                   strokeWidth={3}
                   name="Donasi"
                   dot={{ fill: '#10b981', r: 5 }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="penyaluran" 
-                  stroke="#3b82f6" 
+                <Line
+                  type="monotone"
+                  dataKey="penyaluran"
+                  stroke="#3b82f6"
                   strokeWidth={3}
                   name="Penyaluran"
                   dot={{ fill: '#3b82f6', r: 5 }}
@@ -188,7 +239,7 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     />
@@ -242,12 +293,11 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                     {topMuzakki.map((muzakki, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
                             index === 1 ? 'bg-gray-100 text-gray-700' :
-                            index === 2 ? 'bg-orange-100 text-orange-700' :
-                            'bg-blue-50 text-blue-700'
-                          }`}>
+                              index === 2 ? 'bg-orange-100 text-orange-700' :
+                                'bg-blue-50 text-blue-700'
+                            }`}>
                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                           </div>
                         </td>
@@ -283,12 +333,12 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
           <TabsContent value="kategori">
             <Card className="p-6">
               <div className="grid grid-cols-2 gap-6">
-                {Object.entries(categoryData).map(([category, amount]) => (
+                {Object.entries(categoryData as Record<string, number>).map(([category, amount]) => (
                   <Card key={category} className="p-6 bg-gray-50">
                     <h4 className="text-gray-600 mb-2 capitalize">{category}</h4>
                     <h2 className="text-gray-900 mb-4">{formatCurrency(amount)}</h2>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-primary-600"
                         style={{ width: `${(amount / totalDonations) * 100}%` }}
                       />
