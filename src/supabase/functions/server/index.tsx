@@ -650,7 +650,7 @@ app.get('/make-server-f689ca3f/donations', async (c) => {
 // Add new donation
 app.post('/make-server-f689ca3f/donations', async (c) => {
   try {
-    const { relawan_id, muzakki_id, amount, category, type, receipt_number, notes } = await c.req.json();
+    const { relawan_id, relawan_name, muzakki_id, donor_name, amount, category, type, payment_method, bukti_transfer_url, receipt_number, notes } = await c.req.json();
 
     if (!relawan_id || !amount || !category) {
       return c.json({ error: 'Relawan ID, nominal, dan kategori harus diisi' }, 400);
@@ -660,24 +660,266 @@ app.post('/make-server-f689ca3f/donations', async (c) => {
     const donation = {
       id: donationId,
       relawan_id: relawan_id,
+      relawan_name: relawan_name || '',
       muzakki_id: muzakki_id || null,
+      donor_name: donor_name || '',
       amount: amount,
       category: category,
       type: type || 'incoming',
+      payment_method: payment_method || 'tunai',
+      bukti_transfer_url: bukti_transfer_url || null,
       receipt_number: receipt_number || `${category.toUpperCase().substring(0,3)}${Date.now()}`,
       notes: notes || '',
-      created_at: new Date().toISOString()
+      status: 'pending', // New donations need validation
+      created_at: new Date().toISOString(),
+      validated_by: null,
+      validated_by_name: null,
+      validated_at: null,
+      rejection_reason: null
     };
 
     await kv.set(`donation:${relawan_id}:${donationId}`, donation);
 
     return c.json({
       success: true,
-      message: 'Donasi berhasil dicatat',
+      message: 'Donasi berhasil dilaporkan dan menunggu validasi admin',
       data: donation
     });
   } catch (error) {
     console.log('Add donation error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Upload bukti transfer to Supabase Storage
+app.post('/make-server-f689ca3f/donations/upload-bukti', async (c) => {
+  try {
+    const bucketName = 'make-f689ca3f-bukti-transfer';
+    
+    // Create bucket if doesn't exist
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      return c.json({ error: `Failed to list buckets: ${listError.message}` }, 500);
+    }
+    
+    const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+    
+    if (!bucketExists) {
+      console.log('Creating bucket:', bucketName);
+      const { error: createError } = await supabase.storage.createBucket(bucketName, {
+        public: false
+      });
+      
+      if (createError) {
+        console.error('Error creating bucket:', createError);
+        return c.json({ error: `Failed to create bucket: ${createError.message}` }, 500);
+      }
+      
+      console.log('Bucket created successfully');
+    }
+
+    // Get file from request
+    const formData = await c.req.formData();
+    const file = formData.get('file');
+    const donationId = formData.get('donation_id');
+    
+    console.log('Upload request received:', {
+      hasFile: !!file,
+      donationId,
+      fileType: file instanceof Blob ? file.type : typeof file,
+      fileSize: file instanceof Blob ? file.size : 'N/A'
+    });
+    
+    if (!file || !donationId) {
+      return c.json({ error: 'File dan donation ID harus disertakan' }, 400);
+    }
+
+    // Convert file to buffer
+    let fileBuffer: ArrayBuffer;
+    let contentType = 'image/jpeg';
+    
+    if (file instanceof Blob) {
+      fileBuffer = await file.arrayBuffer();
+      contentType = file.type || 'image/jpeg';
+      console.log('File converted to buffer:', { bufferSize: fileBuffer.byteLength, contentType });
+    } else {
+      console.error('File is not a Blob:', typeof file);
+      return c.json({ error: 'Invalid file format' }, 400);
+    }
+
+    // Upload to storage
+    const fileName = `${donationId}-${Date.now()}.jpg`;
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, fileBuffer, {
+        contentType: contentType,
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return c.json({ error: `Upload failed: ${error.message}` }, 500);
+    }
+
+    // Get signed URL
+    const { data: signedUrl, error: urlError } = await supabase.storage
+      .from(bucketName)
+      .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year
+
+    if (urlError) {
+      console.error('Signed URL error:', urlError);
+      return c.json({ error: `Failed to create signed URL: ${urlError.message}` }, 500);
+    }
+
+    return c.json({
+      success: true,
+      message: 'Bukti transfer berhasil diupload',
+      data: {
+        url: signedUrl?.signedUrl,
+        path: data.path
+      }
+    });
+  } catch (error: any) {
+    console.error('Upload bukti error:', error);
+    return c.json({ error: `Server error: ${error?.message || 'Unknown error'}` }, 500);
+  }
+});
+
+// Get all pending donations (for admin)
+app.get('/make-server-f689ca3f/donations/pending', async (c) => {
+  try {
+    // Get all donations
+    const allDonations = await kv.getByPrefix('donation:');
+    
+    // Filter pending ones
+    const pendingDonations = allDonations.filter(d => d.status === 'pending');
+    
+    // Sort by date (newest first)
+    pendingDonations.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    return c.json({
+      success: true,
+      data: pendingDonations,
+      count: pendingDonations.length
+    });
+  } catch (error) {
+    console.error('Get pending donations error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Validate donation (admin only)
+app.post('/make-server-f689ca3f/donations/:donationId/validate', async (c) => {
+  try {
+    const donationId = c.req.param('donationId');
+    const { admin_id, admin_name, action, rejection_reason } = await c.req.json();
+    
+    if (!admin_id || !action) {
+      return c.json({ error: 'Admin ID dan action harus diisi' }, 400);
+    }
+    
+    if (action !== 'approve' && action !== 'reject') {
+      return c.json({ error: 'Action harus "approve" atau "reject"' }, 400);
+    }
+    
+    if (action === 'reject' && !rejection_reason) {
+      return c.json({ error: 'Alasan penolakan harus diisi' }, 400);
+    }
+    
+    // Find the donation
+    const allDonations = await kv.getByPrefix('donation:');
+    const donation = allDonations.find(d => d.id === donationId);
+    
+    if (!donation) {
+      return c.json({ error: 'Donasi tidak ditemukan' }, 404);
+    }
+    
+    // Update donation status
+    const updatedDonation = {
+      ...donation,
+      status: action === 'approve' ? 'validated' : 'rejected',
+      validated_by: admin_id,
+      validated_by_name: admin_name || 'Admin',
+      validated_at: new Date().toISOString(),
+      rejection_reason: action === 'reject' ? rejection_reason : null
+    };
+    
+    // Save back
+    await kv.set(`donation:${donation.relawan_id}:${donationId}`, updatedDonation);
+    
+    return c.json({
+      success: true,
+      message: action === 'approve' ? 'Donasi berhasil divalidasi' : 'Donasi ditolak',
+      data: updatedDonation
+    });
+  } catch (error) {
+    console.error('Validate donation error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Update donation (for adding bukti transfer URL)
+app.patch('/make-server-f689ca3f/donations/:donationId', async (c) => {
+  try {
+    const donationId = c.req.param('donationId');
+    const updates = await c.req.json();
+    
+    // Find the donation
+    const allDonations = await kv.getByPrefix('donation:');
+    const donation = allDonations.find(d => d.id === donationId);
+    
+    if (!donation) {
+      return c.json({ error: 'Donasi tidak ditemukan' }, 404);
+    }
+    
+    // Update donation
+    const updatedDonation = {
+      ...donation,
+      ...updates
+    };
+    
+    // Save back
+    await kv.set(`donation:${donation.relawan_id}:${donationId}`, updatedDonation);
+    
+    return c.json({
+      success: true,
+      message: 'Donasi berhasil diperbarui',
+      data: updatedDonation
+    });
+  } catch (error) {
+    console.error('Update donation error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Get donation statistics by status
+app.get('/make-server-f689ca3f/donations/stats', async (c) => {
+  try {
+    const allDonations = await kv.getByPrefix('donation:');
+    
+    const stats = {
+      total: allDonations.length,
+      pending: allDonations.filter(d => d.status === 'pending').length,
+      validated: allDonations.filter(d => d.status === 'validated').length,
+      rejected: allDonations.filter(d => d.status === 'rejected').length,
+      total_amount: allDonations
+        .filter(d => d.status === 'validated')
+        .reduce((sum, d) => sum + d.amount, 0),
+      pending_amount: allDonations
+        .filter(d => d.status === 'pending')
+        .reduce((sum, d) => sum + d.amount, 0)
+    };
+    
+    return c.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Get donation stats error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });

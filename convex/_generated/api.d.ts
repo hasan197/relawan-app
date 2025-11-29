@@ -9,11 +9,13 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as backblazeUpload from "../backblazeUpload.js";
 import type * as chat from "../chat.js";
 import type * as checkUserData from "../checkUserData.js";
 import type * as clearData from "../clearData.js";
 import type * as database from "../database.js";
 import type * as donations from "../donations.js";
+import type * as lib_backblazeB2 from "../lib/backblazeB2.js";
 import type * as listUsers from "../listUsers.js";
 import type * as muzakkis from "../muzakkis.js";
 import type * as notifications from "../notifications.js";
@@ -26,6 +28,7 @@ import type * as templates from "../templates.js";
 import type * as testData from "../testData.js";
 import type * as testMuzakki from "../testMuzakki.js";
 import type * as testQueries from "../testQueries.js";
+import type * as uploads from "../uploads.js";
 import type * as verifyAllData from "../verifyAllData.js";
 import type * as verifySeed from "../verifySeed.js";
 import type * as verify_user_data from "../verify_user_data.js";
@@ -38,11 +41,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  backblazeUpload: typeof backblazeUpload;
   chat: typeof chat;
   checkUserData: typeof checkUserData;
   clearData: typeof clearData;
   database: typeof database;
   donations: typeof donations;
+  "lib/backblazeB2": typeof lib_backblazeB2;
   listUsers: typeof listUsers;
   muzakkis: typeof muzakkis;
   notifications: typeof notifications;
@@ -55,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   testData: typeof testData;
   testMuzakki: typeof testMuzakki;
   testQueries: typeof testQueries;
+  uploads: typeof uploads;
   verifyAllData: typeof verifyAllData;
   verifySeed: typeof verifySeed;
   verify_user_data: typeof verify_user_data;

@@ -70,12 +70,16 @@ export const create = mutation({
         donor_name: v.string(),
         donor_id: v.optional(v.id("muzakkis")),
         relawan_id: v.id("users"),
+        relawan_name: v.string(),
         event_name: v.optional(v.string()),
         type: v.union(
             v.literal("incoming"),
             v.literal("outgoing")
         ),
         notes: v.optional(v.string()),
+        bukti_transfer_url: v.union(v.string(), v.null()),
+        payment_method: v.optional(v.string()),
+        receipt_number: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const id = await ctx.db.insert("donations", {
@@ -84,11 +88,114 @@ export const create = mutation({
             donorName: args.donor_name,
             donorId: args.donor_id,
             relawanId: args.relawan_id,
+            relawanName: args.relawan_name,
             eventName: args.event_name,
             type: args.type,
             notes: args.notes,
+            buktiTransferUrl: args.bukti_transfer_url,
+            paymentMethod: args.payment_method,
+            receiptNumber: args.receipt_number,
+            status: "pending", // New donations start as pending
+            validatedBy: undefined,
+            validatedByName: undefined,
+            validatedAt: undefined,
+            rejectionReason: undefined,
             createdAt: Date.now(),
         });
+
+        // Create activity record for the donation
+        await ctx.db.insert("activities", {
+            type: "donation",
+            title: `Donasi ${args.category} dari ${args.donor_name}`,
+            amount: args.amount,
+            relawanId: args.relawan_id,
+            muzakkiId: args.donor_id,
+            donationId: id,
+            description: args.donor_name,
+            time: Date.now(),
+            createdAt: Date.now(),
+        });
+
         return id;
+    },
+});
+
+export const updateBuktiTransferUrl = mutation({
+    args: {
+        donationId: v.id("donations"),
+        buktiTransferUrl: v.string(),
+    },
+    handler: async (ctx, args) => {
+        console.log('🔄 Updating buktiTransferUrl for donation:', args.donationId);
+        console.log('📄 Setting URL:', args.buktiTransferUrl);
+        
+        await ctx.db.patch(args.donationId, {
+            buktiTransferUrl: args.buktiTransferUrl,
+        });
+        
+        console.log('✅ Database update completed for donation:', args.donationId);
+        return { success: true };
+    },
+});
+
+export const validate = mutation({
+    args: {
+        donationId: v.id("donations"),
+        adminId: v.id("users"),
+        adminName: v.string(),
+        action: v.union(v.literal("validate"), v.literal("reject")),
+        rejectionReason: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const donation = await ctx.db.get(args.donationId);
+        if (!donation) {
+            throw new Error("Donation not found");
+        }
+
+        const updateData: any = {
+            status: args.action === "validate" ? "validated" : "rejected",
+            validatedBy: args.adminId,
+            validatedByName: args.adminName,
+            validatedAt: Date.now(),
+        };
+
+        if (args.action === "reject" && args.rejectionReason) {
+            updateData.rejectionReason = args.rejectionReason;
+        }
+
+        await ctx.db.patch(args.donationId, updateData);
+        return { success: true };
+    },
+});
+
+export const listPending = query({
+    handler: async (ctx) => {
+        const donations = await ctx.db
+            .query("donations")
+            .filter((q) => q.eq(q.field("status"), "pending"))
+            .order("desc")
+            .collect();
+
+        return donations.map((d) => ({
+            id: d._id,
+            amount: d.amount,
+            category: d.category,
+            donor_name: d.donorName,
+            donor_id: d.donorId,
+            relawan_id: d.relawanId,
+            relawan_name: d.relawanName,
+            event_name: d.eventName,
+            type: d.type,
+            notes: d.notes,
+            bukti_transfer_url: d.buktiTransferUrl,
+            payment_method: d.paymentMethod,
+            receipt_number: d.receiptNumber,
+            status: d.status,
+            validated_by: d.validatedBy,
+            validated_by_name: d.validatedByName,
+            validated_at: d.validatedAt,
+            rejection_reason: d.rejectionReason,
+            created_at: new Date(d.createdAt).toISOString(),
+        }));
     },
 });

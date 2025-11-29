@@ -8,8 +8,19 @@ import { api } from '../../convex/_generated/api';
  * This allows apiCall() to route to Convex without changing any hooks
  */
 
-const convexUrl = (import.meta.env.VITE_CONVEX_URL as string) ||
-    (import.meta.env.NEXT_PUBLIC_CONVEX_URL as string) ||
+// Type definition for environment variables
+interface ImportMetaEnv {
+  readonly VITE_CONVEX_URL: string;
+  readonly NEXT_PUBLIC_CONVEX_URL: string;
+  readonly [key: string]: any;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+const convexUrl = (import.meta.env?.VITE_CONVEX_URL as string) ||
+    (import.meta.env?.NEXT_PUBLIC_CONVEX_URL as string) ||
     'https://quixotic-rhinoceros-311.convex.cloud';
 let convexClient: ConvexHttpClient | null = null;
 
@@ -23,6 +34,58 @@ function getConvexClient(): ConvexHttpClient {
     return convexClient;
 }
 
+// Helper function to handle file uploads
+async function handleFileUpload(formData: FormData, client: any, api: any) {
+    try {
+        // Parse FormData to extract file
+        const file = formData.get('file') as File;
+        const donationId = formData.get('donation_id') as string;
+        
+        console.log('📁 FormData debug:', {
+            hasFile: !!file,
+            fileName: file?.name,
+            donationId: donationId,
+            donationIdType: typeof donationId,
+            donationIdValue: donationId === 'undefined' ? 'STRING_UNDEFINED' : donationId
+        });
+        
+        if (!file) {
+            throw new Error('Missing file in FormData');
+        }
+        
+        if (!donationId || donationId === 'undefined' || donationId === 'null') {
+            throw new Error(`Invalid donation_id: ${donationId}. Must be a valid Convex ID.`);
+        }
+        
+        // Convert file to ArrayBuffer for Convex (not Uint8Array)
+        const arrayBuffer = await file.arrayBuffer();
+        
+        console.log('📁 File info:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            arrayBufferSize: arrayBuffer.byteLength
+        });
+        
+        // Call Convex action to upload to B2
+        // @ts-ignore
+        const result = await client.action(api.backblazeUpload.uploadFileToB2, {
+            fileData: arrayBuffer, // Use ArrayBuffer, not Uint8Array
+            fileName: file.name,
+            fileType: file.type,
+            donationId: donationId, // Validated donation ID
+        });
+        
+        return result;
+    } catch (error: any) {
+        console.error('❌ Convex B2 upload error:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to upload file to B2'
+        };
+    }
+}
+
 /**
  * Route API call to appropriate Convex query
  */
@@ -31,6 +94,8 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
     const method = options.method || 'GET';
 
     console.log(`🔀 Routing to Convex: ${method} ${endpoint}`);
+    console.log(`🔍 Body type: ${options.body instanceof FormData ? 'FormData' : 'Other'}`);
+    console.log(`🔍 Body content:`, options.body instanceof FormData ? 'FormData object' : options.body);
 
     // Parse endpoint and extract parameters
     const [path, queryString] = endpoint.split('?');
@@ -104,10 +169,23 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         }
         // POST /donations
         if (pathParts[0] === 'donations' && method === 'POST') {
-            const body = JSON.parse(options.body as string);
-            // @ts-ignore
-            const result = await client.mutation(api.donations.create, body);
-            return { data: result };
+            // Check if this is FormData (file upload) or JSON (regular donation)
+            if (options.body instanceof FormData) {
+                console.log('📁 Detected FormData in POST /donations - redirecting to file upload');
+                return handleFileUpload(options.body as FormData, client, api);
+            } else {
+                console.log('📄 Detected JSON in POST /donations - creating donation');
+                const body = JSON.parse(options.body as string);
+                // @ts-ignore
+                const donationId = await client.mutation(api.donations.create, body);
+                console.log('📝 Donation created with ID:', donationId);
+                // Return donation object with id property
+                return { data: { id: donationId } };
+            }
+        }
+        // POST /donations/upload-bukti (file upload to Backblaze B2)
+        if (pathParts[0] === 'donations' && pathParts[1] === 'upload-bukti' && method === 'POST') {
+            return handleFileUpload(options.body as FormData, client, api);
         }
 
         // --- MUZAKKI ---

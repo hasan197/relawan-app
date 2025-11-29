@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, DollarSign, Users, TrendingUp, Award, RefreshCcw, Download, Loader2, Settings } from 'lucide-react';
+import { ArrowLeft, DollarSign, Users, TrendingUp, Award, RefreshCcw, Download, Loader2, Settings, CheckCircle } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -230,6 +230,18 @@ export function AdminDashboardPage({ onBack, onNavigate }: AdminDashboardPagePro
 
             {/* Admin Tools & Export Buttons */}
             <div className="space-y-3 mt-4">
+              <Button
+                onClick={() => onNavigate?.('admin-validasi-donasi')}
+                variant="outline"
+                className="w-full border-green-300 text-green-700 hover:bg-green-50"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Validasi Donasi
+                {globalStats.pendingDonations && globalStats.pendingDonations > 0 && (
+                  <Badge className="ml-2 bg-yellow-500">{globalStats.pendingDonations}</Badge>
+                )}
+              </Button>
+
               <Button
                 onClick={() => onNavigate?.('admin-tools')}
                 variant="outline"

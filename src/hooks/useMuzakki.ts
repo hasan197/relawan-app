@@ -33,7 +33,7 @@ export function useMuzakki(relawanId: string | null) {
       setMuzakkiList(response.data || []);
       setError(null);
     } catch (err: any) {
-      const errorMessage = err.message === 'SERVER_UNAVAILABLE'
+      const errorMessage = err.message === 'SERVER_UNAVAILABLE' 
         ? 'Server belum aktif. Mohon deploy Supabase Edge Function terlebih dahulu.'
         : (err.message || 'Gagal memuat data muzakki');
       setError(errorMessage);
@@ -60,7 +60,7 @@ export function useMuzakki(relawanId: string | null) {
   }) => {
     console.log('🔍 addMuzakki called with data:', data);
     console.log('🔍 Current relawanId:', relawanId);
-
+    
     if (!relawanId) {
       console.error('❌ Error: Relawan ID tidak ditemukan!');
       console.error('Debug info:', {
@@ -306,7 +306,7 @@ export function useAddCommunication() {
       if (!relawanId) {
         throw new Error('Relawan ID tidak ditemukan');
       }
-
+      
       const response = await apiCall('/communications', {
         method: 'POST',
         body: JSON.stringify({
@@ -371,7 +371,7 @@ export function useAddMuzakki() {
       if (!relawanId) {
         throw new Error('Relawan ID tidak ditemukan');
       }
-
+      
       const response = await apiCall('/muzakki', {
         method: 'POST',
         body: JSON.stringify({

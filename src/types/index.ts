@@ -22,6 +22,8 @@ export interface Muzakki {
   createdAt: Date;
 }
 
+export type DonationStatus = 'pending' | 'validated' | 'rejected';
+
 export interface Donation {
   id: string;
   amount: number;
@@ -29,9 +31,22 @@ export interface Donation {
   donorName: string;
   donorId?: string;
   relawanId: string;
+  relawanName?: string;
   eventName?: string;
   createdAt: Date;
   type: 'incoming' | 'outgoing';
+  
+  // Validation fields
+  status: DonationStatus;
+  buktiTransferUrl?: string;
+  paymentMethod?: 'tunai' | 'transfer' | 'qris' | 'other';
+  notes?: string;
+  
+  // Admin validation
+  validatedBy?: string;
+  validatedByName?: string;
+  validatedAt?: Date;
+  rejectionReason?: string;
 }
 
 export interface Regu {

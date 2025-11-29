@@ -30,6 +30,7 @@ import { MateriPromosiPage } from './pages/MateriPromosiPage';
 import { ChatReguPageWithBackend } from './pages/ChatReguPageWithBackend';
 import { PengaturanPage } from './pages/PengaturanPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { AdminValidasiDonasiPage } from './pages/AdminValidasiDonasiPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { OfflinePage } from './pages/OfflinePage';
 import { TestConnectionPage } from './pages/TestConnectionPage';
@@ -51,6 +52,7 @@ import { DesktopCreateReguPage } from './pages/desktop/DesktopCreateReguPage';
 import { DesktopTemplatePesanPage } from './pages/desktop/DesktopTemplatePesanPage';
 import { DesktopNotifikasiPage } from './pages/desktop/DesktopNotifikasiPage';
 import { DesktopAdminDashboardPage } from './pages/desktop/DesktopAdminDashboardPage';
+import { DesktopAdminValidasiDonasiPage } from './pages/desktop/DesktopAdminValidasiDonasiPage';
 import { DesktopAdminToolsPage } from './pages/desktop/DesktopAdminToolsPage';
 import { DesktopDatabaseResetPage } from './pages/desktop/DesktopDatabaseResetPage';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
@@ -92,6 +94,7 @@ type Page =
   | 'chat-regu'
   | 'pengaturan'
   | 'admin-dashboard'
+  | 'admin-validasi-donasi'
   | 'admin-tools'
   | 'database-reset'
   | 'test-connection'
@@ -359,6 +362,9 @@ function AppContent() {
       case 'admin-dashboard':
         return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setCurrentPage} />;
       
+      case 'admin-validasi-donasi':
+        return <AdminValidasiDonasiPage onBack={() => setCurrentPage('admin-dashboard')} />;
+      
       case 'admin-tools':
         return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
       
@@ -481,6 +487,9 @@ function AppContent() {
             
             case 'admin-dashboard':
               return <DesktopAdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
+            
+            case 'admin-validasi-donasi':
+              return <DesktopAdminValidasiDonasiPage onNavigate={handleNavigation} />;
             
             case 'admin-tools':
               return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;

@@ -1,4 +1,4 @@
-import { ArrowLeft, Users, TrendingUp, Award, Settings, Database, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, TrendingUp, Award, Settings, Database, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -31,6 +31,13 @@ export function DesktopAdminDashboardPage({ onBack, onNavigate }: DesktopAdminDa
               </div>
             </div>
             <div className="flex gap-2">
+              <Button onClick={() => onNavigate?.('admin-validasi-donasi')} variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Validasi Donasi
+                {stats.pendingDonations && stats.pendingDonations > 0 && (
+                  <Badge className="ml-2 bg-yellow-500">{stats.pendingDonations}</Badge>
+                )}
+              </Button>
               <Button onClick={() => onNavigate?.('admin-tools')} variant="outline" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
                 Admin Tools

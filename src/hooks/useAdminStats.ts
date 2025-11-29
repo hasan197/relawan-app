@@ -6,6 +6,7 @@ interface GlobalStats {
   total_muzakki: number;
   total_relawan: number;
   total_regu: number;
+  pendingDonations?: number;
   by_category: {
     zakat: number;
     infaq: number;
@@ -55,12 +56,19 @@ export function useAdminStats() {
       const reguResponse = await apiCall('/admin/stats/regu');
       console.log('✅ Regu stats fetched:', reguResponse.data?.length || 0, 'regus');
 
-      setGlobalStats(globalResponse.data || {
-        total_donations: 0,
-        total_muzakki: 0,
-        total_relawan: 0,
-        total_regu: 0,
-        by_category: { zakat: 0, infaq: 0, sedekah: 0, wakaf: 0 }
+      // Fetch donation stats (for pending count)
+      const donationStatsResponse = await apiCall('/donations/stats');
+      console.log('✅ Donation stats fetched:', donationStatsResponse.data);
+
+      setGlobalStats({
+        ...(globalResponse.data || {
+          total_donations: 0,
+          total_muzakki: 0,
+          total_relawan: 0,
+          total_regu: 0,
+          by_category: { zakat: 0, infaq: 0, sedekah: 0, wakaf: 0 }
+        }),
+        pendingDonations: donationStatsResponse.data?.pending || 0
       });
       
       setReguStats(reguResponse.data || []);

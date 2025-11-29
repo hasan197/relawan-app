@@ -1,23 +1,38 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Download, Share2, Copy, CheckCircle, Printer, Receipt } from 'lucide-react';
+import { ArrowLeft, Download, Share2, Copy, CheckCircle, Printer, Receipt, Upload, Image as ImageIcon } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
 import { formatCurrency, generateReceiptNumber, copyToClipboard } from '../lib/utils';
 import { toast } from 'sonner@2.0.3';
+import { useAppContext } from '../contexts/AppContext';
+import { useDonations } from '../hooks/useDonations';
+import { apiCall } from '../lib/supabase';
 
 interface GeneratorResiPageProps {
   onBack?: () => void;
 }
 
 export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
+  const { user, muzakkiList } = useAppContext();
+  const { addDonationWithFile } = useDonations(user?.id || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     donorName: '',
+    muzakkiId: '',
     amount: '',
     category: 'zakat' as 'zakat' | 'infaq' | 'sedekah' | 'wakaf',
-    paymentMethod: 'transfer'
+    paymentMethod: 'transfer' as 'tunai' | 'transfer' | 'qris' | 'other',
+    notes: ''
   });
+
+  const [buktiFile, setBuktiFile] = useState<File | null>(null);
+  const [buktiPreview, setBuktiPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [receipt, setReceipt] = useState<{
     number: string;
@@ -28,7 +43,69 @@ export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
     paymentMethod: string;
   } | null>(null);
 
-  const handleGenerate = (e: React.FormEvent) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Ukuran file maksimal 5MB');
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast.error('File harus berupa gambar');
+        return;
+      }
+
+      setBuktiFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBuktiPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadBuktiTransfer = async (donationId: string): Promise<string | null> => {
+    if (!buktiFile) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', buktiFile);
+      formData.append('donation_id', donationId);
+
+      const response = await fetch(
+        `https://cqeranzfqkccdqadpica.supabase.co/functions/v1/make-server-f689ca3f/donations/upload-bukti`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxZXJhbnpmcWtjY2RxYWRwaWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEzMzcxMTgsImV4cCI6MjA0NjkxMzExOH0.6Uyy-d1VXz_DvdbK40W0yvIqZBz4GJc3SFn9k_WN27s`
+          },
+          body: formData
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Upload failed with status:', response.status, result);
+        throw new Error(result.error || `Upload failed with status ${response.status}`);
+      }
+
+      if (result.success) {
+        return result.data.url;
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(`Gagal upload bukti transfer: ${error.message}`);
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.donorName || !formData.amount) {
@@ -36,23 +113,79 @@ export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
       return;
     }
 
-    const receiptNumber = generateReceiptNumber();
-    const today = new Date().toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    if (!user) {
+      toast.error('User tidak ditemukan');
+      return;
+    }
 
-    setReceipt({
-      number: receiptNumber,
-      date: today,
-      donorName: formData.donorName,
-      amount: parseFloat(formData.amount),
-      category: formData.category,
-      paymentMethod: formData.paymentMethod
-    });
+    // Validate transfer requires bukti
+    if (formData.paymentMethod === 'transfer' && !buktiFile) {
+      toast.error('Bukti transfer harus diupload untuk pembayaran transfer');
+      return;
+    }
 
-    toast.success('Resi berhasil dibuat!');
+    try {
+      setSubmitting(true);
+
+      const amount = parseFloat(formData.amount);
+      const receiptNumber = generateReceiptNumber();
+
+      // Create donation with file upload in one step
+      const donationData = {
+        donor_id: formData.muzakkiId || undefined,
+        donor_name: formData.donorName,
+        amount: amount,
+        category: formData.category,
+        type: 'incoming' as const,
+        payment_method: formData.paymentMethod,
+        receipt_number: receiptNumber,
+        notes: formData.notes,
+        relawan_name: user.full_name || 'Unknown', // 🔥 Fix: use user.full_name
+      };
+
+      const response = await addDonationWithFile(donationData, buktiFile || undefined);
+
+      // Generate receipt
+      const today = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      setReceipt({
+        number: receiptNumber,
+        date: today,
+        donorName: formData.donorName,
+        amount: amount,
+        category: formData.category,
+        paymentMethod: formData.paymentMethod
+      });
+
+      toast.success('Donasi berhasil dilaporkan!', {
+        description: 'Menunggu validasi dari admin'
+      });
+
+      // Reset form
+      setFormData({
+        donorName: '',
+        muzakkiId: '',
+        amount: '',
+        category: 'zakat',
+        paymentMethod: 'transfer',
+        notes: ''
+      });
+      setBuktiFile(null);
+      setBuktiPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+    } catch (error: any) {
+      console.error('Submit donation error:', error);
+      toast.error(error.message || 'Gagal menyimpan donasi');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCopy = () => {
@@ -67,7 +200,13 @@ Tanggal: ${receipt.date}
 Nama Donatur: ${receipt.donorName}
 Nominal: ${formatCurrency(receipt.amount)}
 Kategori: ${receipt.category.charAt(0).toUpperCase() + receipt.category.slice(1)}
-Metode Pembayaran: ${receipt.paymentMethod === 'transfer' ? 'Transfer Bank' : 'Tunai'}
+Metode Pembayaran: ${
+  receipt.paymentMethod === 'transfer' ? 'Transfer Bank' :
+  receipt.paymentMethod === 'tunai' ? 'Tunai' :
+  receipt.paymentMethod === 'qris' ? 'QRIS' : 'Lainnya'
+}
+
+Status: Menunggu Validasi Admin
 
 Jazakumullah khairan katsiran
 Semoga menjadi amal jariyah yang berkah
@@ -94,226 +233,319 @@ Nama Donatur: ${receipt.donorName}
 Nominal: ${formatCurrency(receipt.amount)}
 Kategori: ${receipt.category.charAt(0).toUpperCase() + receipt.category.slice(1)}
 
+Status: Menunggu Validasi Admin ⏳
+
 Jazakumullah khairan katsiran 🤲
 Semoga menjadi amal jariyah yang berkah ✨
     `.trim();
 
     if (navigator.share) {
-      navigator.share({ text }).then(() => {
-        toast.success('Resi berhasil dibagikan!');
-      });
+      navigator.share({
+        title: 'Resi Donasi ZISWAF',
+        text: text
+      }).catch(err => console.log('Share error:', err));
     } else {
       copyToClipboard(text);
-      toast.success('Resi disalin ke clipboard!');
+      toast.success('Resi berhasil disalin!');
     }
   };
 
-  const categoryColors = {
-    zakat: 'from-green-500 to-green-600',
-    infaq: 'from-yellow-400 to-yellow-500',
-    sedekah: 'from-blue-500 to-blue-600',
-    wakaf: 'from-slate-500 to-slate-600'
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 sticky top-0 z-10 shadow-lg">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
+          <button onClick={onBack} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+            <ArrowLeft className="h-5 w-5" />
           </button>
-          <h2 className="text-white">Generator Resi Donasi</h2>
+          <div className="flex-1">
+            <h1 className="font-semibold text-lg">Lapor Donasi</h1>
+            <p className="text-sm text-primary-100">Catat & upload bukti transfer</p>
+          </div>
+          <Receipt className="h-6 w-6 opacity-80" />
         </div>
       </div>
 
-      <div className="px-4 -mt-4 pb-6">
-        {!receipt ? (
-          // Form
-          <Card className="p-6 shadow-card">
-            <h3 className="text-gray-900 mb-4">Buat Resi Baru</h3>
-            
-            <form onSubmit={handleGenerate} className="space-y-4">
+      <div className="p-4 space-y-4">
+        {/* Form */}
+        <Card className="p-4 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Desktop: 2 Column Layout for Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Donatur Selection */}
+              <div className="md:col-span-2">
+                <Label htmlFor="muzakki">Pilih Donatur (Opsional)</Label>
+                <Select value={formData.muzakkiId} onValueChange={(value) => {
+                  if (value === 'new') {
+                    setFormData({ ...formData, muzakkiId: '', donorName: '' });
+                  } else {
+                    setFormData({ ...formData, muzakkiId: value });
+                    const selected = muzakkiList.find(m => m.id === value);
+                    if (selected) {
+                      setFormData(prev => ({ ...prev, donorName: selected.name }));
+                    }
+                  }
+                }}>
+                  <SelectTrigger className="h-10 md:h-12">
+                    <SelectValue placeholder="Pilih dari daftar muzakki" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Donatur Baru</SelectItem>
+                    {muzakkiList.map((muzakki) => (
+                      <SelectItem key={muzakki.id} value={muzakki.id}>
+                        {muzakki.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Donor Name */}
               <div>
                 <Label htmlFor="donorName">Nama Donatur *</Label>
                 <Input
                   id="donorName"
-                  type="text"
                   placeholder="Masukkan nama donatur"
                   value={formData.donorName}
                   onChange={(e) => setFormData({ ...formData, donorName: e.target.value })}
+                  required
+                  className="h-10 md:h-12"
                 />
               </div>
 
+              {/* Amount */}
               <div>
                 <Label htmlFor="amount">Nominal Donasi *</Label>
                 <Input
                   id="amount"
                   type="number"
-                  placeholder="50000"
+                  placeholder="Contoh: 500000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  required
+                  className="h-10 md:h-12"
                 />
+                {formData.amount && (
+                  <p className="text-sm text-primary-600 mt-1">
+                    {formatCurrency(parseFloat(formData.amount))}
+                  </p>
+                )}
               </div>
 
+              {/* Category */}
               <div>
-                <Label>Kategori</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {(['zakat', 'infaq', 'sedekah', 'wakaf'] as const).map((category) => (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, category })}
-                      className={`px-3 py-2 rounded-lg transition-colors capitalize ${
-                        formData.category === category
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                <Label htmlFor="category">Kategori *</Label>
+                <Select value={formData.category} onValueChange={(value: any) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger className="h-10 md:h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zakat">Zakat</SelectItem>
+                    <SelectItem value="infaq">Infaq</SelectItem>
+                    <SelectItem value="sedekah">Sedekah</SelectItem>
+                    <SelectItem value="wakaf">Wakaf</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <Label htmlFor="paymentMethod">Metode Pembayaran *</Label>
+                <Select value={formData.paymentMethod} onValueChange={(value: any) => setFormData({ ...formData, paymentMethod: value })}>
+                  <SelectTrigger className="h-10 md:h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tunai">💵 Tunai</SelectItem>
+                    <SelectItem value="transfer">🏦 Transfer Bank</SelectItem>
+                    <SelectItem value="qris">📱 QRIS</SelectItem>
+                    <SelectItem value="other">💳 Lainnya</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Bukti Transfer Upload - Full Width */}
+            {formData.paymentMethod !== 'tunai' && (
+              <div>
+                <Label>
+                  Bukti Transfer {formData.paymentMethod === 'transfer' ? '*' : '(Opsional)'}
+                </Label>
+                <div className="mt-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="bukti-upload"
+                  />
+                  
+                  {buktiPreview ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="relative rounded-lg overflow-hidden border-2 border-primary-200">
+                        <img
+                          src={buktiPreview}
+                          alt="Preview bukti transfer"
+                          className="w-full h-48 md:h-64 object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="absolute top-2 right-2 bg-white"
+                          onClick={() => {
+                            setBuktiFile(null);
+                            setBuktiPreview(null);
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = '';
+                            }
+                          }}
+                        >
+                          Hapus
+                        </Button>
+                      </div>
+                      <div className="flex items-center">
+                        <label
+                          htmlFor="bukti-upload"
+                          className="w-full flex items-center justify-center gap-2 p-4 md:p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-400 transition-colors"
+                        >
+                          <Upload className="h-5 w-5 text-gray-400" />
+                          <span className="text-sm text-gray-600">Ganti Gambar</span>
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="bukti-upload"
+                      className="flex flex-col items-center justify-center gap-2 p-6 md:p-10 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-400 transition-colors"
                     >
-                      {category}
-                    </button>
-                  ))}
+                      <ImageIcon className="h-10 w-10 md:h-12 md:w-12 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-600">
+                        Upload Bukti Transfer
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        JPG, PNG (Max 5MB)
+                      </span>
+                    </label>
+                  )}
                 </div>
+                {formData.paymentMethod === 'transfer' && !buktiFile && (
+                  <p className="text-xs text-red-500 mt-1">
+                    * Wajib upload bukti transfer untuk pembayaran via transfer
+                  </p>
+                )}
               </div>
+            )}
 
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, paymentMethod: 'transfer' })}
-                    className={`px-3 py-2 rounded-lg transition-colors ${
-                      formData.paymentMethod === 'transfer'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Transfer Bank
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, paymentMethod: 'cash' })}
-                    className={`px-3 py-2 rounded-lg transition-colors ${
-                      formData.paymentMethod === 'cash'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Tunai
-                  </button>
-                </div>
-              </div>
+            {/* Notes - Full Width */}
+            <div>
+              <Label htmlFor="notes">Catatan (Opsional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Tambahkan catatan jika diperlukan..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+                className="md:rows-4"
+              />
+            </div>
 
+            {/* Submit Button - Centered on Desktop */}
+            <div className="md:flex md:justify-center md:pt-4">
               <Button
                 type="submit"
-                className="w-full bg-primary-600 hover:bg-primary-700"
+                className="w-full md:w-auto md:min-w-[320px] bg-primary-600 hover:bg-primary-700 h-11 md:h-12"
+                disabled={submitting}
               >
-                Generate Resi
-              </Button>
-            </form>
-          </Card>
-        ) : (
-          // Receipt Display
-          <div className="space-y-4">
-            <Card className={`overflow-hidden shadow-xl bg-gradient-to-br ${categoryColors[receipt.category as keyof typeof categoryColors]} text-white`}>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="opacity-90 mb-1">Resi Donasi</p>
-                    <h2 className="uppercase">{receipt.category}</h2>
-                  </div>
-                  <CheckCircle className="h-10 w-10 opacity-90" />
-                </div>
-
-                <div className="space-y-3 bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                  <div>
-                    <p className="opacity-80">No. Resi</p>
-                    <p className="text-xl">{receipt.number}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="opacity-80">Tanggal</p>
-                    <p>{receipt.date}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h4 className="text-gray-900 mb-4">Detail Donasi</h4>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Nama Donatur</span>
-                  <span className="text-gray-900">{receipt.donorName}</span>
-                </div>
-                
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Nominal</span>
-                  <span className="text-gray-900">{formatCurrency(receipt.amount)}</span>
-                </div>
-                
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Kategori</span>
-                  <span className="text-gray-900 capitalize">{receipt.category}</span>
-                </div>
-                
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Metode Pembayaran</span>
-                  <span className="text-gray-900">
-                    {receipt.paymentMethod === 'transfer' ? 'Transfer Bank' : 'Tunai'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-primary-50 rounded-lg text-center">
-                <p className="text-primary-700">
-                  Jazakumullah khairan katsiran 🤲
-                </p>
-                <p className="text-primary-600">
-                  Semoga menjadi amal jariyah yang berkah
-                </p>
-              </div>
-            </Card>
-
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                onClick={handleCopy}
-                className="flex-col h-auto py-3"
-              >
-                <Copy className="h-5 w-5 mb-1" />
-                <span>Salin</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleShare}
-                className="flex-col h-auto py-3"
-              >
-                <Share2 className="h-5 w-5 mb-1" />
-                <span>Bagikan</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="flex-col h-auto py-3"
-              >
-                <Download className="h-5 w-5 mb-1" />
-                <span>Unduh</span>
+                {submitting ? (
+                  'Menyimpan...'
+                ) : (
+                  <>
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Lapor Donasi
+                  </>
+                )}
               </Button>
             </div>
 
-            <Button
-              onClick={() => setReceipt(null)}
-              className="w-full bg-primary-600 hover:bg-primary-700"
-            >
-              Buat Resi Baru
-            </Button>
-          </div>
+            <p className="text-xs text-center text-gray-500">
+              Donasi akan menunggu validasi dari admin
+            </p>
+          </form>
+        </Card>
+
+        {/* Receipt Preview */}
+        {receipt && (
+          <Card className="p-6 bg-gradient-to-br from-white to-primary-50">
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-3">
+                <Receipt className="h-8 w-8 text-primary-600" />
+              </div>
+              <h2 className="font-bold text-xl mb-1">Resi Donasi</h2>
+              <p className="text-sm text-gray-600">Donasi berhasil dilaporkan!</p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">No. Resi</span>
+                <span className="font-bold">{receipt.number}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Tanggal</span>
+                <span className="font-medium">{receipt.date}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Donatur</span>
+                <span className="font-medium">{receipt.donorName}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Nominal</span>
+                <span className="font-bold text-lg text-primary-600">
+                  {formatCurrency(receipt.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Kategori</span>
+                <span className="font-medium capitalize">{receipt.category}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Status</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                  Menunggu Validasi
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-amber-800 text-center">
+                ⏳ Donasi Anda sedang menunggu validasi dari admin. Anda akan mendapat notifikasi setelah divalidasi.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                className="flex-1 gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                Salin
+              </Button>
+              <Button
+                onClick={handleShare}
+                className="flex-1 gap-2 bg-primary-600 hover:bg-primary-700"
+              >
+                <Share2 className="h-4 w-4" />
+                Bagikan
+              </Button>
+            </div>
+
+            <p className="text-center text-sm text-gray-600 mt-4">
+              Jazakumullah khairan katsiran 🤲
+            </p>
+          </Card>
         )}
       </div>
     </div>

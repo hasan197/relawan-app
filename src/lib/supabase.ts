@@ -40,11 +40,15 @@ export async function apiCall(
   });
 
   try {
+    // Handle FormData - don't set Content-Type for FormData
+    const isFormData = options.body instanceof FormData;
+    
     const response = await fetch(`${SERVER_URL}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        // Only set Content-Type for non-FormData requests
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
       },
     });

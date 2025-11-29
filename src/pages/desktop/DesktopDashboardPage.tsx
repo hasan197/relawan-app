@@ -9,14 +9,15 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { ServerStatusBanner } from '../../components/ServerStatusBanner';
-import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown, MessageCircle, Package } from 'lucide-react';
 
 interface DesktopDashboardPageProps {
   onNavigate?: (page: string) => void;
 }
 
 export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) {
-  const { donations, muzakkiList, muzakkiError, donationsError, getTotalDonations, getDonationsByCategory } = useAppContext();
+  const { user, donations, muzakkiList, muzakkiError, donationsError, getTotalDonations, getDonationsByCategory } = useAppContext();
+  const { statistics } = useStatistics(user?.id || null);
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const totalDonations = getTotalDonations();
@@ -84,14 +85,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
   ].filter(item => item.value > 0);
 
 
-  // Recent Activities
-  const recentActivities = donations.slice(0, 5).map(d => ({
-    id: d.id,
-    type: d.category,
-    amount: d.amount,
-    date: d.created_at,
-    status: 'completed'
-  }));
+  // Recent Activities from backend
+  const recentActivities = statistics?.recent_activities || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -278,20 +273,56 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
             </div>
             <div className="space-y-4">
               {recentActivities.length > 0 ? (
-                recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <DollarSign className="h-5 w-5 text-green-600" />
+                recentActivities.map((activity) => {
+                  const getActivityIcon = () => {
+                    switch (activity.type) {
+                      case 'donation':
+                        return DollarSign;
+                      case 'follow-up':
+                        return MessageCircle;
+                      case 'distribution':
+                        return Package;
+                      default:
+                        return Activity;
+                    }
+                  };
+                  
+                  const getActivityColor = () => {
+                    switch (activity.type) {
+                      case 'donation':
+                        return 'bg-green-100 text-green-600';
+                      case 'follow-up':
+                        return 'bg-blue-100 text-blue-600';
+                      case 'distribution':
+                        return 'bg-purple-100 text-purple-600';
+                      default:
+                        return 'bg-gray-100 text-gray-600';
+                    }
+                  };
+
+                  const Icon = getActivityIcon();
+                  const iconColor = getActivityColor();
+
+                  return (
+                    <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
+                      <div className={`w-10 h-10 ${iconColor} rounded-lg flex items-center justify-center`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-900">{activity.title}</p>
+                        {activity.amount && (
+                          <p className="text-green-600">{formatCurrency(activity.amount)}</p>
+                        )}
+                        {activity.muzakki_name && (
+                          <p className="text-gray-500 text-sm">{activity.muzakki_name}</p>
+                        )}
+                        <p className="text-gray-400 text-sm">
+                          {formatRelativeTime(activity.time)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-900">Donasi {activity.type}</p>
-                      <p className="text-green-600">{formatCurrency(activity.amount)}</p>
-                      <p className="text-gray-400">
-                        {formatRelativeTime(new Date(activity.date))}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8">
                   <Activity className="h-10 w-10 text-gray-300 mx-auto mb-3" />

@@ -91,12 +91,21 @@ export default defineSchema({
     donorName: v.string(),
     donorId: v.optional(v.id("muzakkis")),
     relawanId: v.id("users"),
+    relawanName: v.optional(v.string()),
     eventName: v.optional(v.string()),
     type: v.union(
       v.literal("incoming"),
       v.literal("outgoing")
     ),
     notes: v.optional(v.string()),
+    buktiTransferUrl: v.optional(v.union(v.string(), v.null())),
+    paymentMethod: v.optional(v.string()),
+    receiptNumber: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("pending"), v.literal("validated"), v.literal("rejected"))),
+    validatedBy: v.optional(v.id("users")),
+    validatedByName: v.optional(v.string()),
+    validatedAt: v.optional(v.number()),
+    rejectionReason: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_relawan", ["relawanId"])
