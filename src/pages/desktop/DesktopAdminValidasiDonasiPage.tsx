@@ -26,7 +26,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
   const [filteredDonations, setFilteredDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'validated' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'validated' | 'rejected'>('pending');
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [showValidateDialog, setShowValidateDialog] = useState(false);
   const [validationAction, setValidationAction] = useState<'approve' | 'reject'>('approve');
@@ -34,6 +34,10 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
   const [validating, setValidating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const donationsPerPage = 20;
 
   useEffect(() => {
     fetchDonations();
@@ -43,13 +47,37 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
     filterDonations();
   }, [donations, searchQuery, statusFilter]);
 
-  const fetchDonations = async () => {
+  // Scroll detection for infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
+      const threshold = document.documentElement.offsetHeight - 1000; // Load more when 1000px from bottom
+      
+      if (scrollPosition >= threshold && hasMore && !loadingMore) {
+        loadMoreDonations();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore, currentPage]);
+
+  const fetchDonations = async (page: number = 0, append: boolean = false) => {
     try {
-      setLoading(true);
-      const response = await apiCall('/donations?admin=true');
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setCurrentPage(0);
+        setHasMore(true);
+      }
+      
+      const paginationParams = `&page=${page}&limit=${donationsPerPage}`;
+      const response = await apiCall(`/donations?admin=true${paginationParams}`);
       
       console.log('🔍 API Response:', response);
       console.log('🔍 Response data length:', response.data?.length || 0);
+      console.log('🔍 Pagination info:', response.pagination);
       
       if (response.success) {
         const transformedDonations = response.data.map((d: any) => ({
@@ -74,21 +102,47 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
         }));
         
         console.log('🔍 Transformed donations:', transformedDonations.length);
-        setDonations(transformedDonations);
+        
+        if (append) {
+          setDonations(prev => [...prev, ...transformedDonations]);
+        } else {
+          setDonations(transformedDonations);
+        }
+        
+        // Use pagination info from backend
+        if (response.pagination) {
+          setHasMore(response.pagination.hasMore);
+          if (append) {
+            setCurrentPage(prev => prev + 1);
+          }
+        }
       }
     } catch (error: any) {
       console.error('Error fetching donations:', error);
       toast.error('Gagal memuat data donasi');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreDonations = () => {
+    if (!loadingMore && hasMore) {
+      fetchDonations(currentPage + 1, true);
     }
   };
 
   const filterDonations = () => {
     let filtered = [...donations];
+    console.log('🔍 Filtering donations:', { 
+      total: donations.length, 
+      statusFilter, 
+      searchQuery: searchQuery || 'none' 
+    });
 
     if (statusFilter !== 'all') {
       filtered = filtered.filter(d => d.status === statusFilter);
+      console.log(`🔍 After status filter (${statusFilter}):`, filtered.length);
     }
 
     if (searchQuery) {
@@ -98,10 +152,12 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
         d.relawanName?.toLowerCase().includes(query) ||
         d.category.toLowerCase().includes(query)
       );
+      console.log(`🔍 After search filter ("${searchQuery}"):`, filtered.length);
     }
 
     filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     setFilteredDonations(filtered);
+    console.log('🔍 Final filtered donations:', filtered.length);
   };
 
   const handleValidate = async () => {
@@ -272,7 +328,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Cari donatur atau relawan..."
+                placeholder="Cari donatur atau relawan yang menunggu validasi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
@@ -397,6 +453,19 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
               )}
             </TableBody>
           </Table>
+          
+          {/* Load More Indicator */}
+          {loadingMore && (
+            <div className="flex justify-center items-center py-4 border-t">
+              <LoadingSpinner message="Memuat lebih banyak data..." />
+            </div>
+          )}
+          
+          {!loadingMore && !hasMore && filteredDonations.length > 0 && (
+            <div className="text-center py-4 text-sm text-gray-500 border-t">
+              Semua data sudah ditampilkan
+            </div>
+          )}
         </Card>
       </div>
 

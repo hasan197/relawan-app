@@ -225,14 +225,38 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
 
             if (isAdmin) {
                 console.log('🔍 Admin route detected, fetching all donations');
-                // Get all donations by combining pending with validated/rejected
-                // @ts-ignore
-                const pendingDonations = await client.query(api.donations.listPending, {});
-                console.log('📊 Pending donations:', pendingDonations?.length || 0);
+                const page = parseInt(queryParams.get('page') || '0');
+                const limit = parseInt(queryParams.get('limit') || '50');
                 
-                // For now, return pending donations since that's what admin needs to validate
-                // Later we can add queries for validated/rejected if needed
-                return { success: true, data: pendingDonations };
+                console.log('🔍 Pagination params:', { page, limit });
+                
+                // Get all donations (pending, validated, rejected)
+                // @ts-ignore
+                const allDonations = await client.query(api.donations.listAll, {});
+                console.log('📊 All donations:', allDonations?.length || 0);
+                
+                // Apply pagination
+                const startIndex = page * limit;
+                const endIndex = startIndex + limit;
+                const paginatedDonations = allDonations.slice(startIndex, endIndex);
+                
+                console.log('🔍 Paginated result:', { 
+                    page, 
+                    limit, 
+                    returned: paginatedDonations.length,
+                    hasMore: endIndex < allDonations.length
+                });
+                
+                return { 
+                    success: true, 
+                    data: paginatedDonations,
+                    pagination: {
+                        page,
+                        limit,
+                        total: allDonations.length,
+                        hasMore: endIndex < allDonations.length
+                    }
+                };
             }
             if (relawanId) {
                 // @ts-ignore
