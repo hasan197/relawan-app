@@ -10,13 +10,13 @@ import { api } from '../../convex/_generated/api';
 
 // Type definition for environment variables
 interface ImportMetaEnv {
-  readonly VITE_CONVEX_URL: string;
-  readonly NEXT_PUBLIC_CONVEX_URL: string;
-  readonly [key: string]: any;
+    readonly VITE_CONVEX_URL: string;
+    readonly NEXT_PUBLIC_CONVEX_URL: string;
+    readonly [key: string]: any;
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv;
+    readonly env: ImportMetaEnv;
 }
 
 const convexUrl = (import.meta.env?.VITE_CONVEX_URL as string) ||
@@ -40,7 +40,7 @@ async function handleFileUpload(formData: FormData, client: any, api: any) {
         // Parse FormData to extract file
         const file = formData.get('file') as File;
         const donationId = formData.get('donation_id') as string;
-        
+
         console.log('📁 FormData debug:', {
             hasFile: !!file,
             fileName: file?.name,
@@ -48,26 +48,26 @@ async function handleFileUpload(formData: FormData, client: any, api: any) {
             donationIdType: typeof donationId,
             donationIdValue: donationId === 'undefined' ? 'STRING_UNDEFINED' : donationId
         });
-        
+
         if (!file) {
             throw new Error('Missing file in FormData');
         }
-        
+
         if (!donationId || donationId === 'undefined' || donationId === 'null') {
             throw new Error(`Invalid donation_id: ${donationId}. Must be a valid Convex ID.`);
         }
-        
+
         // Convert file to ArrayBuffer for Convex (not Uint8Array)
         const arrayBuffer = await file.arrayBuffer();
-        
+
         console.log('📁 File info:', {
             name: file.name,
             type: file.type,
             size: file.size,
             arrayBufferSize: arrayBuffer.byteLength
         });
-        
-        // Call Convex action to upload to B2
+
+        // Call Convex action to upload to storage (provider selected via config)
         // @ts-ignore
         const result = await client.action(api.backblazeUpload.uploadFileToB2, {
             fileData: arrayBuffer, // Use ArrayBuffer, not Uint8Array
@@ -75,7 +75,22 @@ async function handleFileUpload(formData: FormData, client: any, api: any) {
             fileType: file.type,
             donationId: donationId, // Validated donation ID
         });
-        
+
+        console.log('📤 Upload result:', result);
+
+        if (result.success && result.url) {
+            console.log('🔄 Updating donation record with URL:', result.url);
+            // Update donation record with the file URL
+            // @ts-ignore
+            await client.mutation(api.donations.updateBuktiTransferUrl, {
+                donationId: donationId,
+                buktiTransferUrl: result.url
+            });
+            console.log('✅ Donation record updated successfully');
+        } else {
+            console.warn('⚠️ Upload successful but no URL returned, skipping database update');
+        }
+
         return result;
     } catch (error: any) {
         console.error('❌ Convex B2 upload error:', error);
@@ -153,35 +168,35 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             console.log('🔍 Bukti transfer endpoint matched!');
             const donationId = pathParts[1];
             console.log('🔍 Serving bukti transfer for donation:', donationId);
-            
+
             try {
                 // Get donation by ID directly
                 // @ts-ignore
                 const donation = await client.query(api.donations.getById, { donationId: donationId as any });
                 console.log('🔍 Found donation:', donation ? 'yes' : 'no');
-                
+
                 if (!donation || !donation.bukti_transfer_url) {
                     return { error: 'Bukti transfer not found' };
                 }
-                
+
                 console.log('🔍 Fetching file content from:', donation.bukti_transfer_url);
-                
+
                 try {
                     // Use serveBuktiTransfer action to fetch and serve file
                     // @ts-ignore
-                    const result = await client.action(api.backblazeUpload.serveBuktiTransfer, { 
-                        fileUrl: donation.bukti_transfer_url 
+                    const result = await client.action(api.backblazeUpload.serveBuktiTransfer, {
+                        fileUrl: donation.bukti_transfer_url
                     });
                     console.log('🔍 File serve result:', result);
-                    
+
                     if (result.success) {
-                        return { 
-                            success: true, 
-                            data: { 
+                        return {
+                            success: true,
+                            data: {
                                 url: result.url,
                                 contentType: result.contentType,
                                 size: result.size
-                            } 
+                            }
                         };
                     } else {
                         return { error: result.error };
@@ -190,13 +205,13 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                     console.error('❌ Failed to serve file:', error);
                     return { error: 'Failed to serve file' };
                 }
-                
+
             } catch (error) {
                 console.error('❌ Error getting donation:', error);
                 return { error: 'Failed to get donation data' };
             }
         }
-        
+
         // POST /donations/:id/validate
         if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'validate' && method === 'POST') {
             console.log('🔍 Validation endpoint hit:', pathParts);
@@ -204,17 +219,17 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const body = JSON.parse(options.body as string);
             console.log('🔍 Validation body:', body);
             // @ts-ignore
-            const result = await client.mutation(api.donations.validate, { 
+            const result = await client.mutation(api.donations.validate, {
                 donationId: donationId as any,
                 adminId: body.admin_id as any,
                 adminName: body.admin_name,
                 action: body.action === 'approve' ? 'validate' : 'reject',
-                rejectionReason: body.rejection_reason || undefined 
+                rejectionReason: body.rejection_reason || undefined
             });
             console.log('✅ Validation result:', result);
             return { success: true, data: result };
         }
-        
+
         // GET /donations?relawan_id=... or ?muzakki_id=... or ?admin=true (general donations)
         if (pathParts[0] === 'donations' && method === 'GET') {
             console.log('🔍 Donations endpoint hit:', { pathParts, method, pathPartsLength: pathParts.length });
@@ -227,28 +242,28 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                 console.log('🔍 Admin route detected, fetching all donations');
                 const page = parseInt(queryParams.get('page') || '0');
                 const limit = parseInt(queryParams.get('limit') || '50');
-                
+
                 console.log('🔍 Pagination params:', { page, limit });
-                
+
                 // Get all donations (pending, validated, rejected)
                 // @ts-ignore
                 const allDonations = await client.query(api.donations.listAll, {});
                 console.log('📊 All donations:', allDonations?.length || 0);
-                
+
                 // Apply pagination
                 const startIndex = page * limit;
                 const endIndex = startIndex + limit;
                 const paginatedDonations = allDonations.slice(startIndex, endIndex);
-                
-                console.log('🔍 Paginated result:', { 
-                    page, 
-                    limit, 
+
+                console.log('🔍 Paginated result:', {
+                    page,
+                    limit,
                     returned: paginatedDonations.length,
                     hasMore: endIndex < allDonations.length
                 });
-                
-                return { 
-                    success: true, 
+
+                return {
+                    success: true,
                     data: paginatedDonations,
                     pagination: {
                         page,
@@ -294,12 +309,12 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const body = JSON.parse(options.body as string);
             console.log('🔍 Validation body:', body);
             // @ts-ignore
-            const result = await client.mutation(api.donations.validate, { 
+            const result = await client.mutation(api.donations.validate, {
                 donationId: donationId as any,
                 adminId: body.admin_id as any,
                 adminName: body.admin_name,
                 action: body.action === 'approve' ? 'validate' : 'reject',
-                rejectionReason: body.rejection_reason || undefined 
+                rejectionReason: body.rejection_reason || undefined
             });
             console.log('✅ Validation result:', result);
             return { success: true, data: result };
@@ -308,35 +323,54 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'bukti-transfer' && method === 'GET') {
             const donationId = pathParts[1];
             console.log('🔍 Serving bukti transfer for donation:', donationId);
-            
+
             try {
                 // Get donation by ID directly
                 // @ts-ignore
                 const donation = await client.query(api.donations.getById, { donationId: donationId as any });
                 console.log('🔍 Found donation:', donation ? 'yes' : 'no');
-                
+
                 if (!donation || !donation.bukti_transfer_url) {
                     return { error: 'Bukti transfer not found' };
                 }
-                
-                // Extract filename from URL
-                const urlParts = donation.bukti_transfer_url.split('/');
-                const fileName = urlParts[urlParts.length - 1];
-                console.log('🔍 Extracted filename:', fileName);
-                
+
+                // Extract filename/path from URL
+                let fileName = donation.bukti_transfer_url;
+
+                // Handle Backblaze B2 URLs which contain the full path
+                // Format: .../file/<bucketName>/<path/to/file>
+                if (fileName.includes('/file/')) {
+                    const parts = fileName.split('/file/');
+                    if (parts.length > 1) {
+                        // parts[1] is <bucketName>/<path/to/file>
+                        const pathParts = parts[1].split('/');
+                        if (pathParts.length > 1) {
+                            // Remove bucket name (first segment) to get the file key
+                            fileName = pathParts.slice(1).join('/');
+                        }
+                    }
+                } else if (fileName.includes('/')) {
+                    // Fallback for other URLs: take the last segment
+                    const urlParts = fileName.split('/');
+                    fileName = urlParts[urlParts.length - 1];
+                }
+                // If no slashes (e.g. Convex Storage ID), use as is
+
+                console.log('🔍 Extracted filename/key:', fileName);
+
                 try {
                     // Generate signed URL for download
                     // @ts-ignore
                     const result = await client.action(api.backblazeUpload.getDownloadUrl, { fileName });
                     console.log('🔍 Generated download URL:', result);
-                    
+
                     if (result.success) {
-                        return { 
-                            success: true, 
-                            data: { 
+                        return {
+                            success: true,
+                            data: {
                                 url: result.url,
                                 authToken: result.authToken
-                            } 
+                            }
                         };
                     } else {
                         return { error: result.error };

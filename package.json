@@ -61,6 +61,7 @@
             "@vitejs/plugin-react": "^5.1.1",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "@vitest/ui": "^4.0.9",
+            "jsdom": "^27.2.0",
             "vite": "6.3.5",
             "vitest": "^4.0.9"
       },
@@ -68,6 +69,10 @@
             "dev": "vite",
             "build": "vite build",
             "seed:dev": "npx convex run seed:seedDatabase",
-            "seed:prod": "npx convex run seed:seedDatabase --prod"
+            "seed:prod": "npx convex run seed:seedDatabase --prod",
+            "test": "vitest",
+            "test:storage": "vitest --config vitest.storage.config.ts",
+            "test:storage:watch": "vitest --config vitest.storage.config.ts --watch",
+            "test:storage:coverage": "vitest --config vitest.storage.config.ts --coverage"
       }
 }

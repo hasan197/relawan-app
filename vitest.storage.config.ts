@@ -1,14 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    environment: 'node',
+    setupFiles: ['./tests/storage/__tests__/setup.ts'],
+    include: ['tests/storage/__tests__/**/*.test.ts'],
+    exclude: ['node_modules', 'dist'],
   },
   resolve: {
     alias: {

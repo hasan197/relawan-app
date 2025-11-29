@@ -1,0 +1,11 @@
+# Test files should not be deployed to Convex
+storage/__tests__/
+**/__tests__/**
+**/*.test.ts
+**/*.test.js
+**/vitest.*.ts
+**/vitest.*.js
+
+# Test configuration
+**/setup.ts
+**/setup.js
