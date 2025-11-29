@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Download, TrendingUp, DollarSign, Users, Calendar, Filter, FileText } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../lib/utils';
-import { getMonthlyDonations, getWeeklyTrend, getTopMuzakki, getMonthlyTrend, calculatePercentageChange, getPreviousPeriodData } from '../../lib/dataAggregation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 interface DesktopLaporanPageProps {
@@ -23,19 +22,6 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
   const categoryData = getDonationsByCategory();
   const balance = totalDonations - totalDistributed;
 
-  // Use dataAggregation utilities
-  const monthlyData = useMemo(() => getMonthlyDonations(donations), [donations]);
-  const trendData = useMemo(() => getWeeklyTrend(donations), [donations]);
-  const topMuzakkiData = useMemo(() => getTopMuzakki(donations, muzakkiList, 5), [donations, muzakkiList]);
-  const monthlyTrendData = useMemo(() => getMonthlyTrend(donations), [donations]);
-
-  // Calculate percentage changes
-  const currentPeriodTotal = donations
-    .filter(d => d.type === 'incoming')
-    .reduce((sum, d) => sum + d.amount, 0);
-  const previousPeriodTotal = getPreviousPeriodData(donations, selectedPeriod);
-  const donationChange = calculatePercentageChange(currentPeriodTotal, previousPeriodTotal);
-
   const categoryChartData = [
     { name: 'Zakat', value: categoryData.zakat, color: '#10b981' },
     { name: 'Infaq', value: categoryData.infaq, color: '#fbbf24' },
@@ -43,11 +29,27 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
   ].filter(item => item.value > 0);
 
+  const monthlyTrend = [
+    { month: 'Jan', donasi: 32, penyaluran: 28 },
+    { month: 'Feb', donasi: 45, penyaluran: 38 },
+    { month: 'Mar', donasi: 38, penyaluran: 35 },
+    { month: 'Apr', donasi: 52, penyaluran: 42 },
+    { month: 'Mei', donasi: 48, penyaluran: 45 },
+    { month: 'Jun', donasi: 61, penyaluran: 52 }
+  ];
+
+  const topMuzakki = [
+    { name: 'Ahmad Dahlan', total: 15000000, count: 8 },
+    { name: 'Siti Nurjanah', total: 12500000, count: 6 },
+    { name: 'Budi Santoso', total: 10000000, count: 5 },
+    { name: 'Fatimah Az-Zahra', total: 8500000, count: 4 },
+    { name: 'Muhammad Hasan', total: 7000000, count: 4 }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DesktopTopbar
-        title="Laporan & Analytics"
+      <DesktopTopbar 
+        title="Laporan & Analytics" 
         subtitle="Analisis lengkap performa donasi Anda"
         onNavigate={onNavigate}
       />
@@ -60,10 +62,11 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === period
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  selectedPeriod === period
                     ? 'bg-primary-600 text-white'
                     : 'bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
+                }`}
               >
                 <Calendar className="h-4 w-4 inline mr-2" />
                 {period === 'week' ? 'Minggu Ini' : period === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
@@ -84,7 +87,7 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                 <DollarSign className="h-6 w-6 text-green-600" />
               </div>
               <Badge className="bg-green-100 text-green-700 border-none">
-                {donationChange}
+                +12.5%
               </Badge>
             </div>
             <h3 className="text-gray-900 mb-1">{formatCurrency(totalDonations)}</h3>
@@ -137,26 +140,26 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
           <Card className="col-span-2 p-6">
             <h3 className="text-gray-900 mb-6">Trend Donasi vs Penyaluran</h3>
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={monthlyTrendData}>
+              <LineChart data={monthlyTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip
+                <Tooltip 
                   formatter={(value: number) => `Rp ${value}M`}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="donasi"
-                  stroke="#10b981"
+                <Line 
+                  type="monotone" 
+                  dataKey="donasi" 
+                  stroke="#10b981" 
                   strokeWidth={3}
                   name="Donasi"
                   dot={{ fill: '#10b981', r: 5 }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="penyaluran"
-                  stroke="#3b82f6"
+                <Line 
+                  type="monotone" 
+                  dataKey="penyaluran" 
+                  stroke="#3b82f6" 
                   strokeWidth={3}
                   name="Penyaluran"
                   dot={{ fill: '#3b82f6', r: 5 }}
@@ -185,7 +188,7 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
+                    <Tooltip 
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     />
@@ -236,14 +239,15 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                  {topMuzakkiData.map((muzakki, index) => (
+                    {topMuzakki.map((muzakki, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                              index === 1 ? 'bg-gray-100 text-gray-700' :
-                                index === 2 ? 'bg-orange-100 text-orange-700' :
-                                  'bg-blue-50 text-blue-700'
-                            }`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                            index === 1 ? 'bg-gray-100 text-gray-700' :
+                            index === 2 ? 'bg-orange-100 text-orange-700' :
+                            'bg-blue-50 text-blue-700'
+                          }`}>
                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                           </div>
                         </td>
@@ -282,15 +286,15 @@ export function DesktopLaporanPage({ onNavigate }: DesktopLaporanPageProps) {
                 {Object.entries(categoryData).map(([category, amount]) => (
                   <Card key={category} className="p-6 bg-gray-50">
                     <h4 className="text-gray-600 mb-2 capitalize">{category}</h4>
-                    <h2 className="text-gray-900 mb-4">{formatCurrency(amount as number)}</h2>
+                    <h2 className="text-gray-900 mb-4">{formatCurrency(amount)}</h2>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
+                      <div 
                         className="h-full bg-primary-600"
-                        style={{ width: `${((amount as number) / totalDonations) * 100}%` }}
+                        style={{ width: `${(amount / totalDonations) * 100}%` }}
                       />
                     </div>
                     <p className="text-gray-500 mt-2">
-                      {(((amount as number) / totalDonations) * 100).toFixed(1)}% dari total
+                      {((amount / totalDonations) * 100).toFixed(1)}% dari total
                     </p>
                   </Card>
                 ))}

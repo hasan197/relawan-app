@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useAuth } from '../hooks/useAuth';
+import { BottomNavigation } from '../components/BottomNavigation';
 
 interface AdminToolsPageProps {
   onBack?: () => void;
@@ -251,6 +252,12 @@ export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
           </p>
         </Card>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        active="admin-tools" 
+        onNavigate={(item) => onNavigate?.(item)} 
+      />
     </div>
   );
 }

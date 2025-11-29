@@ -1,6 +1,7 @@
-import { Home, Users, BarChart3, User } from "lucide-react";
+import { Home, Users, BarChart3, User, Shield, CheckCircle, Database } from "lucide-react";
+import { useAppContext } from "../contexts/AppContext";
 
-type NavItem = "dashboard" | "donatur" | "laporan" | "profil";
+type NavItem = "dashboard" | "donatur" | "laporan" | "profil" | "admin-dashboard" | "admin-validasi-donasi" | "admin-data" | "admin-tools";
 
 interface BottomNavigationProps {
   active: NavItem;
@@ -11,7 +12,34 @@ export function BottomNavigation({
   active,
   onNavigate,
 }: BottomNavigationProps) {
-  const navItems = [
+  const { user } = useAppContext();
+  
+  // Admin Navigation
+  const adminNavItems = [
+    {
+      id: "admin-dashboard" as NavItem,
+      label: "Dashboard",
+      icon: Shield,
+    },
+    { 
+      id: "admin-validasi-donasi" as NavItem, 
+      label: "Validasi", 
+      icon: CheckCircle 
+    },
+    {
+      id: "admin-data" as NavItem,
+      label: "Data",
+      icon: Database,
+    },
+    { 
+      id: "profil" as NavItem, 
+      label: "Profil", 
+      icon: User 
+    },
+  ];
+
+  // Regular User Navigation (Relawan & Pembimbing)
+  const regularNavItems = [
     {
       id: "dashboard" as NavItem,
       label: "Dashboard",
@@ -25,6 +53,10 @@ export function BottomNavigation({
     },
     { id: "profil" as NavItem, label: "Profil", icon: User },
   ];
+
+  const navItems = user?.role === 'admin' ? adminNavItems : regularNavItems;
+
+  const isAdminMode = user?.role === 'admin';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-1.5 safe-area-bottom">
@@ -41,19 +73,31 @@ export function BottomNavigation({
             >
               <div
                 className={`p-1.5 rounded-full transition-colors ${
-                  isActive ? "bg-primary-100" : "bg-transparent"
+                  isActive 
+                    ? isAdminMode 
+                      ? "bg-purple-100" 
+                      : "bg-primary-100" 
+                    : "bg-transparent"
                 }`}
               >
                 <Icon
                   className={`h-5 w-5 ${
                     isActive
-                      ? "text-primary-600"
+                      ? isAdminMode 
+                        ? "text-purple-600" 
+                        : "text-primary-600"
                       : "text-gray-400"
                   }`}
                 />
               </div>
               <span
-                className={`text-xs ${isActive ? "text-primary-600" : "text-gray-500"}`}
+                className={`text-xs ${
+                  isActive 
+                    ? isAdminMode 
+                      ? "text-purple-600" 
+                      : "text-primary-600" 
+                    : "text-gray-500"
+                }`}
               >
                 {item.label}
               </span>

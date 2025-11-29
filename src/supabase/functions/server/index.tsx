@@ -400,17 +400,51 @@ app.get('/make-server-f689ca3f/users/phone/:phone', async (c) => {
   }
 });
 
-// Get all muzakki for a relawan
+// Get all muzakki for a relawan (or all for admin)
 app.get('/make-server-f689ca3f/muzakki', async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     const relawanId = c.req.query('relawan_id');
+    const all = c.req.query('all'); // Admin mode: get all muzakki
 
     console.log('📥 GET /muzakki request:', {
       relawanId,
+      all,
       hasToken: !!accessToken
     });
 
+    // Admin mode: get all muzakki
+    if (all === 'true') {
+      console.log('🔍 Fetching ALL muzakki (admin mode)...');
+      const allMuzakki = await kv.getByPrefix('muzakki:');
+      const allUsers = await kv.getByPrefix('user:');
+
+      // Deduplicate users
+      const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+        if (!acc.some((u: any) => u.id === user.id)) {
+          acc.push(user);
+        }
+        return acc;
+      }, []);
+
+      // Enrich with relawan name
+      const enrichedMuzakki = allMuzakki.map((muzakki: any) => {
+        const relawan = uniqueUsers.find((u: any) => u.id === muzakki.relawan_id);
+        return {
+          ...muzakki,
+          relawan_name: relawan?.full_name || relawan?.name || null
+        };
+      });
+
+      console.log('✅ All muzakki fetched:', enrichedMuzakki.length);
+      
+      return c.json({
+        success: true,
+        data: enrichedMuzakki
+      });
+    }
+
+    // Regular mode: get muzakki for specific relawan
     if (!relawanId) {
       console.error('❌ Missing relawan_id');
       return c.json({ error: 'Relawan ID diperlukan' }, 400);
@@ -624,7 +658,7 @@ app.get('/make-server-f689ca3f/donations', async (c) => {
     const isAdmin = c.req.query('admin') === 'true';
 
     if (!relawanId && !muzakkiId && !isAdmin) {
-      return c.json({ error: 'Relawan ID, Muzakki ID, atau admin parameter diperlukan' }, 400);
+      return c.json({ error: 'Relawan ID atau Muzakki ID diperlukan' }, 400);
     }
 
     let donations = [];
@@ -632,6 +666,26 @@ app.get('/make-server-f689ca3f/donations', async (c) => {
     if (isAdmin) {
       // Get all donations for admin
       donations = await kv.getByPrefix('donation:');
+      
+      // Enrich with relawan name if not already present
+      const allUsers = await kv.getByPrefix('user:');
+      const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+        if (!acc.some((u: any) => u.id === user.id)) {
+          acc.push(user);
+        }
+        return acc;
+      }, []);
+
+      donations = donations.map((donation: any) => {
+        if (!donation.relawan_name && donation.relawan_id) {
+          const relawan = uniqueUsers.find((u: any) => u.id === donation.relawan_id);
+          return {
+            ...donation,
+            relawan_name: relawan?.full_name || relawan?.name || 'Unknown'
+          };
+        }
+        return donation;
+      });
     } else if (muzakkiId) {
       // Get donations for specific muzakki
       const allDonations = await kv.getByPrefix('donation:');
@@ -993,7 +1047,45 @@ app.get('/make-server-f689ca3f/communications/:muzakki_id', async (c) => {
 // REGU & CHAT ENDPOINTS
 // ============================================
 
-// Get all regus
+// Get all regus (with member count)
+app.get('/make-server-f689ca3f/regu', async (c) => {
+  try {
+    console.log('🔍 Fetching all regus with member count...');
+    const allRegus = await kv.getByPrefix('regu:');
+    const allUsers = await kv.getByPrefix('user:');
+
+    // Deduplicate users
+    const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+      if (!acc.some((u: any) => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, []);
+
+    // Filter out code mappings and enrich with member count
+    const realRegus = allRegus
+      .filter((r: any) => r.id && !r.id.includes('code:'))
+      .map((regu: any) => {
+        const memberCount = uniqueUsers.filter((u: any) => u.regu_id === regu.id).length;
+        return {
+          ...regu,
+          member_count: memberCount
+        };
+      });
+
+    console.log('✅ Regus found:', realRegus.length);
+    
+    return c.json({
+      success: true,
+      data: realRegus
+    });
+  } catch (error) {
+    console.log('Get regus error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Get all regus (legacy endpoint)
 app.get('/make-server-f689ca3f/regus', async (c) => {
   try {
     console.log('🔍 Fetching all regus...');
@@ -1713,6 +1805,46 @@ app.patch('/make-server-f689ca3f/notifications/:user_id/:notif_id/read', async (
 // TEMPLATE ENDPOINTS
 // ============================================
 
+// Get all users (Admin only)
+app.get('/make-server-f689ca3f/admin/users', async (c) => {
+  try {
+    console.log('👥 Fetching all users for admin...');
+
+    const allUsers = await kv.getByPrefix('user:');
+    const allRegus = await kv.getByPrefix('regu:');
+
+    // Deduplicate users (since we have user:{id} and user:phone:{phone})
+    const uniqueUsers = allUsers.reduce((acc: any[], user: any) => {
+      if (!acc.some((u: any) => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, []);
+
+    // Enrich with regu name
+    const enrichedUsers = uniqueUsers.map((user: any) => {
+      if (user.regu_id) {
+        const regu = allRegus.find((r: any) => r.id === user.regu_id);
+        return {
+          ...user,
+          regu_name: regu?.name || null
+        };
+      }
+      return user;
+    });
+
+    console.log('✅ Users fetched:', enrichedUsers.length);
+
+    return c.json({
+      success: true,
+      data: enrichedUsers
+    });
+  } catch (error) {
+    console.error('❌ Get admin users error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
 // Get admin global statistics
 app.get('/make-server-f689ca3f/admin/stats/global', async (c) => {
   try {
@@ -1833,14 +1965,31 @@ app.get('/make-server-f689ca3f/admin/stats/regu', async (c) => {
   }
 });
 
-// Get all templates
+// Get all templates (supports all=true for admin)
 app.get('/make-server-f689ca3f/templates', async (c) => {
   try {
-    const templates = await kv.getByPrefix('template:');
+    const all = c.req.query('all');
+    const relawanId = c.req.query('relawan_id');
+
+    console.log('📥 GET /templates request:', { all, relawanId });
+
+    // Admin mode or get all templates
+    if (all === 'true' || !relawanId) {
+      const templates = await kv.getByPrefix('template:');
+      
+      return c.json({
+        success: true,
+        data: templates  // Already returns array of values
+      });
+    }
+
+    // Get templates for specific relawan
+    const userTemplates = await kv.getByPrefix(`template:${relawanId}:`);
+    const sharedTemplates = await kv.getByPrefix('template:shared:');
     
     return c.json({
       success: true,
-      data: templates  // Already returns array of values
+      data: [...userTemplates, ...sharedTemplates]
     });
   } catch (error) {
     console.log('Get templates error:', error);
@@ -2300,6 +2449,511 @@ app.post('/make-server-f689ca3f/admin/seed-database', async (c) => {
     });
   } catch (error) {
     console.error('❌ Seed database error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// ============================================
+// DELETE ENDPOINTS FOR ADMIN DATA MANAGEMENT
+// ============================================
+
+// Delete user (Admin only)
+app.delete('/make-server-f689ca3f/admin/users/:id', async (c) => {
+  try {
+    const userId = c.req.param('id');
+    
+    // Check if user exists
+    const user = await kv.get(`user:${userId}`);
+    if (!user) {
+      return c.json({ error: 'User tidak ditemukan' }, 404);
+    }
+
+    // Delete user
+    await kv.del(`user:${userId}`);
+    
+    console.log('✅ User deleted:', userId);
+    
+    return c.json({
+      success: true,
+      message: 'User berhasil dihapus'
+    });
+  } catch (error) {
+    console.error('❌ Delete user error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Delete regu
+app.delete('/make-server-f689ca3f/regu/:id', async (c) => {
+  try {
+    const reguId = c.req.param('id');
+    
+    // Check if regu exists
+    const regu = await kv.get(`regu:${reguId}`);
+    if (!regu) {
+      return c.json({ error: 'Regu tidak ditemukan' }, 404);
+    }
+
+    // Delete regu
+    await kv.del(`regu:${reguId}`);
+    
+    // Update all members' regu_id to null
+    const allUsers = await kv.getByPrefix('user:');
+    const updates = allUsers
+      .filter((u: any) => u.regu_id === reguId)
+      .map((u: any) => ({ ...u, regu_id: null, regu_name: null }));
+    
+    if (updates.length > 0) {
+      await kv.mset(updates.map((u: any) => [`user:${u.id}`, u]));
+    }
+    
+    console.log('✅ Regu deleted:', reguId);
+    
+    return c.json({
+      success: true,
+      message: 'Regu berhasil dihapus'
+    });
+  } catch (error) {
+    console.error('❌ Delete regu error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Delete donation
+app.delete('/make-server-f689ca3f/donations/:id', async (c) => {
+  try {
+    const donationId = c.req.param('id');
+    
+    // Find donation
+    const allDonations = await kv.getByPrefix('donation:');
+    const donation = allDonations.find((d: any) => d.id === donationId);
+    
+    if (!donation) {
+      return c.json({ error: 'Donasi tidak ditemukan' }, 404);
+    }
+
+    // Delete donation
+    await kv.del(`donation:${donation.relawan_id}:${donationId}`);
+    
+    console.log('✅ Donation deleted:', donationId);
+    
+    return c.json({
+      success: true,
+      message: 'Donasi berhasil dihapus'
+    });
+  } catch (error) {
+    console.error('❌ Delete donation error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Delete program
+app.delete('/make-server-f689ca3f/programs/:id', async (c) => {
+  try {
+    const programId = c.req.param('id');
+    
+    // Check if program exists
+    const program = await kv.get(`program:${programId}`);
+    if (!program) {
+      return c.json({ error: 'Program tidak ditemukan' }, 404);
+    }
+
+    // Delete program
+    await kv.del(`program:${programId}`);
+    
+    console.log('✅ Program deleted:', programId);
+    
+    return c.json({
+      success: true,
+      message: 'Program berhasil dihapus'
+    });
+  } catch (error) {
+    console.error('❌ Delete program error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Delete template
+app.delete('/make-server-f689ca3f/templates/:id', async (c) => {
+  try {
+    const templateId = c.req.param('id');
+    
+    // Find template
+    const allTemplates = await kv.getByPrefix('template:');
+    const template = allTemplates.find((t: any) => t.id === templateId);
+    
+    if (!template) {
+      return c.json({ error: 'Template tidak ditemukan' }, 404);
+    }
+
+    // Delete template
+    // Templates can be stored as template:relawan_id:template_id or template:shared:template_id
+    const key = template.is_shared 
+      ? `template:shared:${templateId}`
+      : `template:${template.relawan_id}:${templateId}`;
+    
+    await kv.del(key);
+    
+    console.log('✅ Template deleted:', templateId);
+    
+    return c.json({
+      success: true,
+      message: 'Template berhasil dihapus'
+    });
+  } catch (error) {
+    console.error('❌ Delete template error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// ============================================
+// CREATE & UPDATE ENDPOINTS FOR ADMIN
+// ============================================
+
+// Create/Update user (Admin)
+app.post('/make-server-f689ca3f/admin/users', async (c) => {
+  try {
+    const { full_name, phone, email, role, regu_id } = await c.req.json();
+    
+    if (!full_name || !phone) {
+      return c.json({ error: 'Nama dan nomor telepon wajib diisi' }, 400);
+    }
+
+    const userId = crypto.randomUUID();
+    const userData = {
+      id: userId,
+      full_name,
+      phone,
+      email: email || `${phone}@ziswaf.app`,
+      role: role || 'relawan',
+      regu_id: regu_id || null,
+      created_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${userId}`, userData);
+    
+    console.log('✅ User created:', userId);
+    
+    return c.json({
+      success: true,
+      message: 'User berhasil ditambahkan',
+      data: userData
+    });
+  } catch (error) {
+    console.error('❌ Create user error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+app.put('/make-server-f689ca3f/admin/users/:id', async (c) => {
+  try {
+    const userId = c.req.param('id');
+    const updates = await c.req.json();
+    
+    const existing = await kv.get(`user:${userId}`);
+    if (!existing) {
+      return c.json({ error: 'User tidak ditemukan' }, 404);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: userId,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${userId}`, updated);
+    
+    console.log('✅ User updated:', userId);
+    
+    return c.json({
+      success: true,
+      message: 'User berhasil diupdate',
+      data: updated
+    });
+  } catch (error) {
+    console.error('❌ Update user error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Create/Update regu
+app.post('/make-server-f689ca3f/admin/regu', async (c) => {
+  try {
+    const { name, pembimbing_id, target } = await c.req.json();
+    
+    if (!name || !pembimbing_id) {
+      return c.json({ error: 'Nama regu dan pembimbing wajib diisi' }, 400);
+    }
+
+    const reguId = crypto.randomUUID();
+    const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const reguData = {
+      id: reguId,
+      name,
+      pembimbing_id,
+      target: target || 0,
+      join_code: joinCode,
+      created_at: new Date().toISOString()
+    };
+
+    await kv.set(`regu:${reguId}`, reguData);
+    await kv.set(`regu:code:${joinCode}`, reguData);
+    
+    console.log('✅ Regu created:', reguId);
+    
+    return c.json({
+      success: true,
+      message: 'Regu berhasil ditambahkan',
+      data: reguData
+    });
+  } catch (error) {
+    console.error('❌ Create regu error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+app.put('/make-server-f689ca3f/admin/regu/:id', async (c) => {
+  try {
+    const reguId = c.req.param('id');
+    const updates = await c.req.json();
+    
+    const existing = await kv.get(`regu:${reguId}`);
+    if (!existing) {
+      return c.json({ error: 'Regu tidak ditemukan' }, 404);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: reguId,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`regu:${reguId}`, updated);
+    
+    console.log('✅ Regu updated:', reguId);
+    
+    return c.json({
+      success: true,
+      message: 'Regu berhasil diupdate',
+      data: updated
+    });
+  } catch (error) {
+    console.error('❌ Update regu error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Create/Update program
+app.post('/make-server-f689ca3f/admin/programs', async (c) => {
+  try {
+    const { title, category, target_amount, description, start_date, end_date, status, image_url } = await c.req.json();
+    
+    if (!title || !category || !target_amount) {
+      return c.json({ error: 'Judul, kategori, dan target wajib diisi' }, 400);
+    }
+
+    const programId = crypto.randomUUID();
+    const programData = {
+      id: programId,
+      title,
+      category,
+      target_amount,
+      collected_amount: 0,
+      description: description || '',
+      start_date: start_date || null,
+      end_date: end_date || null,
+      status: status || 'active',
+      image_url: image_url || null,
+      created_at: new Date().toISOString()
+    };
+
+    await kv.set(`program:${programId}`, programData);
+    
+    console.log('✅ Program created:', programId);
+    
+    return c.json({
+      success: true,
+      message: 'Program berhasil ditambahkan',
+      data: programData
+    });
+  } catch (error) {
+    console.error('❌ Create program error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+app.put('/make-server-f689ca3f/admin/programs/:id', async (c) => {
+  try {
+    const programId = c.req.param('id');
+    const updates = await c.req.json();
+    
+    const existing = await kv.get(`program:${programId}`);
+    if (!existing) {
+      return c.json({ error: 'Program tidak ditemukan' }, 404);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: programId,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`program:${programId}`, updated);
+    
+    console.log('✅ Program updated:', programId);
+    
+    return c.json({
+      success: true,
+      message: 'Program berhasil diupdate',
+      data: updated
+    });
+  } catch (error) {
+    console.error('❌ Update program error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Create/Update template
+app.post('/make-server-f689ca3f/admin/templates', async (c) => {
+  try {
+    const { name, category, message, is_shared } = await c.req.json();
+    
+    if (!name || !message) {
+      return c.json({ error: 'Nama dan pesan wajib diisi' }, 400);
+    }
+
+    const templateId = crypto.randomUUID();
+    const templateData = {
+      id: templateId,
+      name,
+      category: category || 'general',
+      message,
+      is_shared: is_shared || false,
+      created_at: new Date().toISOString()
+    };
+
+    const key = is_shared ? `template:shared:${templateId}` : `template:${templateId}`;
+    await kv.set(key, templateData);
+    
+    console.log('✅ Template created:', templateId);
+    
+    return c.json({
+      success: true,
+      message: 'Template berhasil ditambahkan',
+      data: templateData
+    });
+  } catch (error) {
+    console.error('❌ Create template error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+app.put('/make-server-f689ca3f/admin/templates/:id', async (c) => {
+  try {
+    const templateId = c.req.param('id');
+    const updates = await c.req.json();
+    
+    // Find template
+    const allTemplates = await kv.getByPrefix('template:');
+    const existing = allTemplates.find((t: any) => t.id === templateId);
+    
+    if (!existing) {
+      return c.json({ error: 'Template tidak ditemukan' }, 404);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: templateId,
+      updated_at: new Date().toISOString()
+    };
+
+    const key = updated.is_shared ? `template:shared:${templateId}` : `template:${templateId}`;
+    await kv.set(key, updated);
+    
+    console.log('✅ Template updated:', templateId);
+    
+    return c.json({
+      success: true,
+      message: 'Template berhasil diupdate',
+      data: updated
+    });
+  } catch (error) {
+    console.error('❌ Update template error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+// Create/Update donation
+app.post('/make-server-f689ca3f/admin/donations', async (c) => {
+  try {
+    const { donor_name, amount, category, relawan_id, status } = await c.req.json();
+    
+    if (!donor_name || !amount || !relawan_id) {
+      return c.json({ error: 'Nama donor, jumlah, dan relawan wajib diisi' }, 400);
+    }
+
+    const donationId = crypto.randomUUID();
+    const donationData = {
+      id: donationId,
+      donor_name,
+      amount: parseFloat(amount),
+      category: category || 'zakat',
+      relawan_id,
+      status: status || 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    await kv.set(`donation:${relawan_id}:${donationId}`, donationData);
+    
+    console.log('✅ Donation created:', donationId);
+    
+    return c.json({
+      success: true,
+      message: 'Donasi berhasil ditambahkan',
+      data: donationData
+    });
+  } catch (error) {
+    console.error('❌ Create donation error:', error);
+    return c.json({ error: `Server error: ${error.message}` }, 500);
+  }
+});
+
+app.put('/make-server-f689ca3f/admin/donations/:id', async (c) => {
+  try {
+    const donationId = c.req.param('id');
+    const updates = await c.req.json();
+    
+    // Find donation
+    const allDonations = await kv.getByPrefix('donation:');
+    const existing = allDonations.find((d: any) => d.id === donationId);
+    
+    if (!existing) {
+      return c.json({ error: 'Donasi tidak ditemukan' }, 404);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: donationId,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`donation:${updated.relawan_id}:${donationId}`, updated);
+    
+    console.log('✅ Donation updated:', donationId);
+    
+    return c.json({
+      success: true,
+      message: 'Donasi berhasil diupdate',
+      data: updated
+    });
+  } catch (error) {
+    console.error('❌ Update donation error:', error);
     return c.json({ error: `Server error: ${error.message}` }, 500);
   }
 });

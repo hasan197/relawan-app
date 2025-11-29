@@ -140,7 +140,231 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             return { data: result };
         }
 
-        // --- STATISTICS ---
+        // --- ADMIN USERS ---
+        // GET /admin/users
+        if (pathParts[0] === 'admin' && pathParts[1] === 'users' && method === 'GET') {
+            // @ts-ignore
+            const result = await client.query(api.admin.getAllUsers, {});
+            return { success: true, data: result };
+        }
+        // POST /admin/users
+        if (pathParts[0] === 'admin' && pathParts[1] === 'users' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.createUser, body);
+            return { success: true, data: result };
+        }
+        // PUT /admin/users/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'users' && pathParts.length === 3 && method === 'PUT') {
+            const userId = pathParts[2];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.updateUser, { userId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /admin/users/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'users' && pathParts.length === 3 && method === 'DELETE') {
+            const userId = pathParts[2];
+            // @ts-ignore
+            const result = await client.mutation(api.admin.deleteUser, { userId });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN REGU ---
+        // GET /regu (list with enrichment)
+        if (pathParts[0] === 'regu' && pathParts.length === 1 && method === 'GET') {
+            // @ts-ignore
+            const result = await client.query(api.admin.getAllRegus, {});
+            return { success: true, data: result };
+        }
+        // POST /admin/regu
+        if (pathParts[0] === 'admin' && pathParts[1] === 'regu' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.createRegu, body);
+            return { success: true, data: result };
+        }
+        // PUT /admin/regu/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'regu' && pathParts.length === 3 && method === 'PUT') {
+            const reguId = pathParts[2];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.updateRegu, { reguId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /regu/:id
+        if (pathParts[0] === 'regu' && pathParts.length === 2 && method === 'DELETE') {
+            const reguId = pathParts[1];
+            // @ts-ignore
+            const result = await client.mutation(api.admin.deleteRegu, { reguId });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN MUZAKKI ---
+        // GET /muzakki?all=true
+        if (pathParts[0] === 'muzakki' && pathParts.length === 1 && method === 'GET') {
+            const queryParams = new URLSearchParams(queryString);
+            const all = queryParams.get('all') === 'true';
+            if (all) {
+                // @ts-ignore
+                const result = await client.query(api.admin.getAllMuzakkis, {});
+                return { success: true, data: result };
+            }
+        }
+        // POST /muzakki
+        if (pathParts[0] === 'muzakki' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.createMuzakki, body);
+            return { success: true, data: result };
+        }
+        // PUT /muzakki/:id
+        if (pathParts[0] === 'muzakki' && pathParts.length === 2 && method === 'PUT') {
+            const muzakkiId = pathParts[1];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.admin.updateMuzakki, { muzakkiId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /muzakki/:id
+        if (pathParts[0] === 'muzakki' && pathParts.length === 2 && method === 'DELETE') {
+            const muzakkiId = pathParts[1];
+            // @ts-ignore
+            const result = await client.mutation(api.admin.deleteMuzakki, { muzakkiId });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN DONATIONS ---
+        // GET /donations?admin=true
+        if (pathParts[0] === 'donations' && method === 'GET') {
+            const queryParams = new URLSearchParams(queryString);
+            const isAdmin = queryParams.get('admin') === 'true';
+            const relawanId = queryParams.get('relawan_id');
+            
+            if (isAdmin) {
+                // @ts-ignore
+                const result = await client.query(api.donationsAdmin.getAllDonations, { admin: true });
+                return { success: true, data: result };
+            }
+            if (relawanId) {
+                // @ts-ignore
+                const result = await client.query(api.donationsAdmin.getDonationStats, { relawan_id: relawanId as any });
+                return { data: result };
+            }
+        }
+        // GET /donations/pending
+        if (pathParts[0] === 'donations' && pathParts[1] === 'pending' && method === 'GET') {
+            // @ts-ignore
+            const result = await client.query(api.donationsAdmin.getPendingDonations, {});
+            return { success: true, data: result };
+        }
+        // GET /donations/stats
+        if (pathParts[0] === 'donations' && pathParts[1] === 'stats' && method === 'GET') {
+            // @ts-ignore
+            const result = await client.query(api.donationsAdmin.getDonationStats, {});
+            return { data: result };
+        }
+        // POST /admin/donations
+        if (pathParts[0] === 'admin' && pathParts[1] === 'donations' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.donationsAdmin.createDonation, body);
+            return { success: true, data: result };
+        }
+        // PUT /admin/donations/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'donations' && pathParts.length === 3 && method === 'PUT') {
+            const donationId = pathParts[2];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.donationsAdmin.updateDonation, { donationId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /donations/:id
+        if (pathParts[0] === 'donations' && pathParts.length === 2 && method === 'DELETE') {
+            const donationId = pathParts[1];
+            // @ts-ignore
+            const result = await client.mutation(api.donationsAdmin.deleteDonation, { donationId });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN PROGRAMS ---
+        // POST /admin/programs
+        if (pathParts[0] === 'admin' && pathParts[1] === 'programs' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.programs.adminCreate, body);
+            return { success: true, data: result };
+        }
+        // PUT /admin/programs/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'programs' && pathParts.length === 3 && method === 'PUT') {
+            const programId = pathParts[2];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.programs.adminUpdate, { programId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /programs/:id
+        if (pathParts[0] === 'programs' && pathParts.length === 2 && method === 'DELETE') {
+            const programId = pathParts[1];
+            // @ts-ignore
+            const result = await client.mutation(api.programs.adminDelete, { programId });
+            return { success: true, data: result };
+        }
+        // PATCH /programs/:id/collect
+        if (pathParts[0] === 'programs' && pathParts.length === 3 && pathParts[2] === 'collect' && method === 'PATCH') {
+            const programId = pathParts[1];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.programs.collect, { programId, amount: body.amount });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN TEMPLATES ---
+        // GET /templates?all=true
+        if (pathParts[0] === 'templates' && method === 'GET') {
+            const queryParams = new URLSearchParams(queryString);
+            const all = queryParams.get('all') === 'true';
+            const relawanId = queryParams.get('relawan_id');
+            // @ts-ignore
+            const result = await client.query(api.templates.list, { all, relawanId });
+            return { success: true, data: result };
+        }
+        // POST /admin/templates
+        if (pathParts[0] === 'admin' && pathParts[1] === 'templates' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.templates.adminCreate, body);
+            return { success: true, data: result };
+        }
+        // PUT /admin/templates/:id
+        if (pathParts[0] === 'admin' && pathParts[1] === 'templates' && pathParts.length === 3 && method === 'PUT') {
+            const templateId = pathParts[2];
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.mutation(api.templates.adminUpdate, { templateId, ...body });
+            return { success: true, data: result };
+        }
+        // DELETE /templates/:id
+        if (pathParts[0] === 'templates' && pathParts.length === 2 && method === 'DELETE') {
+            const templateId = pathParts[1];
+            // @ts-ignore
+            const result = await client.mutation(api.templates.adminDelete, { templateId });
+            return { success: true, data: result };
+        }
+
+        // --- ADMIN DATABASE MANAGEMENT ---
+        // POST /admin/reset-database
+        if (pathParts[0] === 'admin' && pathParts[1] === 'reset-database' && method === 'POST') {
+            // @ts-ignore
+            const result = await client.mutation(api.admin.resetDatabase, {});
+            return { success: true, data: result };
+        }
+        // POST /admin/seed-database
+        if (pathParts[0] === 'admin' && pathParts[1] === 'seed-database' && method === 'POST') {
+            // @ts-ignore
+            const result = await client.mutation(api.admin.seedDatabase, {});
+            return { success: true, data: result };
+        }
         // GET /statistics/:relawanId
         if (pathParts[0] === 'statistics' && pathParts.length === 2) {
             const relawanId = pathParts[1];
@@ -152,13 +376,13 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /admin/stats/global
         if (pathParts[0] === 'admin' && pathParts[1] === 'stats' && pathParts[2] === 'global') {
             // @ts-ignore
-            const result = await client.query(api.statistics.getGlobalStats, {});
+            const result = await client.query(api.admin.getGlobalStats, {});
             return { data: result };
         }
         // GET /admin/stats/regu
         if (pathParts[0] === 'admin' && pathParts[1] === 'stats' && pathParts[2] === 'regu') {
             // @ts-ignore
-            const result = await client.query(api.statistics.getReguStats, {});
+            const result = await client.query(api.admin.getReguStats, {});
             return { data: result };
         }
 

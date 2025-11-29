@@ -6,7 +6,7 @@ interface GlobalStats {
   total_muzakki: number;
   total_relawan: number;
   total_regu: number;
-  pendingDonations?: number;
+  pendingDonations: number;
   by_category: {
     zakat: number;
     infaq: number;
@@ -31,6 +31,7 @@ export function useAdminStats() {
     total_muzakki: 0,
     total_relawan: 0,
     total_regu: 0,
+    pendingDonations: 0,
     by_category: {
       zakat: 0,
       infaq: 0,

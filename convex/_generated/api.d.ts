@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as backblazeUpload from "../backblazeUpload.js";
 import type * as chat from "../chat.js";
@@ -15,6 +16,7 @@ import type * as checkUserData from "../checkUserData.js";
 import type * as clearData from "../clearData.js";
 import type * as database from "../database.js";
 import type * as donations from "../donations.js";
+import type * as donationsAdmin from "../donationsAdmin.js";
 import type * as lib_backblazeB2 from "../lib/backblazeB2.js";
 import type * as listUsers from "../listUsers.js";
 import type * as muzakkis from "../muzakkis.js";
@@ -45,6 +47,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   auth: typeof auth;
   backblazeUpload: typeof backblazeUpload;
   chat: typeof chat;
@@ -52,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   clearData: typeof clearData;
   database: typeof database;
   donations: typeof donations;
+  donationsAdmin: typeof donationsAdmin;
   "lib/backblazeB2": typeof lib_backblazeB2;
   listUsers: typeof listUsers;
   muzakkis: typeof muzakkis;

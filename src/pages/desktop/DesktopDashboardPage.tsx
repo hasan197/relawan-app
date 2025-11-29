@@ -1,48 +1,33 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
 import { useStatistics } from '../../hooks/useStatistics';
 import { formatCurrency, getInitials, formatRelativeTime } from '../../lib/utils';
-import { getMonthlyDonations, getWeeklyTrend, getTopMuzakki, getMonthlyTrend, calculatePercentageChange, getPreviousPeriodData } from '../../lib/dataAggregation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { ServerStatusBanner } from '../../components/ServerStatusBanner';
-import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown, MessageCircle, Package } from 'lucide-react';
+import { Plus, DollarSign, Download, Users, Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface DesktopDashboardPageProps {
   onNavigate?: (page: string) => void;
 }
 
 export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) {
-  const { user, donations, muzakkiList, muzakkiError, donationsError, getTotalDonations, getDonationsByCategory } = useAppContext();
-  const { statistics } = useStatistics(user?.id || null);
+  const { donations, muzakkiList, muzakkiError, donationsError, getTotalDonations, getDonationsByCategory } = useAppContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const totalDonations = getTotalDonations();
   const categoryData = getDonationsByCategory();
 
-  // Use dataAggregation utilities
-  const monthlyData = useMemo(() => getMonthlyDonations(donations), [donations]);
-  const trendData = useMemo(() => getWeeklyTrend(donations), [donations]);
-  const topMuzakkiData = useMemo(() => getTopMuzakki(donations, muzakkiList, 5), [donations, muzakkiList]);
-  const monthlyTrendData = useMemo(() => getMonthlyTrend(donations), [donations]);
-
-  // Calculate percentage changes
-  const currentPeriodTotal = donations
-    .filter(d => d.type === 'incoming')
-    .reduce((sum, d) => sum + d.amount, 0);
-  const previousPeriodTotal = getPreviousPeriodData(donations, selectedPeriod);
-  const donationChange = calculatePercentageChange(currentPeriodTotal, previousPeriodTotal);
-
-  // Stats Cards Data with real calculations
+  // Stats Cards Data
   const statsCards = [
     {
       title: 'Total Donasi',
       value: formatCurrency(totalDonations),
-      change: donationChange,
-      trend: donationChange.startsWith('+') ? 'up' as const : 'down' as const,
+      change: '+12.5%',
+      trend: 'up' as const,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
@@ -76,38 +61,65 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
     }
   ];
 
-  // Chart Data using dataAggregation
+  // Chart Data
   const categoryChartData = [
     { name: 'Zakat', value: categoryData.zakat, color: '#10b981' },
     { name: 'Infaq', value: categoryData.infaq, color: '#fbbf24' },
     { name: 'Sedekah', value: categoryData.sedekah, color: '#3b82f6' },
     { name: 'Wakaf', value: categoryData.wakaf, color: '#8b5cf6' }
-  ].filter(item => item.value > 0);
+  ];
 
+  const monthlyData = [
+    { month: 'Jan', zakat: 40, infaq: 24, sedekah: 12, wakaf: 8 },
+    { month: 'Feb', zakat: 52, infaq: 28, sedekah: 15, wakaf: 10 },
+    { month: 'Mar', zakat: 48, infaq: 32, sedekah: 18, wakaf: 12 },
+    { month: 'Apr', zakat: 61, infaq: 35, sedekah: 20, wakaf: 14 },
+    { month: 'Mei', zakat: 55, infaq: 38, sedekah: 22, wakaf: 16 },
+    { month: 'Jun', zakat: 67, infaq: 42, sedekah: 25, wakaf: 18 }
+  ];
 
-  // Recent Activities from backend
-  const recentActivities = statistics?.recent_activities || [];
+  const trendData = [
+    { date: 'Sen', amount: 45 },
+    { date: 'Sel', amount: 52 },
+    { date: 'Rab', amount: 48 },
+    { date: 'Kam', amount: 61 },
+    { date: 'Jum', amount: 55 },
+    { date: 'Sab', amount: 67 },
+    { date: 'Min', amount: 72 }
+  ];
+
+  // Recent Activities
+  const recentActivities = donations.slice(0, 5).map(d => ({
+    id: d.id,
+    type: d.category,
+    amount: d.amount,
+    date: d.created_at,
+    status: 'completed'
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DesktopTopbar
-        title="Dashboard Relawan"
+      <DesktopTopbar 
+        title="Dashboard Relawan" 
         subtitle="Selamat datang kembali! Berikut ringkasan aktivitas Anda."
         onNavigate={onNavigate}
       />
 
       <div className="p-6">
+        {/* Server Status Banner */}
+        <ServerStatusBanner error={muzakkiError || donationsError} />
+
         {/* Quick Actions */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <Button
+            <Button 
               onClick={() => onNavigate?.('tambah-prospek')}
               className="bg-primary-600 hover:bg-primary-700 gap-2 h-9"
             >
               <Plus className="h-4 w-4" />
               Tambah Muzakki
             </Button>
-            <Button
+            <Button 
               onClick={() => onNavigate?.('generator-resi')}
               variant="outline"
               className="gap-2 h-9"
@@ -115,7 +127,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
               <DollarSign className="h-4 w-4" />
               Catat Donasi
             </Button>
-            <Button
+            <Button 
               onClick={() => onNavigate?.('template')}
               variant="outline"
               className="gap-2 h-9"
@@ -130,10 +142,11 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-3 py-1.5 rounded-lg transition-colors ${selectedPeriod === period
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  selectedPeriod === period
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
               >
                 {period === 'week' ? 'Minggu Ini' : period === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
               </button>
@@ -151,8 +164,9 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                   <div className={`p-2 ${stat.bgColor} rounded-lg`}>
                     <Icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
-                  <Badge className={`${stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    } border-none gap-1`}>
+                  <Badge className={`${
+                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  } border-none gap-1`}>
                     {stat.trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                     {stat.change}
                   </Badge>
@@ -183,13 +197,13 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="date" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip
+                <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#10b981"
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#10b981" 
                   strokeWidth={3}
                   dot={{ fill: '#10b981', r: 4 }}
                 />
@@ -216,7 +230,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
+                <Tooltip 
                   formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
@@ -248,7 +262,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip
+                <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                 />
                 <Bar dataKey="zakat" fill="#10b981" radius={[8, 8, 0, 0]} />
@@ -263,8 +277,8 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-900">Aktivitas Terbaru</h3>
-              <Button
-                variant="ghost"
+              <Button 
+                variant="ghost" 
                 size="sm"
                 onClick={() => onNavigate?.('riwayat-aktivitas')}
               >
@@ -273,56 +287,20 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
             </div>
             <div className="space-y-4">
               {recentActivities.length > 0 ? (
-                recentActivities.map((activity) => {
-                  const getActivityIcon = () => {
-                    switch (activity.type) {
-                      case 'donation':
-                        return DollarSign;
-                      case 'follow-up':
-                        return MessageCircle;
-                      case 'distribution':
-                        return Package;
-                      default:
-                        return Activity;
-                    }
-                  };
-                  
-                  const getActivityColor = () => {
-                    switch (activity.type) {
-                      case 'donation':
-                        return 'bg-green-100 text-green-600';
-                      case 'follow-up':
-                        return 'bg-blue-100 text-blue-600';
-                      case 'distribution':
-                        return 'bg-purple-100 text-purple-600';
-                      default:
-                        return 'bg-gray-100 text-gray-600';
-                    }
-                  };
-
-                  const Icon = getActivityIcon();
-                  const iconColor = getActivityColor();
-
-                  return (
-                    <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
-                      <div className={`w-10 h-10 ${iconColor} rounded-lg flex items-center justify-center`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-900">{activity.title}</p>
-                        {activity.amount && (
-                          <p className="text-green-600">{formatCurrency(activity.amount)}</p>
-                        )}
-                        {activity.muzakki_name && (
-                          <p className="text-gray-500 text-sm">{activity.muzakki_name}</p>
-                        )}
-                        <p className="text-gray-400 text-sm">
-                          {formatRelativeTime(activity.time)}
-                        </p>
-                      </div>
+                recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
-                  );
-                })
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900">Donasi {activity.type}</p>
+                      <p className="text-green-600">{formatCurrency(activity.amount)}</p>
+                      <p className="text-gray-400">
+                        {formatRelativeTime(new Date(activity.date))}
+                      </p>
+                    </div>
+                  </div>
+                ))
               ) : (
                 <div className="text-center py-8">
                   <Activity className="h-10 w-10 text-gray-300 mx-auto mb-3" />

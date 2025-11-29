@@ -27,10 +27,12 @@ export class ConvexStorageProvider implements StorageProvider {
       const storageId = await ctx.storage.store(blob);
 
       console.log('✅ Convex upload success:', storageId);
+      console.log('🔍 StorageId type:', typeof storageId);
+      console.log('🔍 StorageId value:', storageId);
 
       return {
         success: true,
-        url: storageId, // In Convex, we store the storageId
+        url: storageId.toString(), // Convert Convex ID to string
         fileName: uniqueFileName
       };
     } catch (error) {

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, Search, Filter, FileText, Download } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Search, Filter, FileText } from 'lucide-react';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from 'sonner@2.0.3';
@@ -26,18 +26,12 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
   const [filteredDonations, setFilteredDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'validated' | 'rejected'>('pending');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'validated' | 'rejected'>('all');
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [showValidateDialog, setShowValidateDialog] = useState(false);
   const [validationAction, setValidationAction] = useState<'approve' | 'reject'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [validating, setValidating] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const donationsPerPage = 20;
 
   useEffect(() => {
     fetchDonations();
@@ -47,37 +41,10 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
     filterDonations();
   }, [donations, searchQuery, statusFilter]);
 
-  // Scroll detection for infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
-      const threshold = document.documentElement.offsetHeight - 1000; // Load more when 1000px from bottom
-      
-      if (scrollPosition >= threshold && hasMore && !loadingMore) {
-        loadMoreDonations();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasMore, loadingMore, currentPage]);
-
-  const fetchDonations = async (page: number = 0, append: boolean = false) => {
+  const fetchDonations = async () => {
     try {
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-        setCurrentPage(0);
-        setHasMore(true);
-      }
-      
-      const paginationParams = `&page=${page}&limit=${donationsPerPage}`;
-      const response = await apiCall(`/donations?admin=true${paginationParams}`);
-      
-      console.log('🔍 API Response:', response);
-      console.log('🔍 Response data length:', response.data?.length || 0);
-      console.log('🔍 Pagination info:', response.pagination);
+      setLoading(true);
+      const response = await apiCall('/donations?admin=true');
       
       if (response.success) {
         const transformedDonations = response.data.map((d: any) => ({
@@ -101,48 +68,21 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
           rejectionReason: d.rejection_reason
         }));
         
-        console.log('🔍 Transformed donations:', transformedDonations.length);
-        
-        if (append) {
-          setDonations(prev => [...prev, ...transformedDonations]);
-        } else {
-          setDonations(transformedDonations);
-        }
-        
-        // Use pagination info from backend
-        if (response.pagination) {
-          setHasMore(response.pagination.hasMore);
-          if (append) {
-            setCurrentPage(prev => prev + 1);
-          }
-        }
+        setDonations(transformedDonations);
       }
     } catch (error: any) {
       console.error('Error fetching donations:', error);
       toast.error('Gagal memuat data donasi');
     } finally {
       setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  const loadMoreDonations = () => {
-    if (!loadingMore && hasMore) {
-      fetchDonations(currentPage + 1, true);
     }
   };
 
   const filterDonations = () => {
     let filtered = [...donations];
-    console.log('🔍 Filtering donations:', { 
-      total: donations.length, 
-      statusFilter, 
-      searchQuery: searchQuery || 'none' 
-    });
 
     if (statusFilter !== 'all') {
       filtered = filtered.filter(d => d.status === statusFilter);
-      console.log(`🔍 After status filter (${statusFilter}):`, filtered.length);
     }
 
     if (searchQuery) {
@@ -152,12 +92,10 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
         d.relawanName?.toLowerCase().includes(query) ||
         d.category.toLowerCase().includes(query)
       );
-      console.log(`🔍 After search filter ("${searchQuery}"):`, filtered.length);
     }
 
     filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     setFilteredDonations(filtered);
-    console.log('🔍 Final filtered donations:', filtered.length);
   };
 
   const handleValidate = async () => {
@@ -171,14 +109,11 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
     try {
       setValidating(true);
       
-      const adminName = user.name || user.email || user.id;
-      console.log('🔍 Admin info:', { id: user.id, name: user.name, email: user.email, adminName });
-      
       const response = await apiCall(`/donations/${selectedDonation.id}/validate`, {
         method: 'POST',
         body: JSON.stringify({
           admin_id: user.id,
-          admin_name: adminName,
+          admin_name: user.name,
           action: validationAction,
           rejection_reason: validationAction === 'reject' ? rejectionReason : null
         })
@@ -328,7 +263,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Cari donatur atau relawan yang menunggu validasi..."
+                placeholder="Cari donatur atau relawan..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
@@ -340,10 +275,10 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
                 <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="pending">Menunggu</SelectItem>
-                <SelectItem value="validated">Tervalidasi</SelectItem>
-                <SelectItem value="rejected">Ditolak</SelectItem>
+                <SelectItem key="all" value="all">Semua Status</SelectItem>
+                <SelectItem key="pending" value="pending">Menunggu</SelectItem>
+                <SelectItem key="validated" value="validated">Tervalidasi</SelectItem>
+                <SelectItem key="rejected" value="rejected">Ditolak</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -402,26 +337,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={async () => {
-                              try {
-                                console.log('🔍 Getting bukti transfer URL for donation:', donation.id);
-                                setPreviewLoading(true);
-                                const response = await apiCall(`/donations/${donation.id}/bukti-transfer`);
-                                
-                                if (response.success && response.data.url) {
-                                  console.log('🔍 Loading image preview');
-                                  setPreviewImage(response.data.url);
-                                } else {
-                                  console.error('❌ Failed to get download URL:', response);
-                                  toast.error('Gagal membuka bukti transfer');
-                                }
-                              } catch (error) {
-                                console.error('❌ Error opening bukti transfer:', error);
-                                toast.error('Gagal membuka bukti transfer');
-                              } finally {
-                                setPreviewLoading(false);
-                              }
-                            }}
+                            onClick={() => window.open(donation.buktiTransferUrl, '_blank')}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -453,19 +369,6 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
               )}
             </TableBody>
           </Table>
-          
-          {/* Load More Indicator */}
-          {loadingMore && (
-            <div className="flex justify-center items-center py-4 border-t">
-              <LoadingSpinner message="Memuat lebih banyak data..." />
-            </div>
-          )}
-          
-          {!loadingMore && !hasMore && filteredDonations.length > 0 && (
-            <div className="text-center py-4 text-sm text-gray-500 border-t">
-              Semua data sudah ditampilkan
-            </div>
-          )}
         </Card>
       </div>
 
@@ -546,58 +449,6 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
               {validating ? 'Memproses...' : validationAction === 'approve' ? 'Validasi' : 'Tolak'}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Preview Image Modal */}
-      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Preview Bukti Transfer</DialogTitle>
-            <DialogDescription>
-              Preview bukti transfer dari donasi. Anda bisa mendownload file ini jika diperlukan.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center">
-            {previewLoading ? (
-              <div className="flex items-center justify-center h-96">
-                <LoadingSpinner />
-                <span className="ml-2">Memuat gambar...</span>
-              </div>
-            ) : (
-              <>
-                <img 
-                  src={previewImage || ''} 
-                  alt="Bukti Transfer" 
-                  className="max-w-full max-h-96 object-contain border rounded"
-                />
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (previewImage) {
-                        const link = document.createElement('a');
-                        link.href = previewImage;
-                        link.download = `bukti-transfer-${selectedDonation?.id || 'image'}.jpg`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }
-                    }}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setPreviewImage(null)}
-                  >
-                    Tutup
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </div>

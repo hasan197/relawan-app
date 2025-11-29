@@ -31,6 +31,8 @@ import { ChatReguPageWithBackend } from './pages/ChatReguPageWithBackend';
 import { PengaturanPage } from './pages/PengaturanPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminValidasiDonasiPage } from './pages/AdminValidasiDonasiPage';
+import { AdminDataManagementPage } from './pages/AdminDataManagementPage';
+import { AdminProfilPage } from './pages/AdminProfilPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { OfflinePage } from './pages/OfflinePage';
 import { TestConnectionPage } from './pages/TestConnectionPage';
@@ -53,7 +55,9 @@ import { DesktopTemplatePesanPage } from './pages/desktop/DesktopTemplatePesanPa
 import { DesktopNotifikasiPage } from './pages/desktop/DesktopNotifikasiPage';
 import { DesktopAdminDashboardPage } from './pages/desktop/DesktopAdminDashboardPage';
 import { DesktopAdminValidasiDonasiPage } from './pages/desktop/DesktopAdminValidasiDonasiPage';
+import { DesktopAdminDataManagementPage } from './pages/desktop/DesktopAdminDataManagementPage';
 import { DesktopAdminToolsPage } from './pages/desktop/DesktopAdminToolsPage';
+import { DesktopAdminProfilPage } from './pages/desktop/DesktopAdminProfilPage';
 import { DesktopDatabaseResetPage } from './pages/desktop/DesktopDatabaseResetPage';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
 import { useResponsive } from './hooks/useResponsive';
@@ -95,6 +99,7 @@ type Page =
   | 'pengaturan'
   | 'admin-dashboard'
   | 'admin-validasi-donasi'
+  | 'admin-data'
   | 'admin-tools'
   | 'database-reset'
   | 'test-connection'
@@ -157,10 +162,11 @@ function AppContent() {
         console.log('✅ User ID exists:', user.id);
         console.log('✅ User authenticated and ready!');
         
-        // If on auth pages, redirect to dashboard
+        // If on auth pages, redirect to appropriate dashboard based on role
         if (currentPage === 'splash' || currentPage === 'login' || currentPage === 'otp') {
-          console.log('📍 Redirecting from', currentPage, 'to dashboard');
-          setCurrentPage('dashboard');
+          const targetPage = user.role === 'admin' ? 'admin-dashboard' : 'dashboard';
+          console.log('📍 Redirecting from', currentPage, 'to', targetPage, '(role:', user.role, ')');
+          setCurrentPage(targetPage);
         }
       } else {
         // ❌ User not authenticated
@@ -261,7 +267,9 @@ function AppContent() {
         return <LaporanPage onNavigate={handleNavigation} />;
       
       case 'profil':
-        return <ProfilPage onNavigate={handleNavigation} />;
+        return user?.role === 'admin' 
+          ? <AdminProfilPage onNavigate={handleNavigation} />
+          : <ProfilPage onNavigate={handleNavigation} />;
       
       case 'template':
         return <TemplatePesanPage onBack={handleBackNavigation} />;
@@ -363,7 +371,10 @@ function AppContent() {
         return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setCurrentPage} />;
       
       case 'admin-validasi-donasi':
-        return <AdminValidasiDonasiPage onBack={() => setCurrentPage('admin-dashboard')} />;
+        return <AdminValidasiDonasiPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
+      
+      case 'admin-data':
+        return <AdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
       
       case 'admin-tools':
         return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
@@ -432,7 +443,9 @@ function AppContent() {
               return <DesktopLaporanPage onNavigate={handleNavigation} />;
             
             case 'profil':
-              return <DesktopProfilPage onNavigate={handleNavigation} />;
+              return user?.role === 'admin'
+                ? <DesktopAdminProfilPage onNavigate={handleNavigation} />
+                : <DesktopProfilPage onNavigate={handleNavigation} />;
             
             case 'program':
               return <DesktopProgramPage onNavigate={handleNavigation} />;
@@ -490,6 +503,9 @@ function AppContent() {
             
             case 'admin-validasi-donasi':
               return <DesktopAdminValidasiDonasiPage onNavigate={handleNavigation} />;
+            
+            case 'admin-data':
+              return <DesktopAdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
             
             case 'admin-tools':
               return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;

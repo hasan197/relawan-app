@@ -18,7 +18,7 @@ interface GeneratorResiPageProps {
 
 export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
   const { user, muzakkiList } = useAppContext();
-  const { addDonationWithFile } = useDonations(user?.id || null);
+  const { addDonation } = useDonations(user?.id || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -130,20 +130,48 @@ export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
       const amount = parseFloat(formData.amount);
       const receiptNumber = generateReceiptNumber();
 
-      // Create donation with file upload in one step
+      // First create donation with pending status
       const donationData = {
-        donor_id: formData.muzakkiId || undefined,
+        relawan_id: user.id,
+        relawan_name: user.name,
         donor_name: formData.donorName,
+        muzakki_id: formData.muzakkiId || null,
         amount: amount,
         category: formData.category,
         type: 'incoming' as const,
         payment_method: formData.paymentMethod,
         receipt_number: receiptNumber,
         notes: formData.notes,
-        relawan_name: user.full_name || 'Unknown', // 🔥 Fix: use user.full_name
+        bukti_transfer_url: null
       };
 
-      const response = await addDonationWithFile(donationData, buktiFile || undefined);
+      const response = await apiCall('/donations', {
+        method: 'POST',
+        body: JSON.stringify(donationData)
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Gagal menyimpan donasi');
+      }
+
+      const donationId = response.data.id;
+
+      // Upload bukti if exists
+      let buktiUrl: string | null = null;
+      if (buktiFile) {
+        toast.info('Mengupload bukti transfer...');
+        buktiUrl = await uploadBuktiTransfer(donationId);
+
+        // Update donation with bukti URL
+        if (buktiUrl) {
+          await apiCall(`/donations/${donationId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              bukti_transfer_url: buktiUrl
+            })
+          });
+        }
+      }
 
       // Generate receipt
       const today = new Date().toLocaleDateString('id-ID', {

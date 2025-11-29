@@ -6,8 +6,9 @@ export default defineSchema({
     fullName: v.string(),
     phone: v.string(),
     city: v.string(),
-    role: v.string(),
-    regu_id: v.optional(v.string()),
+    email: v.optional(v.string()),
+    role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin")),
+    regu_id: v.optional(v.id("regus")),
     tokenIdentifier: v.optional(v.string()),
     isPhoneVerified: v.optional(v.boolean()),
     otp: v.optional(v.string()),
@@ -21,7 +22,8 @@ export default defineSchema({
     .index("by_phone", ["phone"])
     .index("by_token", ["tokenIdentifier"])
     .index("by_otp", ["phone", "otp"])
-    .index("by_regu", ["regu_id"]),
+    .index("by_regu", ["regu_id"])
+    .index("by_role", ["role"]),
 
   // Table for OTP logs and audit trail
   otpLogs: defineTable({
@@ -54,16 +56,23 @@ export default defineSchema({
     name: v.string(),
     pembimbingId: v.id("users"),
     description: v.optional(v.string()),
+    targetAmount: v.optional(v.number()),
+    joinCode: v.optional(v.string()),
+    memberCount: v.optional(v.number()),
+    totalDonations: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-    .index("by_pembimbing", ["pembimbingId"]),
+    .index("by_pembimbing", ["pembimbingId"])
+    .index("by_join_code", ["joinCode"]),
 
   // Muzakki (donors) table
   muzakkis: defineTable({
     name: v.string(),
     phone: v.string(),
+    address: v.optional(v.string()),
     city: v.optional(v.string()),
+    category: v.optional(v.union(v.literal("muzakki"), v.literal("donatur"), v.literal("prospek"))),
     status: v.union(
       v.literal("baru"),
       v.literal("follow-up"),
@@ -77,6 +86,7 @@ export default defineSchema({
   })
     .index("by_phone", ["phone"])
     .index("by_status", ["status"])
+    .index("by_category", ["category"])
     .index("by_created_by", ["createdBy"]),
 
   // Donations table
@@ -111,6 +121,7 @@ export default defineSchema({
     .index("by_relawan", ["relawanId"])
     .index("by_category", ["category"])
     .index("by_type", ["type"])
+    .index("by_status", ["status"])
     .index("by_created_at", ["createdAt"]),
 
   // Activities table
@@ -149,22 +160,34 @@ export default defineSchema({
 
   // Message templates table
   messageTemplates: defineTable({
-    title: v.string(),
+    name: v.optional(v.string()),
+    title: v.optional(v.string()),
     category: v.union(
       v.literal("zakat"),
       v.literal("infaq"),
       v.literal("sedekah"),
       v.literal("wakaf"),
-      v.literal("umum")
+      v.literal("umum"),
+      v.literal("greeting"),
+      v.literal("reminder"),
+      v.literal("thanks"),
+      v.literal("invitation"),
+      v.literal("follow-up"),
+      v.literal("info")
     ),
-    content: v.string(),
+    message: v.optional(v.string()),
+    content: v.optional(v.string()), // For compatibility
+    variables: v.optional(v.array(v.string())),
     tags: v.array(v.string()),
     isActive: v.boolean(),
+    isShared: v.optional(v.boolean()),
+    createdBy: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
     .index("by_category", ["category"])
-    .index("by_active", ["isActive"]),
+    .index("by_active", ["isActive"])
+    .index("by_shared", ["isShared"]),
 
   // Programs table
   programs: defineTable({
@@ -177,15 +200,20 @@ export default defineSchema({
       v.literal("wakaf")
     ),
     targetAmount: v.number(),
-    currentAmount: v.number(),
-    imageUrl: v.string(),
-    donationLink: v.string(),
+    collectedAmount: v.optional(v.number()),
+    currentAmount: v.optional(v.number()), // For compatibility
+    imageUrl: v.optional(v.string()),
+    donationLink: v.optional(v.string()),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("active"), v.literal("inactive"), v.literal("completed"))),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
     .index("by_category", ["category"])
-    .index("by_active", ["isActive"]),
+    .index("by_active", ["isActive"])
+    .index("by_status", ["status"]),
 
   // Chat messages table
   chatMessages: defineTable({

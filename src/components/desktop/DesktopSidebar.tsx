@@ -9,7 +9,8 @@ import {
   LogOut,
   Shield,
   TrendingUp,
-  Bell
+  Bell,
+  Database
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -24,7 +25,16 @@ interface DesktopSidebarProps {
 export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps) {
   const { user, logout } = useAppContext();
 
-  const menuItems = [
+  // Admin gets different menu structure
+  const adminMenuItems = [
+    { id: 'admin-dashboard', label: 'Dashboard Admin', icon: LayoutDashboard },
+    { id: 'admin-validasi-donasi', label: 'Validasi Donasi', icon: Shield },
+    { id: 'admin-data', label: 'Data Management', icon: Database },
+    { id: 'profil', label: 'Profil', icon: User },
+  ];
+
+  // Regular users (Relawan & Pembimbing)
+  const regularMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'donatur', label: 'Muzakki', icon: Users },
     { id: 'laporan', label: 'Laporan', icon: FileText },
@@ -33,9 +43,9 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
     { id: 'profil', label: 'Profil', icon: User },
   ];
 
-  const adminItems = [
-    { id: 'admin-dashboard', label: 'Admin Panel', icon: Shield },
-  ];
+  const menuItems = user?.role === 'admin' ? adminMenuItems : regularMenuItems;
+
+  const adminItems: typeof adminMenuItems = [];
 
   const bottomItems = [
     { id: 'pengaturan', label: 'Pengaturan', icon: Settings },
@@ -51,12 +61,22 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
       {/* Logo & Brand */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-            <TrendingUp className="h-5 w-5 text-white" />
+          <div className={`w-8 h-8 bg-gradient-to-br rounded-lg flex items-center justify-center ${
+            user?.role === 'admin' 
+              ? 'from-purple-500 to-purple-600' 
+              : 'from-primary-500 to-primary-600'
+          }`}>
+            {user?.role === 'admin' ? (
+              <Shield className="h-5 w-5 text-white" />
+            ) : (
+              <TrendingUp className="h-5 w-5 text-white" />
+            )}
           </div>
           <div>
             <h2 className="text-gray-900">ZISWAF</h2>
-            <p className="text-gray-500">Manager</p>
+            <p className={user?.role === 'admin' ? 'text-purple-600' : 'text-gray-500'}>
+              {user?.role === 'admin' ? 'Admin Panel' : 'Manager'}
+            </p>
           </div>
         </div>
       </div>
@@ -97,7 +117,9 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
+                    ? user?.role === 'admin'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                      : 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -107,34 +129,6 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
             );
           })}
         </div>
-
-        {/* Admin Section */}
-        {user?.role === 'admin' && (
-          <div className="mt-4">
-            <p className="px-3 text-gray-400 mb-1.5">Admin</p>
-            <div className="space-y-0.5">
-              {adminItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPage === item.id;
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onNavigate(item.id)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </nav>
 
       {/* Bottom Navigation */}
