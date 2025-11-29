@@ -148,12 +148,92 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         }
 
         // --- DONATIONS ---
-        // GET /donations?relawan_id=... or ?muzakki_id=...
+        // GET /donations/:id/bukti-transfer - serve bukti transfer file (must come before general donations)
+        if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'bukti-transfer' && method === 'GET') {
+            console.log('🔍 Bukti transfer endpoint matched!');
+            const donationId = pathParts[1];
+            console.log('🔍 Serving bukti transfer for donation:', donationId);
+            
+            try {
+                // Get donation by ID directly
+                // @ts-ignore
+                const donation = await client.query(api.donations.getById, { donationId: donationId as any });
+                console.log('🔍 Found donation:', donation ? 'yes' : 'no');
+                
+                if (!donation || !donation.bukti_transfer_url) {
+                    return { error: 'Bukti transfer not found' };
+                }
+                
+                console.log('🔍 Fetching file content from:', donation.bukti_transfer_url);
+                
+                try {
+                    // Use serveBuktiTransfer action to fetch and serve file
+                    // @ts-ignore
+                    const result = await client.action(api.backblazeUpload.serveBuktiTransfer, { 
+                        fileUrl: donation.bukti_transfer_url 
+                    });
+                    console.log('🔍 File serve result:', result);
+                    
+                    if (result.success) {
+                        return { 
+                            success: true, 
+                            data: { 
+                                url: result.url,
+                                contentType: result.contentType,
+                                size: result.size
+                            } 
+                        };
+                    } else {
+                        return { error: result.error };
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to serve file:', error);
+                    return { error: 'Failed to serve file' };
+                }
+                
+            } catch (error) {
+                console.error('❌ Error getting donation:', error);
+                return { error: 'Failed to get donation data' };
+            }
+        }
+        
+        // POST /donations/:id/validate
+        if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'validate' && method === 'POST') {
+            console.log('🔍 Validation endpoint hit:', pathParts);
+            const donationId = pathParts[1];
+            const body = JSON.parse(options.body as string);
+            console.log('🔍 Validation body:', body);
+            // @ts-ignore
+            const result = await client.mutation(api.donations.validate, { 
+                donationId: donationId as any,
+                adminId: body.admin_id as any,
+                adminName: body.admin_name,
+                action: body.action === 'approve' ? 'validate' : 'reject',
+                rejectionReason: body.rejection_reason || undefined 
+            });
+            console.log('✅ Validation result:', result);
+            return { success: true, data: result };
+        }
+        
+        // GET /donations?relawan_id=... or ?muzakki_id=... or ?admin=true (general donations)
         if (pathParts[0] === 'donations' && method === 'GET') {
+            console.log('🔍 Donations endpoint hit:', { pathParts, method, pathPartsLength: pathParts.length });
             const queryParams = new URLSearchParams(queryString);
             const relawanId = queryParams.get('relawan_id');
             const muzakkiId = queryParams.get('muzakki_id');
+            const isAdmin = queryParams.get('admin') === 'true';
 
+            if (isAdmin) {
+                console.log('🔍 Admin route detected, fetching all donations');
+                // Get all donations by combining pending with validated/rejected
+                // @ts-ignore
+                const pendingDonations = await client.query(api.donations.listPending, {});
+                console.log('📊 Pending donations:', pendingDonations?.length || 0);
+                
+                // For now, return pending donations since that's what admin needs to validate
+                // Later we can add queries for validated/rejected if needed
+                return { success: true, data: pendingDonations };
+            }
             if (relawanId) {
                 // @ts-ignore
                 const result = await client.query(api.donations.listByRelawan, { relawanId });
@@ -181,6 +261,69 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                 console.log('📝 Donation created with ID:', donationId);
                 // Return donation object with id property
                 return { data: { id: donationId } };
+            }
+        }
+        // POST /donations/:id/validate
+        if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'validate' && method === 'POST') {
+            console.log('🔍 Validation endpoint hit:', pathParts);
+            const donationId = pathParts[1];
+            const body = JSON.parse(options.body as string);
+            console.log('🔍 Validation body:', body);
+            // @ts-ignore
+            const result = await client.mutation(api.donations.validate, { 
+                donationId: donationId as any,
+                adminId: body.admin_id as any,
+                adminName: body.admin_name,
+                action: body.action === 'approve' ? 'validate' : 'reject',
+                rejectionReason: body.rejection_reason || undefined 
+            });
+            console.log('✅ Validation result:', result);
+            return { success: true, data: result };
+        }
+        // GET /donations/:id/bukti-transfer - serve bukti transfer file
+        if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'bukti-transfer' && method === 'GET') {
+            const donationId = pathParts[1];
+            console.log('🔍 Serving bukti transfer for donation:', donationId);
+            
+            try {
+                // Get donation by ID directly
+                // @ts-ignore
+                const donation = await client.query(api.donations.getById, { donationId: donationId as any });
+                console.log('🔍 Found donation:', donation ? 'yes' : 'no');
+                
+                if (!donation || !donation.bukti_transfer_url) {
+                    return { error: 'Bukti transfer not found' };
+                }
+                
+                // Extract filename from URL
+                const urlParts = donation.bukti_transfer_url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                console.log('🔍 Extracted filename:', fileName);
+                
+                try {
+                    // Generate signed URL for download
+                    // @ts-ignore
+                    const result = await client.action(api.backblazeUpload.getDownloadUrl, { fileName });
+                    console.log('🔍 Generated download URL:', result);
+                    
+                    if (result.success) {
+                        return { 
+                            success: true, 
+                            data: { 
+                                url: result.url,
+                                authToken: result.authToken
+                            } 
+                        };
+                    } else {
+                        return { error: result.error };
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to generate download URL:', error);
+                    return { error: 'Failed to generate download URL' };
+                }
+            } catch (error) {
+                console.error('❌ Error getting donation:', error);
+                return { error: 'Failed to get donation data' };
             }
         }
         // POST /donations/upload-bukti (file upload to Backblaze B2)

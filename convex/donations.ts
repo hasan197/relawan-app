@@ -168,6 +168,70 @@ export const validate = mutation({
     },
 });
 
+export const getById = query({
+    args: { donationId: v.id("donations") },
+    handler: async (ctx, args) => {
+        const donation = await ctx.db.get(args.donationId);
+        
+        if (!donation) {
+            return null;
+        }
+
+        return {
+            id: donation._id,
+            amount: donation.amount,
+            category: donation.category,
+            donor_name: donation.donorName,
+            donor_id: donation.donorId,
+            relawan_id: donation.relawanId,
+            relawan_name: donation.relawanName,
+            event_name: donation.eventName,
+            type: donation.type,
+            notes: donation.notes,
+            bukti_transfer_url: donation.buktiTransferUrl,
+            payment_method: donation.paymentMethod,
+            receipt_number: donation.receiptNumber,
+            status: donation.status,
+            validated_by: donation.validatedBy,
+            validated_by_name: donation.validatedByName,
+            validated_at: donation.validatedAt,
+            rejection_reason: donation.rejectionReason,
+            created_at: new Date(donation.createdAt).toISOString(),
+        };
+    },
+});
+
+export const listAll = query({
+    handler: async (ctx) => {
+        const donations = await ctx.db
+            .query("donations")
+            .order("desc")
+            .collect();
+
+        return donations.map((d) => ({
+            id: d._id,
+            amount: d.amount,
+            category: d.category,
+            donor_name: d.donorName,
+            donor_id: d.donorId,
+            relawan_id: d.relawanId,
+            relawan_name: d.relawanName,
+            event_name: d.eventName,
+            type: d.type,
+            notes: d.notes,
+            bukti_transfer_url: d.buktiTransferUrl,
+            payment_method: d.paymentMethod,
+            receipt_number: d.receiptNumber,
+            status: d.status,
+            validated_by: d.validatedBy,
+            validated_by_name: d.validatedByName,
+            validated_at: d.validatedAt,
+            rejection_reason: d.rejectionReason,
+            created_at: new Date(d.createdAt).toISOString(),
+        }));
+    },
+});
+
 export const listPending = query({
     handler: async (ctx) => {
         const donations = await ctx.db

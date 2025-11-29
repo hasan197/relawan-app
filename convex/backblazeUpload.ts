@@ -81,9 +81,23 @@ class BackblazeB2Client {
   }
 
   /**
+ * Public method for authentication
+   */
+  public async authenticate(): Promise<B2AuthResponse> {
+    return this.authorize();
+  }
+
+  /**
+   * Public method for getting bucket ID
+   */
+  public async getBucketId(): Promise<string> {
+    return this.getBucketIdInternal();
+  }
+
+  /**
    * Get bucket ID from bucket name
    */
-  private async getBucketId(): Promise<string> {
+  private async getBucketIdInternal(): Promise<string> {
     if (this.bucketId) {
       return this.bucketId;
     }
@@ -277,6 +291,99 @@ export const uploadFileToB2 = action({
       return {
         success: false,
         error: error.message || 'Failed to upload file to B2',
+      };
+    }
+  },
+});
+
+/**
+ * Fetch and serve bukti transfer file content
+ */
+export const serveBuktiTransfer = action({
+  args: {
+    fileUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.log('🔍 Fetching file from URL:', args.fileUrl);
+      
+      // Parse the URL to extract file path
+      const url = new URL(args.fileUrl);
+      const filePath = url.pathname.replace(`/file/${process.env.B2_BUCKET_NAME}/`, '');
+      console.log('🔍 Extracted file path:', filePath);
+      
+      // Use the same client creation as uploadFileToB2
+      const b2Client = createB2Client();
+      
+      // Get auth data
+      const authData = await b2Client.authenticate();
+      console.log('🔍 Authenticated with B2');
+      
+      // Try to fetch file directly with auth header
+      const response = await fetch(args.fileUrl, {
+        headers: {
+          'Authorization': authData.authorizationToken,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      const buffer = await response.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString('base64');
+      
+      // Return data URL that can be opened directly
+      const dataUrl = `data:${contentType};base64,${base64}`;
+      
+      return {
+        success: true,
+        url: dataUrl,
+        contentType,
+        size: buffer.byteLength
+      };
+    } catch (error) {
+      console.error('Failed to serve bukti transfer:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+});
+
+/**
+ * Generate signed URL for file download
+ */
+export const getDownloadUrl = action({
+  args: {
+    fileName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const client = new BackblazeB2Client(
+      process.env.B2_KEY_ID!,
+      process.env.B2_APP_KEY!,
+      process.env.B2_BUCKET_NAME!
+    );
+
+    try {
+      const authData = await client.authorize();
+      
+      // Generate download URL with signed token (if needed)
+      // For B2, we can use the public download URL with auth token
+      const downloadUrl = `${authData.downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${args.fileName}`;
+      
+      return {
+        success: true,
+        url: downloadUrl,
+        authToken: authData.authorizationToken
+      };
+    } catch (error) {
+      console.error('Failed to generate download URL:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   },

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, Search, Filter, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Search, Filter, FileText, Download } from 'lucide-react';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from 'sonner@2.0.3';
@@ -32,6 +32,8 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
   const [validationAction, setValidationAction] = useState<'approve' | 'reject'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [validating, setValidating] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     fetchDonations();
@@ -45,6 +47,9 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
     try {
       setLoading(true);
       const response = await apiCall('/donations?admin=true');
+      
+      console.log('🔍 API Response:', response);
+      console.log('🔍 Response data length:', response.data?.length || 0);
       
       if (response.success) {
         const transformedDonations = response.data.map((d: any) => ({
@@ -68,6 +73,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
           rejectionReason: d.rejection_reason
         }));
         
+        console.log('🔍 Transformed donations:', transformedDonations.length);
         setDonations(transformedDonations);
       }
     } catch (error: any) {
@@ -109,11 +115,14 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
     try {
       setValidating(true);
       
+      const adminName = user.name || user.email || user.id;
+      console.log('🔍 Admin info:', { id: user.id, name: user.name, email: user.email, adminName });
+      
       const response = await apiCall(`/donations/${selectedDonation.id}/validate`, {
         method: 'POST',
         body: JSON.stringify({
           admin_id: user.id,
-          admin_name: user.name,
+          admin_name: adminName,
           action: validationAction,
           rejection_reason: validationAction === 'reject' ? rejectionReason : null
         })
@@ -337,7 +346,26 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(donation.buktiTransferUrl, '_blank')}
+                            onClick={async () => {
+                              try {
+                                console.log('🔍 Getting bukti transfer URL for donation:', donation.id);
+                                setPreviewLoading(true);
+                                const response = await apiCall(`/donations/${donation.id}/bukti-transfer`);
+                                
+                                if (response.success && response.data.url) {
+                                  console.log('🔍 Loading image preview');
+                                  setPreviewImage(response.data.url);
+                                } else {
+                                  console.error('❌ Failed to get download URL:', response);
+                                  toast.error('Gagal membuka bukti transfer');
+                                }
+                              } catch (error) {
+                                console.error('❌ Error opening bukti transfer:', error);
+                                toast.error('Gagal membuka bukti transfer');
+                              } finally {
+                                setPreviewLoading(false);
+                              }
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -449,6 +477,58 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
               {validating ? 'Memproses...' : validationAction === 'approve' ? 'Validasi' : 'Tolak'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Image Modal */}
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview Bukti Transfer</DialogTitle>
+            <DialogDescription>
+              Preview bukti transfer dari donasi. Anda bisa mendownload file ini jika diperlukan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center">
+            {previewLoading ? (
+              <div className="flex items-center justify-center h-96">
+                <LoadingSpinner />
+                <span className="ml-2">Memuat gambar...</span>
+              </div>
+            ) : (
+              <>
+                <img 
+                  src={previewImage || ''} 
+                  alt="Bukti Transfer" 
+                  className="max-w-full max-h-96 object-contain border rounded"
+                />
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (previewImage) {
+                        const link = document.createElement('a');
+                        link.href = previewImage;
+                        link.download = `bukti-transfer-${selectedDonation?.id || 'image'}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPreviewImage(null)}
+                  >
+                    Tutup
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

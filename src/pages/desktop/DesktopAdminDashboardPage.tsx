@@ -11,7 +11,7 @@ interface DesktopAdminDashboardPageProps {
 }
 
 export function DesktopAdminDashboardPage({ onBack, onNavigate }: DesktopAdminDashboardPageProps) {
-  const { stats, loading } = useAdminStats();
+  const { globalStats: stats, loading } = useAdminStats();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -53,9 +53,9 @@ export function DesktopAdminDashboardPage({ onBack, onNavigate }: DesktopAdminDa
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
-              <p className="text-gray-600 text-sm">Total Users</p>
+              <p className="text-gray-600 text-sm">Total Relawan</p>
             </div>
-            <p className="text-2xl text-gray-900 font-semibold">{stats?.total_users || 0}</p>
+            <p className="text-2xl text-gray-900 font-semibold">{stats?.total_relawan || 0}</p>
           </Card>
 
           <Card className="p-5">
@@ -73,9 +73,9 @@ export function DesktopAdminDashboardPage({ onBack, onNavigate }: DesktopAdminDa
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Award className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="text-gray-600 text-sm">Total Regu</p>
+              <p className="text-gray-600 text-sm">Total Relawan</p>
             </div>
-            <p className="text-2xl text-gray-900 font-semibold">{stats?.total_regus || 0}</p>
+            <p className="text-2xl text-gray-900 font-semibold">{stats?.total_regu || 0}</p>
           </Card>
 
           <Card className="p-5">

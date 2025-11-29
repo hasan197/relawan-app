@@ -621,14 +621,18 @@ app.get('/make-server-f689ca3f/donations', async (c) => {
   try {
     const relawanId = c.req.query('relawan_id');
     const muzakkiId = c.req.query('muzakki_id');
+    const isAdmin = c.req.query('admin') === 'true';
 
-    if (!relawanId && !muzakkiId) {
-      return c.json({ error: 'Relawan ID atau Muzakki ID diperlukan' }, 400);
+    if (!relawanId && !muzakkiId && !isAdmin) {
+      return c.json({ error: 'Relawan ID, Muzakki ID, atau admin parameter diperlukan' }, 400);
     }
 
     let donations = [];
 
-    if (muzakkiId) {
+    if (isAdmin) {
+      // Get all donations for admin
+      donations = await kv.getByPrefix('donation:');
+    } else if (muzakkiId) {
       // Get donations for specific muzakki
       const allDonations = await kv.getByPrefix('donation:');
       donations = allDonations.filter((d: any) => d.muzakki_id === muzakkiId);
