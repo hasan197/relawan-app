@@ -11,10 +11,33 @@ If you find this project useful, please consider:
 [![GitHub stars](https://img.shields.io/github/stars/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/stargazers)
 [![GitHub watchers](https://img.shields.io/github/watchers/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/watchers)
 [![GitHub forks](https://img.shields.io/github/forks/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/network)
+[![GitHub license](https://img.shields.io/github/license/hasan197/relawan-app)](https://github.com/hasan197/relawan-app/blob/main/LICENSE.md)
+[![GitHub issues](https://img.shields.io/github/issues/hasan197/relawan-app)](https://github.com/hasan197/relawan-app/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/hasan197/relawan-app)](https://github.com/hasan197/relawan-app/pulls)
 
 - ⭐ **Add a star** on [GitHub](https://github.com/hasan197/relawan-app) to show your support
 - 👁️ **Watch** the repository to stay updated with new features
 - 🍴 **Fork** the project if you want to contribute or customize
+- 🐛 **Report issues** [here](https://github.com/hasan197/relawan-app/issues) if you find bugs
+- 💡 **Suggest features** [here](https://github.com/hasan197/relawan-app/issues/new?template=feature_request.md)
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### 📋 Contribution Guidelines
+- Follow the existing code style and conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
 
 ---
 
