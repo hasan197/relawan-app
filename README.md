@@ -6,13 +6,18 @@ This is a code bundle for Volunteer Dashboard Design. The original project is av
 
 <div align="center">
 
-### Mobile Dashboard
-<img src="mobile-dashboard.png" alt="Mobile Dashboard" width="300" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-
-<br/><br/>
-
-### Desktop Dashboard  
-<img src="desktop-dashboard.png" alt="Desktop Dashboard" width="800" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<table>
+  <tr>
+    <td style="text-align: center; padding: 20px;">
+      <h3>Mobile Dashboard</h3>
+      <img src="mobile-dashboard.png" alt="Mobile Dashboard" width="280" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    </td>
+    <td style="text-align: center; padding: 20px;">
+      <h3>Desktop Dashboard</h3>
+      <img src="desktop-dashboard.png" alt="Desktop Dashboard" width="560" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    </td>
+  </tr>
+</table>
 
 </div>
 
