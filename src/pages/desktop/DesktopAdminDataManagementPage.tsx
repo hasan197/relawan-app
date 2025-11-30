@@ -76,7 +76,7 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
         // Filter regu fields
         return removeNullValues({
           name: data.name,
-          pembimbing_name: data.pembimbing_name,
+          pembimbing_id: data.pembimbing_id, // Use consistent pembimbing_id field
           target: data.target,
           description: data.description
         });
@@ -184,6 +184,12 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
         transformedItem = {
           ...item,
           relawan_id: item.relawanId, // Map relawanId to relawan_id
+        };
+      } else if (activeTab === 'regu') {
+        // Transform pembimbingId to pembimbing_id for form consistency
+        transformedItem = {
+          ...item,
+          pembimbing_id: item.pembimbingId, // Map pembimbingId to pembimbing_id
         };
       }
       
