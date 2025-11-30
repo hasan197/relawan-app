@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pending Donations</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Pending Donations</h1>
+    
+    <div class="section">
+        <h2>Backend Configuration</h2>
+        <div id="backend-config">Loading...</div>
+    </div>
+
+    <div class="section">
+        <h2>API Calls Test</h2>
+        <button onclick="testAPIs()">Test All APIs</button>
+        <div id="api-results"></div>
+    </div>
+
+    <script type="module">
+        // Import backend config (simulating the app's setup)
+        const BACKEND_PROVIDER = 'convex'; // Based on backendConfig.ts default
+        
+        // Simulate API call function
+        async function apiCall(endpoint, options = {}) {
+            console.log(`🔀 Backend: ${BACKEND_PROVIDER} (${endpoint})`);
+            
+            if (BACKEND_PROVIDER === 'convex') {
+                // For testing, we'll need to implement convex routing
+                // For now, show what would be called
+                return { 
+                    success: false, 
+                    message: `Would call Convex: ${endpoint}`,
+                    note: "Convex routing not implemented in this test"
+                };
+            }
+            
+            // Supabase backend call
+            const projectId = 'your-project-id'; // This would come from config
+            const SERVER_URL = `https://${projectId}.supabase.co/functions/v1/make-server-f689ca3f`;
+            const publicAnonKey = 'your-anon-key';
+            
+            try {
+                const response = await fetch(`${SERVER_URL}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Authorization': `Bearer ${publicAnonKey}`,
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Display backend configuration
+        document.getElementById('backend-config').innerHTML = `
+            <p><strong>BACKEND_PROVIDER:</strong> ${BACKEND_PROVIDER}</p>
+            <p><strong>Environment:</strong> ${import.meta?.env?.MODE || 'Unknown'}</p>
+        `;
+
+        // Test APIs
+        window.testAPIs = async function() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>Testing APIs...</p>';
+
+            const tests = [
+                {
+                    name: 'Donations Stats (for pendingDonations)',
+                    endpoint: '/donations/stats',
+                    description: 'This is what useAdminStats calls for pendingDonations'
+                },
+                {
+                    name: 'Admin Stats Global',
+                    endpoint: '/admin/stats/global',
+                    description: 'Global stats from admin endpoint'
+                },
+                {
+                    name: 'All Donations (Admin)',
+                    endpoint: '/donations?admin=true',
+                    description: 'This is what validation page uses'
+                }
+            ];
+
+            let results = '';
+            
+            for (const test of tests) {
+                results += `<h3>${test.name}</h3>`;
+                results += `<p><em>${test.description}</em></p>`;
+                
+                try {
+                    const response = await apiCall(test.endpoint);
+                    
+                    if (response.success) {
+                        results += `<div class="success">✅ Success</div>`;
+                        results += `<pre>${JSON.stringify(response.data, null, 2)}</pre>`;
+                        
+                        // Extract pending donations count if available
+                        if (response.data?.data?.pending !== undefined) {
+                            results += `<p><strong>Pending Donations:</strong> ${response.data.data.pending}</p>`;
+                        } else if (response.data?.pending !== undefined) {
+                            results += `<p><strong>Pending Donations:</strong> ${response.data.pending}</p>`;
+                        }
+                        
+                        // If it's the donations array, count pending ones
+                        if (Array.isArray(response.data?.data)) {
+                            const pendingCount = response.data.data.filter(d => d.status === 'pending').length;
+                            results += `<p><strong>Calculated Pending:</strong> ${pendingCount} (from ${response.data.data.length} total donations)</p>`;
+                        }
+                    } else {
+                        results += `<div class="error">❌ Failed: ${response.error || response.message || 'Unknown error'}</div>`;
+                        if (response.status) {
+                            results += `<p>Status: ${response.status}</p>`;
+                        }
+                    }
+                } catch (error) {
+                    results += `<div class="error">❌ Exception: ${error.message}</div>`;
+                }
+                
+                results += `<hr>`;
+            }
+            
+            resultsDiv.innerHTML = results;
+        };
+
+        // Auto-run test on page load
+        setTimeout(() => {
+            testAPIs();
+        }, 1000);
+    </script>
+</body>
+</html>

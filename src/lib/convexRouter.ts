@@ -109,6 +109,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
     const method = options.method || 'GET';
 
     console.log(`🔀 Routing to Convex: ${method} ${endpoint}`);
+    console.log(`🔍 Full options:`, options);
     console.log(`🔍 Body type: ${options.body instanceof FormData ? 'FormData' : 'Other'}`);
     console.log(`🔍 Body content:`, options.body instanceof FormData ? 'FormData object' : options.body);
 
@@ -159,14 +160,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const userId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.updateUser, { userId, ...body });
+            const result = await client.mutation(api.admin.updateUser, { userId: userId as any, ...body });
             return { success: true, data: result };
         }
         // DELETE /admin/users/:id
         if (pathParts[0] === 'admin' && pathParts[1] === 'users' && pathParts.length === 3 && method === 'DELETE') {
             const userId = pathParts[2];
             // @ts-ignore
-            const result = await client.mutation(api.admin.deleteUser, { userId });
+            const result = await client.mutation(api.admin.deleteUser, { userId: userId as any });
             return { success: true, data: result };
         }
 
@@ -324,7 +325,11 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'templates' && method === 'GET') {
             const queryParams = new URLSearchParams(queryString);
             const all = queryParams.get('all') === 'true';
-            const relawanId = queryParams.get('relawan_id');
+            let relawanId = queryParams.get('relawan_id');
+            // Convert null to undefined for optional Convex validator
+            if (relawanId === null || relawanId === '') {
+                relawanId = undefined;
+            }
             // @ts-ignore
             const result = await client.query(api.templates.list, { all, relawanId });
             return { success: true, data: result };

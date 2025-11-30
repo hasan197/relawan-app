@@ -20,6 +20,7 @@ export const getAllDonations = query({
         return {
           ...donation,
           relawan_name: relawan?.fullName || relawan?.name || null,
+          relawanId: donation.relawanId, // Add relawanId for dropdown matching
           donor_name: donation.donorName || donor?.name || null,
           donor_phone: donor?.phone || null,
         };

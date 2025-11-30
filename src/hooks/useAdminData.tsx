@@ -68,8 +68,8 @@ export function useAdminData(type: DataType): UseAdminDataReturn {
       const response = await apiCall(endpoint);
       
       // Handle different response formats from existing backend
-      if (response.success || response.data) {
-        setData(response.data || []);
+      if (response.status === 'success' || response.success || response.data) {
+        setData(response.data || response.value || []);
       } else {
         // For endpoints that return direct array
         setData(Array.isArray(response) ? response : []);
@@ -85,7 +85,13 @@ export function useAdminData(type: DataType): UseAdminDataReturn {
   const createItem = useCallback(async (itemData: any): Promise<boolean> => {
     try {
       const endpoint = getEndpoint(type, 'create');
-      const response = await apiCall(endpoint, 'POST', itemData);
+      const response = await apiCall(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(itemData),
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       
       // Handle different response formats
       if (response.success || response.data) {
@@ -105,13 +111,19 @@ export function useAdminData(type: DataType): UseAdminDataReturn {
   const updateItem = useCallback(async (id: string, itemData: any): Promise<boolean> => {
     try {
       const endpoint = getEndpoint(type, 'update', id);
-      const response = await apiCall(endpoint, 'PUT', itemData);
+      const response = await apiCall(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(itemData),
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       
       // Handle different response formats
       if (response.success || response.data) {
         // Update local state with the updated item
         if (response.data) {
-          setData(prev => prev.map(item => item.id === id ? response.data : item));
+          setData(prev => prev.map(item => (item._id === id || item.id === id) ? response.data : item));
         }
         return true;
       }
@@ -125,7 +137,9 @@ export function useAdminData(type: DataType): UseAdminDataReturn {
   const deleteItem = useCallback(async (id: string): Promise<boolean> => {
     try {
       const endpoint = getEndpoint(type, 'delete', id);
-      const response = await apiCall(endpoint, 'DELETE');
+      const response = await apiCall(endpoint, {
+        method: 'DELETE'
+      });
       
       // Handle different response formats
       if (response.success || response.message) {

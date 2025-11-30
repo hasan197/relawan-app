@@ -168,23 +168,27 @@ export const adminUpdate = mutation({
     handler: async (ctx, args) => {
         const { programId, ...updates } = args;
 
-        const updatedProgram = await ctx.db.patch(programId, {
-            ...(updates.title && { title: updates.title }),
-            ...(updates.category && { category: updates.category }),
-            ...(updates.target_amount && { targetAmount: updates.target_amount }),
-            ...(updates.description && { description: updates.description }),
-            ...(updates.start_date && { startDate: new Date(updates.start_date).getTime() }),
-            ...(updates.end_date && { endDate: new Date(updates.end_date).getTime() }),
-            ...(updates.status && { 
+        // Build patch data
+        const patchData = {
+            ...(updates.title !== undefined && { title: updates.title }),
+            ...(updates.category !== undefined && { category: updates.category }),
+            ...(updates.target_amount !== undefined && { targetAmount: updates.target_amount }),
+            ...(updates.description !== undefined && { description: updates.description }),
+            ...(updates.start_date !== undefined && { startDate: new Date(updates.start_date).getTime() }),
+            ...(updates.end_date !== undefined && { endDate: new Date(updates.end_date).getTime() }),
+            ...(updates.status !== undefined && { 
                 status: updates.status,
                 isActive: updates.status !== "inactive"
             }),
-            ...(updates.image_url && { imageUrl: updates.image_url }),
+            ...(updates.image_url !== undefined && { imageUrl: updates.image_url }),
             ...(updates.collected_amount !== undefined && { collectedAmount: updates.collected_amount }),
             updatedAt: Date.now(),
-        });
-
-        return updatedProgram;
+        };
+        
+        // Apply patch and return updated document
+        await ctx.db.patch(programId, patchData);
+        const finalProgram = await ctx.db.get(programId);
+        return finalProgram;
     },
 });
 

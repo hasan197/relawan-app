@@ -284,6 +284,7 @@ export const getAllMuzakkis = query({
         return {
           ...muzakki,
           relawan_name: relawan?.fullName || relawan?.name || null,
+          relawanId: muzakki.createdBy, // Add relawanId for dropdown matching
         };
       })
     );

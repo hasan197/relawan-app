@@ -48,6 +48,93 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
     { id: 'template' as TabType, label: 'Template', icon: MessageSquare, color: 'pink' },
   ];
 
+  // Utility function to remove null/undefined values
+  const removeNullValues = (obj: any): any => {
+    const cleaned = { ...obj };
+    Object.keys(cleaned).forEach(key => {
+      if (cleaned[key] === null || cleaned[key] === undefined) {
+        delete cleaned[key];
+      }
+    });
+    return cleaned;
+  };
+
+  // Filter update data based on active tab to only send allowed fields
+  const filterUpdateData = (tab: TabType, data: any): any => {
+    switch (tab) {
+      case 'users':
+        // Only allow fields that are in Convex updateUser validator
+        return removeNullValues({
+          fullName: data.fullName,
+          phone: data.phone,
+          email: data.email,
+          role: data.role,
+          regu_id: data.regu_id
+        });
+      
+      case 'regu':
+        // Filter regu fields
+        return removeNullValues({
+          name: data.name,
+          pembimbing_name: data.pembimbing_name,
+          target: data.target,
+          description: data.description
+        });
+      
+      case 'muzakki':
+        // Filter muzakki fields
+        return removeNullValues({
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+          address: data.address,
+          category: data.category,
+          relawan_id: data.relawan_id
+        });
+      
+      case 'donasi':
+        // Filter donation fields
+        return removeNullValues({
+          donorName: data.donorName,
+          amount: data.amount,
+          category: data.category,
+          relawan_id: data.relawan_id, // Use consistent relawan_id field
+          notes: data.notes,
+          paymentMethod: data.paymentMethod,
+          receiptNumber: data.receiptNumber
+        });
+      
+      case 'program':
+        // Filter program fields - match Convex adminUpdate validator
+        const programData = {
+          title: data.name || data.title, // Try both 'name' and 'title' from frontend
+          description: data.description,
+          category: data.category,
+          target_amount: data.target_amount,
+          status: data.is_active ? "active" : "inactive", // Frontend uses boolean, Convex uses string
+          start_date: data.start_date,
+          end_date: data.end_date,
+          image_url: data.image_url,
+          collected_amount: data.collected_amount
+        };
+        // Remove null/undefined values to avoid Convex validation errors
+        return removeNullValues(programData);
+      
+      case 'template':
+        // Filter template fields
+        return removeNullValues({
+          name: data.name,
+          category: data.category,
+          message: data.message,
+          title: data.title
+        });
+      
+      default:
+        // For other tabs, return minimal data
+        return {};
+    }
+  };
+
   // Load data when tab changes
   useEffect(() => {
     fetchData();
@@ -71,7 +158,36 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
   const handleOpenForm = (item?: any) => {
     if (item) {
       setEditingItem(item);
-      setFormData(item);
+      
+      // Transform database format to form format
+      let transformedItem = { ...item };
+      
+      // Convert timestamp dates to string dates for form
+      if (activeTab === 'program') {
+        transformedItem = {
+          ...item,
+          title: item.title, // Use consistent 'title' field
+          start_date: item.start_date ? new Date(item.start_date).toISOString().split('T')[0] : '',
+          end_date: item.end_date ? new Date(item.end_date).toISOString().split('T')[0] : '',
+          target_amount: item.target_amount,
+          is_active: item.is_active,
+          image_url: item.image_url
+        };
+      } else if (activeTab === 'muzakki') {
+        // Transform relawanId to relawan_id for form consistency
+        transformedItem = {
+          ...item,
+          relawan_id: item.relawanId || item.createdBy, // Map relawanId to relawan_id
+        };
+      } else if (activeTab === 'donasi') {
+        // Transform relawanId to relawan_id for form consistency
+        transformedItem = {
+          ...item,
+          relawan_id: item.relawanId, // Map relawanId to relawan_id
+        };
+      }
+      
+      setFormData(transformedItem);
     } else {
       setEditingItem(null);
       setFormData({});
@@ -94,17 +210,18 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
     e.preventDefault();
     setSubmitting(true);
 
-    console.log('📝 Form submit:', { activeTab, editingItem, formData });
-
     try {
       let success = false;
       
       if (editingItem) {
-        // Update - remove ID from formData to prevent updating it
-        const { id, ...updateData } = formData;
-        console.log('🔄 Updating item:', editingItem.id, updateData);
+        // Update - filter only allowed fields and remove IDs
+        const { id, _id, ...updateData } = formData;
+        const itemId = editingItem._id || editingItem.id; // Use Convex _id or fallback to id
         
-        success = await updateItem(editingItem.id, updateData);
+        // Filter only allowed fields based on activeTab
+        const filteredUpdateData = filterUpdateData(activeTab, updateData);
+        
+        success = await updateItem(itemId, filteredUpdateData);
         if (success) {
           toast.success('Data berhasil diupdate');
           handleCloseForm();
@@ -115,7 +232,6 @@ export function DesktopAdminDataManagementPage({ onBack, onNavigate }: DesktopAd
       } else {
         // Create - remove ID if exists
         const { id, ...createData } = formData;
-        console.log('➕ Creating item:', createData);
         
         success = await createItem(createData);
         if (success) {

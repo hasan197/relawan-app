@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Program Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .data-preview { background: #f5f5f5; padding: 10px; border-radius: 3px; white-space: pre-wrap; }
+        input[type="date"] { padding: 5px; margin: 5px 0; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Program Form Data</h1>
+    
+    <div class="debug-section">
+        <h3>1. Backend Data Simulation</h3>
+        <div id="backend-data" class="data-preview"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>2. Data Transformation</h3>
+        <div id="transformed-data" class="data-preview"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>3. Form Input Test</h3>
+        <label>Title:</label><br>
+        <input type="text" id="title-input" style="width: 300px; padding: 5px;"><br><br>
+        
+        <label>Start Date:</label><br>
+        <input type="date" id="start-date-input"><br><br>
+        
+        <label>End Date:</label><br>
+        <input type="date" id="end-date-input"><br><br>
+        
+        <button onclick="checkFormValues()">Check Form Values</button>
+        <div id="form-check-result"></div>
+    </div>
+
+    <script>
+        // Simulate backend data
+        const backendData = {
+            id: "test123",
+            title: "Wakaf Sumur untuk Yaman",
+            description: "Program wakaf untuk membangun sumur air bersih",
+            category: "wakaf",
+            target_amount: 10000000,
+            collected_amount: 2500000,
+            image_url: "https://example.com/image.jpg",
+            status: "active",
+            is_active: true,
+            start_date: "2024-01-15T00:00:00.000Z",
+            end_date: "2024-12-31T00:00:00.000Z",
+            created_at: "2024-01-10T00:00:00.000Z"
+        };
+
+        // Display backend data
+        document.getElementById('backend-data').textContent = JSON.stringify(backendData, null, 2);
+
+        // Transform data (same logic as handleOpenForm)
+        function transformProgramData(item) {
+            console.log('🔍 Original program data:', item);
+            
+            const transformedItem = {
+                ...item,
+                title: item.title, // Keep the same field name for title
+                start_date: item.start_date ? new Date(item.start_date).toISOString().split('T')[0] : '',
+                end_date: item.end_date ? new Date(item.end_date).toISOString().split('T')[0] : '',
+                target_amount: item.target_amount,
+                is_active: item.is_active,
+                image_url: item.image_url
+            };
+            
+            console.log('🔍 Transformed program data:', transformedItem);
+            return transformedItem;
+        }
+
+        // Transform and display
+        const formData = transformProgramData(backendData);
+        document.getElementById('transformed-data').textContent = JSON.stringify(formData, null, 2);
+
+        // Populate form fields
+        document.getElementById('title-input').value = formData.title || '';
+        document.getElementById('start-date-input').value = formData.start_date || '';
+        document.getElementById('end-date-input').value = formData.end_date || '';
+
+        // Check form values
+        function checkFormValues() {
+            const titleValue = document.getElementById('title-input').value;
+            const startDateValue = document.getElementById('start-date-input').value;
+            const endDateValue = document.getElementById('end-date-input').value;
+            
+            const resultDiv = document.getElementById('form-check-result');
+            
+            let html = '<h4>Form Values:</h4>';
+            html += `<p>Title: <strong>${titleValue}</strong> ${titleValue ? '<span class="success">✓</span>' : '<span class="error">✗ Empty</span>'}</p>`;
+            html += `<p>Start Date: <strong>${startDateValue}</strong> ${startDateValue ? '<span class="success">✓</span>' : '<span class="error">✗ Empty</span>'}</p>`;
+            html += `<p>End Date: <strong>${endDateValue}</strong> ${endDateValue ? '<span class="success">✓</span>' : '<span class="error">✗ Empty</span>'}</p>`;
+            
+            // Validate date format
+            const isValidDate = (dateString) => /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+            html += `<h4>Date Format Validation:</h4>`;
+            html += `<p>Start date format: ${isValidDate(startDateValue) ? '<span class="success">✓ Valid YYYY-MM-DD</span>' : '<span class="error">✗ Invalid format</span>'}</p>`;
+            html += `<p>End date format: ${isValidDate(endDateValue) ? '<span class="success">✓ Valid YYYY-MM-DD</span>' : '<span class="error">✗ Invalid format</span>'}</p>`;
+            
+            resultDiv.innerHTML = html;
+        }
+
+        // Auto-check on load
+        setTimeout(checkFormValues, 100);
+    </script>
+</body>
+</html>
