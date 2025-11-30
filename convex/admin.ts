@@ -408,7 +408,7 @@ export const getGlobalStats = query({
       .filter(d => d.type === "incoming")
       .reduce((sum, d) => sum + d.amount, 0);
     
-    const pendingDonations = donations.filter(d => d.status === "pending").length;
+    const pendingDonations = donations.filter(d => d.status === "pending" || d.status === undefined).length;
 
     const byCategory = donations
       .filter(d => d.type === "incoming")

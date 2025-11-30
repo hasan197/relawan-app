@@ -33,10 +33,12 @@ export const getAllDonations = query({
 // Get pending donations (Admin)
 export const getPendingDonations = query({
   handler: async (ctx) => {
-    const pendingDonations = await ctx.db
-      .query("donations")
-      .withIndex("by_status", (q) => q.eq("status", "pending"))
-      .collect();
+    // Get all donations and filter for pending (including undefined status)
+    const allDonations = await ctx.db.query("donations").collect();
+    
+    const pendingDonations = allDonations.filter(d => 
+      d.status === "pending" || d.status === undefined
+    );
     
     // Enrich with relawan information
     const enrichedDonations = await Promise.all(
@@ -182,7 +184,7 @@ export const getDonationStats = query({
 
     const stats = {
       total: donations.length,
-      pending: donations.filter(d => d.status === "pending").length,
+      pending: donations.filter(d => d.status === "pending" || d.status === undefined).length,
       validated: donations.filter(d => d.status === "validated").length,
       rejected: donations.filter(d => d.status === "rejected").length,
       by_category: donations
