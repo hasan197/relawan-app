@@ -2,13 +2,19 @@
 
 This is a code bundle for Volunteer Dashboard Design. The original project is available at https://www.figma.com/design/TeOSmOcWhrlNFUXwRsequL/Volunteer-Dashboard-Design.
 
-## Screenshots
+## 📱 Screenshots
+
+<div align="center">
 
 ### Mobile Dashboard
-![Mobile Dashboard](mobile-dashboard.png)
+<img src="mobile-dashboard.png" alt="Mobile Dashboard" width="300" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+<br/><br/>
 
 ### Desktop Dashboard  
-![Desktop Dashboard](desktop-dashboard.png)
+<img src="desktop-dashboard.png" alt="Desktop Dashboard" width="800" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+</div>
 
 ## 🚀 Running the code
 
