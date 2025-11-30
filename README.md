@@ -2,6 +2,22 @@
 
 This is a code bundle for Volunteer Dashboard Design. The original project is available at https://www.figma.com/design/TeOSmOcWhrlNFUXwRsequL/Volunteer-Dashboard-Design.
 
+---
+
+## 🌟 Show Your Support
+
+If you find this project useful, please consider:
+
+[![GitHub stars](https://img.shields.io/github/stars/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/stargazers)
+[![GitHub watchers](https://img.shields.io/github/watchers/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/watchers)
+[![GitHub forks](https://img.shields.io/github/forks/hasan197/relawan-app?style=social)](https://github.com/hasan197/relawan-app/network)
+
+- ⭐ **Add a star** on [GitHub](https://github.com/hasan197/relawan-app) to show your support
+- 👁️ **Watch** the repository to stay updated with new features
+- 🍴 **Fork** the project if you want to contribute or customize
+
+---
+
 ## 📱 Screenshots
 
 <div align="center">
