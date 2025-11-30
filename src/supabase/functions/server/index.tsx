@@ -2043,7 +2043,8 @@ app.post('/make-server-f689ca3f/seed', async (c) => {
     
     // Optional: Add a simple protection key
     const protectionKey = c.req.query('key');
-    if (protectionKey && protectionKey !== 'ziswaf-dev-2025') {
+    const expectedKey = Deno.env.get('PROTECTION_KEY') || 'default-dev-key';
+    if (protectionKey && protectionKey !== expectedKey) {
       return c.json({ 
         success: false,
         error: 'Invalid protection key' 
@@ -2415,15 +2416,15 @@ app.post('/make-server-f689ca3f/admin/seed-database', async (c) => {
     // ============================================
     const summary = {
       users: {
-        admin: { phone: admin.phone, password: 'admin123' },
+        admin: { phone: admin.phone, password: Deno.env.get('ADMIN_PASSWORD') || 'admin123' },
         pembimbing: [
-          { phone: pembimbing1.phone, password: 'pembimbing123', regu: regu1.name, code: regu1JoinCode },
-          { phone: pembimbing2.phone, password: 'pembimbing123', regu: regu2.name, code: regu2JoinCode }
+          { phone: pembimbing1.phone, password: Deno.env.get('PEMBIMBING_PASSWORD') || 'pembimbing123', regu: regu1.name, code: regu1JoinCode },
+          { phone: pembimbing2.phone, password: Deno.env.get('PEMBIMBING_PASSWORD') || 'pembimbing123', regu: regu2.name, code: regu2JoinCode }
         ],
         relawan: [
-          { phone: relawan1.phone, password: 'relawan123', regu: regu1.name },
-          { phone: relawan2.phone, password: 'relawan123', regu: regu1.name },
-          { phone: relawan3.phone, password: 'relawan123', regu: regu2.name }
+          { phone: relawan1.phone, password: Deno.env.get('RELAWAN_PASSWORD') || 'relawan123', regu: regu1.name },
+          { phone: relawan2.phone, password: Deno.env.get('RELAWAN_PASSWORD') || 'relawan123', regu: regu1.name },
+          { phone: relawan3.phone, password: Deno.env.get('RELAWAN_PASSWORD') || 'relawan123', regu: regu2.name }
         ]
       },
       regus: [

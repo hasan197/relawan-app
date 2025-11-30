@@ -1,41 +1,78 @@
-**Add your own guidelines here**
-<!--
+# Relawan Dashboard Development Guidelines
 
-System Guidelines
+## 🎯 Project Overview
+This is a **Waqf Software** project dedicated as Islamic endowment for charitable volunteer management. All development must align with Islamic principles and serve the Muslim Ummah.
 
-Use this file to provide the AI with rules and guidelines you want it to follow.
-This template outlines a few examples of things you can add. You can add your own sections and format it to suit your needs
+## 🕌 Islamic Principles
+- All code and features must comply with Shari'ah
+- No commercial exploitation - this is perpetual Waqf
+- Serve charitable and humanitarian purposes only
+- Maintain integrity and transparency in all implementations
 
-TIP: More context isn't always better. It can confuse the LLM. Try and add the most important rules you need
+## 🛠️ Technical Guidelines
 
-# General guidelines
+### Code Quality
+- Use TypeScript for type safety
+- Follow React best practices and hooks patterns
+- Implement proper error handling and user feedback
+- Write clean, readable, and maintainable code
+- Use meaningful variable and function names
 
-Any general rules you want the AI to follow.
-For example:
+### UI/UX Standards
+- Mobile-first responsive design
+- Use TailwindCSS for styling consistency
+- Follow the established component patterns in `/src/components/ui/`
+- Maintain accessibility standards (ARIA labels, semantic HTML)
+- Test on both mobile and desktop viewports
 
-* Only use absolute positioning when necessary. Opt for responsive and well structured layouts that use flexbox and grid by default
-* Refactor code as you go to keep code clean
-* Keep file sizes small and put helper functions and components in their own files.
+### Backend Integration
+- Use the established API patterns in `/src/lib/backendConfig.ts`
+- Handle both Convex and Supabase backends based on `BACKEND_PROVIDER`
+- Implement proper loading states and error handling
+- Use snake_case field names for backend consistency
+- Convert timestamps properly (milliseconds to Date objects)
 
---------------
+### Data Handling
+- Never commit sensitive data (API keys, credentials, personal info)
+- Use environment variables for all configuration
+- Implement proper data validation and sanitization
+- Follow the snake_case naming convention for backend fields
+- Handle date formatting consistently across the app
 
-# Design system guidelines
-Rules for how the AI should make generations look like your company's design system
+## 📱 Mobile Development
+- Prioritize mobile user experience
+- Touch-friendly interface elements
+- Optimize for performance on mobile devices
+- Test on various screen sizes
+- Implement proper offline handling where needed
 
-Additionally, if you select a design system to use in the prompt box, you can reference
-your design system's components, tokens, variables and components.
-For example:
+## 🔒 Security & Privacy
+- Never expose API keys or sensitive configuration
+- Implement proper authentication flows
+- Validate all user inputs
+- Use secure storage for sensitive data
+- Follow OWASP security guidelines
 
-* Use a base font-size of 14px
-* Date formats should always be in the format “Jun 10”
-* The bottom toolbar should only ever have a maximum of 4 items
-* Never use the floating action button with the bottom toolbar
-* Chips should always come in sets of 3 or more
-* Don't use a dropdown if there are 2 or fewer options
+## 🎨 Design System
+- Use established color palette from TailwindCSS
+- Maintain consistent spacing and typography
+- Use shadcn/ui components when available
+- Create reusable components for common patterns
+- Follow the established icon and imagery guidelines
 
-You can also create sub sections and add more specific details
-For example:
+## 📝 Documentation
+- Update README.md for major features
+- Document API endpoints in BACKEND_CONFIG.md
+- Include examples for complex components
+- Maintain clear commit messages
+- Update this guidelines file when standards change
 
+## 🧪 Testing
+- Test all major user flows
+- Verify mobile responsiveness
+- Test backend integrations thoroughly
+- Check error handling scenarios
+- Validate form inputs and edge cases
 
 ## Button
 The Button component is a fundamental interactive element in our design system, designed to trigger actions or navigate
