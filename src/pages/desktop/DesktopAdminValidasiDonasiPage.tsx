@@ -48,14 +48,14 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
       
       if (response.success) {
         const transformedDonations = response.data.map((d: any) => ({
-          id: d.id,
+          id: d._id,
           amount: d.amount,
           category: d.category,
-          donorName: d.donor_name || d.donorName || 'Anonim',
-          donorId: d.muzakki_id,
+          donorName: d.donor_name || 'Anonim',
+          donorId: d.donor_id,
           relawanId: d.relawan_id,
           relawanName: d.relawan_name,
-          eventName: d.eventName,
+          eventName: d.event_name,
           createdAt: new Date(d.created_at),
           type: d.type || 'incoming',
           status: d.status || 'pending',

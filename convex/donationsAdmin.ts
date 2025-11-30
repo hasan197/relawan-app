@@ -18,11 +18,26 @@ export const getAllDonations = query({
         const donor = donation.donorId ? await ctx.db.get(donation.donorId) : null;
         
         return {
-          ...donation,
-          relawan_name: relawan?.fullName || relawan?.name || null,
-          relawanId: donation.relawanId, // Add relawanId for dropdown matching
+          _id: donation._id,
+          _creationTime: donation._creationTime,
+          amount: donation.amount,
+          category: donation.category,
           donor_name: donation.donorName || donor?.name || null,
+          donor_id: donation.donorId,
           donor_phone: donor?.phone || null,
+          relawan_id: donation.relawanId,
+          relawan_name: relawan?.fullName || relawan?.name || null,
+          event_name: donation.eventName,
+          created_at: donation.createdAt,
+          validated_at: donation.validatedAt,
+          type: donation.type,
+          status: donation.status,
+          bukti_transfer_url: donation.buktiTransferUrl,
+          payment_method: donation.paymentMethod,
+          notes: donation.notes,
+          validated_by: donation.validatedBy,
+          validated_by_name: donation.validatedByName,
+          rejection_reason: donation.rejectionReason
         };
       })
     );
@@ -48,10 +63,26 @@ export const getPendingDonations = query({
         const donor = donation.donorId ? await ctx.db.get(donation.donorId) : null;
         
         return {
-          ...donation,
-          relawan_name: relawan?.fullName || relawan?.name || null,
+          _id: donation._id,
+          _creationTime: donation._creationTime,
+          amount: donation.amount,
+          category: donation.category,
           donor_name: donation.donorName || donor?.name || null,
+          donor_id: donation.donorId,
           donor_phone: donor?.phone || null,
+          relawan_id: donation.relawanId,
+          relawan_name: relawan?.fullName || relawan?.name || null,
+          event_name: donation.eventName,
+          created_at: donation.createdAt,
+          validated_at: donation.validatedAt,
+          type: donation.type,
+          status: donation.status,
+          bukti_transfer_url: donation.buktiTransferUrl,
+          payment_method: donation.paymentMethod,
+          notes: donation.notes,
+          validated_by: donation.validatedBy,
+          validated_by_name: donation.validatedByName,
+          rejection_reason: donation.rejectionReason
         };
       })
     );

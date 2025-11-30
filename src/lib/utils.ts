@@ -15,6 +15,10 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatRelativeTime(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Tanggal tidak valid';
+  }
+  
   const now = new Date();
   const diffInMs = now.getTime() - date.getTime();
   const diffInMinutes = Math.floor(diffInMs / 60000);
