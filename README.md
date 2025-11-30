@@ -74,7 +74,7 @@ This project is dedicated as **Waqf** (Islamic endowment) for the benefit of the
 - ❌ Distribution to entities engaged in haram activities
 
 ### 📖 Full License
-See [LICENSE](LICENSE) file for complete terms and conditions.
+See [LICENSE.md](LICENSE.md) file for complete terms and conditions.
 
 ---
 
