@@ -57,3 +57,26 @@ Run `npm run dev` to start the development server.
 - ✅ Implemented consistent snake_case field naming across backend
 - ✅ Added proper error handling for date formatting
 - ✅ Enhanced mobile responsiveness
+
+## 📜 License
+
+This project is dedicated as **Waqf** (Islamic endowment) for the benefit of the Muslim community.
+
+### 🤝 Permitted Use
+- ✅ Islamic organizations and charitable activities
+- ✅ Community service initiatives
+- ✅ Educational and humanitarian purposes
+- ✅ Any use aligned with Islamic principles
+
+### 🚫 Prohibited Use
+- ❌ Commercial exploitation for profit
+- ❌ Use contrary to Islamic principles
+- ❌ Distribution to entities engaged in haram activities
+
+### 📖 Full License
+See [LICENSE](LICENSE) file for complete terms and conditions.
+
+---
+
+**Dedicated as Waqf LilLahi Ta'ala (Endowment for Allah SWT)**  
+*For the benefit of the Muslim ummah*
