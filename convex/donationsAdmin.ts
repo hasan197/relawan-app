@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 // ==================== DONATION MANAGEMENT ====================
 
@@ -7,16 +8,19 @@ import { mutation, query } from "./_generated/server";
 export const getAllDonations = query({
   args: {
     admin: v.optional(v.boolean()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const donations = await ctx.db.query("donations").collect();
-    
+
     // Enrich with relawan and muzakki information
     const enrichedDonations = await Promise.all(
       donations.map(async (donation) => {
         const relawan = await ctx.db.get(donation.relawanId);
         const donor = donation.donorId ? await ctx.db.get(donation.donorId) : null;
-        
+
         return {
           _id: donation._id,
           _creationTime: donation._creationTime,
@@ -48,20 +52,23 @@ export const getAllDonations = query({
 
 // Get pending donations (Admin)
 export const getPendingDonations = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     // Get all donations and filter for pending (including undefined status)
     const allDonations = await ctx.db.query("donations").collect();
-    
-    const pendingDonations = allDonations.filter(d => 
+
+    const pendingDonations = allDonations.filter(d =>
       d.status === "pending" || d.status === undefined
     );
-    
+
     // Enrich with relawan information
     const enrichedDonations = await Promise.all(
       pendingDonations.map(async (donation) => {
         const relawan = await ctx.db.get(donation.relawanId);
         const donor = donation.donorId ? await ctx.db.get(donation.donorId) : null;
-        
+
         return {
           _id: donation._id,
           _creationTime: donation._creationTime,
@@ -103,8 +110,11 @@ export const createDonation = mutation({
     notes: v.optional(v.string()),
     payment_method: v.optional(v.string()),
     receipt_number: v.optional(v.string()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const donationId = await ctx.db.insert("donations", {
       donorName: args.donor_name,
       amount: args.amount,
@@ -136,8 +146,11 @@ export const updateDonation = mutation({
     payment_method: v.optional(v.string()),
     receipt_number: v.optional(v.string()),
     bukti_transfer_url: v.optional(v.string()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const { donationId, ...updates } = args;
 
     const updatedDonation = await ctx.db.patch(donationId, {
@@ -159,8 +172,11 @@ export const updateDonation = mutation({
 export const deleteDonation = mutation({
   args: {
     donationId: v.id("donations"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     await ctx.db.delete(args.donationId);
     return { success: true };
   },
@@ -174,8 +190,11 @@ export const validateDonation = mutation({
     admin_name: v.string(),
     action: v.union(v.literal("validate"), v.literal("reject")),
     rejection_reason: v.optional(v.string()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const donation = await ctx.db.get(args.donationId);
     if (!donation) {
       throw new Error("Donasi tidak ditemukan");
@@ -201,10 +220,13 @@ export const validateDonation = mutation({
 export const getDonationStats = query({
   args: {
     relawan_id: v.optional(v.id("users")),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     let donations;
-    
+
     if (args.relawan_id) {
       donations = await ctx.db
         .query("donations")
@@ -240,12 +262,15 @@ export const uploadBuktiTransfer = mutation({
     donationId: v.id("donations"),
     file: v.string(), // Base64 encoded file
     filename: v.string(),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     // This would integrate with Convex storage
     // For now, just update the URL field
     const storageId = `bukti-${args.donationId}-${Date.now()}`;
-    
+
     const updatedDonation = await ctx.db.patch(args.donationId, {
       buktiTransferUrl: storageId,
     });

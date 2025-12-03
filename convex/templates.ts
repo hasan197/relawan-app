@@ -1,16 +1,20 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 export const list = query({
-    args: { 
+    args: {
         all: v.optional(v.boolean()),
-        relawanId: v.optional(v.string())
+        relawanId: v.optional(v.string()),
+        token: v.optional(v.string())
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         // Admin mode or get all templates
         if (args.all === true || !args.relawanId) {
             const templates = await ctx.db.query("messageTemplates").collect();
-            
+
             return templates.map((t) => ({
                 id: t._id,
                 name: t.name,
@@ -64,8 +68,11 @@ export const create = mutation({
         message: v.string(),
         variables: v.optional(v.array(v.string())),
         is_shared: v.optional(v.boolean()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("messageTemplates", {
             name: args.name,
             category: args.category,
@@ -83,10 +90,12 @@ export const create = mutation({
 
 // Admin functions
 export const adminList = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const templates = await ctx.db.query("messageTemplates").collect();
-        
+
         return templates.map((t) => ({
             id: t._id,
             name: t.name,
@@ -120,8 +129,11 @@ export const adminCreate = mutation({
         message: v.string(),
         variables: v.optional(v.array(v.string())),
         is_shared: v.optional(v.boolean()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const templateId = await ctx.db.insert("messageTemplates", {
             name: args.name,
             category: args.category,
@@ -160,14 +172,17 @@ export const adminUpdate = mutation({
         variables: v.optional(v.array(v.string())),
         is_shared: v.optional(v.boolean()),
         isActive: v.optional(v.boolean()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const { templateId, ...updates } = args;
 
         const updatedTemplate = await ctx.db.patch(templateId, {
             ...(updates.name && { name: updates.name }),
             ...(updates.category && { category: updates.category }),
-            ...(updates.message && { 
+            ...(updates.message && {
                 message: updates.message,
                 content: updates.message // For compatibility
             }),
@@ -184,8 +199,11 @@ export const adminUpdate = mutation({
 export const adminDelete = mutation({
     args: {
         templateId: v.id("messageTemplates"),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         await ctx.db.delete(args.templateId);
         return { success: true };
     },

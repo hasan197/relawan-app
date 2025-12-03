@@ -31,6 +31,8 @@ function getConvexClient(): ConvexHttpClient {
         }
         convexClient = new ConvexHttpClient(convexUrl);
     }
+    // Note: We don't use client.setAuth() because our tokens are not JWT format
+    // Instead, we pass the token in function arguments
     return convexClient;
 }
 
@@ -105,13 +107,50 @@ async function handleFileUpload(formData: FormData, client: any, api: any) {
  * Route API call to appropriate Convex query
  */
 export async function routeToConvex(endpoint: string, options: RequestInit = {}): Promise<any> {
-    const client = getConvexClient();
     const method = options.method || 'GET';
+
+    // Extract auth token from headers
+    // Handle different header formats (Headers object, array, or plain object)
+    let token: string | null = null;
+    if (options.headers) {
+        if (options.headers instanceof Headers) {
+            const auth = options.headers.get('Authorization');
+            if (auth?.startsWith('Bearer ')) token = auth.split(' ')[1];
+        } else if (Array.isArray(options.headers)) {
+            const auth = options.headers.find(([key]) => key.toLowerCase() === 'authorization')?.[1];
+            if (auth?.startsWith('Bearer ')) token = auth.split(' ')[1];
+        } else {
+            // Plain object
+            const headers = options.headers as Record<string, string>;
+            // Case-insensitive lookup
+            const key = Object.keys(headers).find(k => k.toLowerCase() === 'authorization');
+            const auth = key ? headers[key] : null;
+            if (auth?.startsWith('Bearer ')) token = auth.split(' ')[1];
+        }
+    }
+
+    // Get Convex client (token is passed in arguments, not via setAuth)
+    const client = getConvexClient();
+    
+    if (token) {
+        console.log('🔐 Convex Auth Token will be passed in arguments');
+    } else {
+        console.log('⚠️ No Auth Token found for Convex request');
+    }
 
     console.log(`🔀 Routing to Convex: ${method} ${endpoint}`);
     console.log(`🔍 Full options:`, options);
     console.log(`🔍 Body type: ${options.body instanceof FormData ? 'FormData' : 'Other'}`);
     console.log(`🔍 Body content:`, options.body instanceof FormData ? 'FormData object' : options.body);
+
+    // Helper to inject token into arguments
+    const withAuth = (args: any) => {
+        // All Convex functions expect the token in arguments
+        if (token) {
+            return { ...args, token };
+        }
+        return args;
+    };
 
     // Parse endpoint and extract parameters
     const [path, queryString] = endpoint.split('?');
@@ -123,21 +162,21 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'notifications' && pathParts.length === 2 && method === 'GET') {
             const userId = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.notifications.getByUser, { userId });
+            const result = await client.query(api.notifications.getByUser, withAuth({ userId }));
             return { data: result };
         }
         // PUT /notifications/:id/read
         if (pathParts[0] === 'notifications' && pathParts.length === 3 && pathParts[2] === 'read' && method === 'PUT') {
             const id = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.notifications.markAsRead, { id });
+            const result = await client.mutation(api.notifications.markAsRead, withAuth({ id }));
             return { data: result };
         }
         // POST /notifications
         if (pathParts[0] === 'notifications' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.notifications.create, body);
+            const result = await client.mutation(api.notifications.create, withAuth(body));
             return { data: result };
         }
 
@@ -145,14 +184,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /admin/users
         if (pathParts[0] === 'admin' && pathParts[1] === 'users' && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.admin.getAllUsers, {});
+            const result = await client.query(api.admin.getAllUsers, withAuth({}));
             return { success: true, data: result };
         }
         // POST /admin/users
         if (pathParts[0] === 'admin' && pathParts[1] === 'users' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.createUser, body);
+            const result = await client.mutation(api.admin.createUser, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /admin/users/:id
@@ -160,14 +199,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const userId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.updateUser, { userId: userId as any, ...body });
+            const result = await client.mutation(api.admin.updateUser, withAuth({ userId: userId as any, ...body }));
             return { success: true, data: result };
         }
         // DELETE /admin/users/:id
         if (pathParts[0] === 'admin' && pathParts[1] === 'users' && pathParts.length === 3 && method === 'DELETE') {
             const userId = pathParts[2];
             // @ts-ignore
-            const result = await client.mutation(api.admin.deleteUser, { userId: userId as any });
+            const result = await client.mutation(api.admin.deleteUser, withAuth({ userId: userId as any }));
             return { success: true, data: result };
         }
 
@@ -175,14 +214,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /regu (list with enrichment)
         if (pathParts[0] === 'regu' && pathParts.length === 1 && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.admin.getAllRegus, {});
+            const result = await client.query(api.admin.getAllRegus, withAuth({}));
             return { success: true, data: result };
         }
         // POST /admin/regu
         if (pathParts[0] === 'admin' && pathParts[1] === 'regu' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.createRegu, body);
+            const result = await client.mutation(api.admin.createRegu, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /admin/regu/:id
@@ -190,14 +229,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const reguId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.updateRegu, { reguId, ...body });
+            const result = await client.mutation(api.admin.updateRegu, withAuth({ reguId, ...body }));
             return { success: true, data: result };
         }
         // DELETE /regu/:id
         if (pathParts[0] === 'regu' && pathParts.length === 2 && method === 'DELETE') {
             const reguId = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.admin.deleteRegu, { reguId });
+            const result = await client.mutation(api.admin.deleteRegu, withAuth({ reguId }));
             return { success: true, data: result };
         }
 
@@ -208,7 +247,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const all = queryParams.get('all') === 'true';
             if (all) {
                 // @ts-ignore
-                const result = await client.query(api.admin.getAllMuzakkis, {});
+                const result = await client.query(api.admin.getAllMuzakkis, withAuth({}));
                 return { success: true, data: result };
             }
         }
@@ -216,7 +255,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'muzakki' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.createMuzakki, body);
+            const result = await client.mutation(api.admin.createMuzakki, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /muzakki/:id
@@ -224,14 +263,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const muzakkiId = pathParts[1];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.admin.updateMuzakki, { muzakkiId, ...body });
+            const result = await client.mutation(api.admin.updateMuzakki, withAuth({ muzakkiId, ...body }));
             return { success: true, data: result };
         }
         // DELETE /muzakki/:id
         if (pathParts[0] === 'muzakki' && pathParts.length === 2 && method === 'DELETE') {
             const muzakkiId = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.admin.deleteMuzakki, { muzakkiId });
+            const result = await client.mutation(api.admin.deleteMuzakki, withAuth({ muzakkiId }));
             return { success: true, data: result };
         }
 
@@ -241,35 +280,35 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const queryParams = new URLSearchParams(queryString);
             const isAdmin = queryParams.get('admin') === 'true';
             const relawanId = queryParams.get('relawan_id');
-            
+
             if (isAdmin) {
                 // @ts-ignore
-                const result = await client.query(api.donationsAdmin.getAllDonations, { admin: true });
+                const result = await client.query(api.donationsAdmin.getAllDonations, withAuth({ admin: true }));
                 return { success: true, data: result };
             }
             if (relawanId) {
                 // @ts-ignore
-                const result = await client.query(api.donationsAdmin.getDonationStats, { relawan_id: relawanId as any });
+                const result = await client.query(api.donationsAdmin.getDonationStats, withAuth({ relawan_id: relawanId as any }));
                 return { data: result };
             }
         }
         // GET /donations/pending
         if (pathParts[0] === 'donations' && pathParts[1] === 'pending' && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.donationsAdmin.getPendingDonations, {});
+            const result = await client.query(api.donationsAdmin.getPendingDonations, withAuth({}));
             return { success: true, data: result };
         }
         // GET /donations/stats
         if (pathParts[0] === 'donations' && pathParts[1] === 'stats' && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.donationsAdmin.getDonationStats, {});
+            const result = await client.query(api.donationsAdmin.getDonationStats, withAuth({}));
             return { data: result };
         }
         // POST /admin/donations
         if (pathParts[0] === 'admin' && pathParts[1] === 'donations' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.donationsAdmin.createDonation, body);
+            const result = await client.mutation(api.donationsAdmin.createDonation, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /admin/donations/:id
@@ -277,14 +316,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const donationId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.donationsAdmin.updateDonation, { donationId, ...body });
+            const result = await client.mutation(api.donationsAdmin.updateDonation, withAuth({ donationId, ...body }));
             return { success: true, data: result };
         }
         // DELETE /donations/:id
         if (pathParts[0] === 'donations' && pathParts.length === 2 && method === 'DELETE') {
             const donationId = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.donationsAdmin.deleteDonation, { donationId });
+            const result = await client.mutation(api.donationsAdmin.deleteDonation, withAuth({ donationId }));
             return { success: true, data: result };
         }
 
@@ -293,7 +332,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'admin' && pathParts[1] === 'programs' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.programs.adminCreate, body);
+            const result = await client.mutation(api.programs.adminCreate, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /admin/programs/:id
@@ -301,14 +340,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const programId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.programs.adminUpdate, { programId, ...body });
+            const result = await client.mutation(api.programs.adminUpdate, withAuth({ programId, ...body }));
             return { success: true, data: result };
         }
         // DELETE /programs/:id
         if (pathParts[0] === 'programs' && pathParts.length === 2 && method === 'DELETE') {
             const programId = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.programs.adminDelete, { programId });
+            const result = await client.mutation(api.programs.adminDelete, withAuth({ programId }));
             return { success: true, data: result };
         }
         // PATCH /programs/:id/collect
@@ -316,7 +355,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const programId = pathParts[1];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.programs.collect, { programId, amount: body.amount });
+            const result = await client.mutation(api.programs.collect, withAuth({ programId, amount: body.amount }));
             return { success: true, data: result };
         }
 
@@ -331,14 +370,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                 relawanId = undefined;
             }
             // @ts-ignore
-            const result = await client.query(api.templates.list, { all, relawanId });
+            const result = await client.query(api.templates.list, withAuth({ all, relawanId }));
             return { success: true, data: result };
         }
         // POST /admin/templates
         if (pathParts[0] === 'admin' && pathParts[1] === 'templates' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.templates.adminCreate, body);
+            const result = await client.mutation(api.templates.adminCreate, withAuth(body));
             return { success: true, data: result };
         }
         // PUT /admin/templates/:id
@@ -346,14 +385,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const templateId = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.templates.adminUpdate, { templateId, ...body });
+            const result = await client.mutation(api.templates.adminUpdate, withAuth({ templateId, ...body }));
             return { success: true, data: result };
         }
         // DELETE /templates/:id
         if (pathParts[0] === 'templates' && pathParts.length === 2 && method === 'DELETE') {
             const templateId = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.templates.adminDelete, { templateId });
+            const result = await client.mutation(api.templates.adminDelete, withAuth({ templateId }));
             return { success: true, data: result };
         }
 
@@ -361,33 +400,33 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // POST /admin/reset-database
         if (pathParts[0] === 'admin' && pathParts[1] === 'reset-database' && method === 'POST') {
             // @ts-ignore
-            const result = await client.mutation(api.admin.resetDatabase, {});
+            const result = await client.mutation(api.admin.resetDatabase, withAuth({}));
             return { success: true, data: result };
         }
         // POST /admin/seed-database
         if (pathParts[0] === 'admin' && pathParts[1] === 'seed-database' && method === 'POST') {
             // @ts-ignore
-            const result = await client.mutation(api.admin.seedDatabase, {});
+            const result = await client.mutation(api.admin.seedDatabase, withAuth({}));
             return { success: true, data: result };
         }
         // GET /statistics/:relawanId
         if (pathParts[0] === 'statistics' && pathParts.length === 2) {
             const relawanId = pathParts[1];
-            const result = await client.query(api.statistics.getRelawanStatistics, {
+            const result = await client.query(api.statistics.getRelawanStatistics, withAuth({
                 relawanId: relawanId as any,
-            });
+            }));
             return { data: result };
         }
         // GET /admin/stats/global
         if (pathParts[0] === 'admin' && pathParts[1] === 'stats' && pathParts[2] === 'global') {
             // @ts-ignore
-            const result = await client.query(api.admin.getGlobalStats, {});
+            const result = await client.query(api.admin.getGlobalStats, withAuth({}));
             return { data: result };
         }
         // GET /admin/stats/regu
         if (pathParts[0] === 'admin' && pathParts[1] === 'stats' && pathParts[2] === 'regu') {
             // @ts-ignore
-            const result = await client.query(api.admin.getReguStats, {});
+            const result = await client.query(api.admin.getReguStats, withAuth({}));
             return { data: result };
         }
 
@@ -476,7 +515,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
 
                 // Get all donations (pending, validated, rejected)
                 // @ts-ignore
-                const allDonations = await client.query(api.donations.listAll, {});
+                const allDonations = await client.query(api.donations.listAll, withAuth({}));
                 console.log('📊 All donations:', allDonations?.length || 0);
 
                 // Apply pagination
@@ -504,12 +543,12 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             }
             if (relawanId) {
                 // @ts-ignore
-                const result = await client.query(api.donations.listByRelawan, { relawanId });
+                const result = await client.query(api.donations.listByRelawan, withAuth({ relawanId }));
                 return { data: result };
             }
             if (muzakkiId) {
                 // @ts-ignore
-                const result = await client.query(api.donations.listByMuzakki, { muzakkiId });
+                const result = await client.query(api.donations.listByMuzakki, withAuth({ muzakkiId }));
                 return { data: result };
             }
             // If no filter, maybe return all? Or empty.
@@ -525,7 +564,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                 console.log('📄 Detected JSON in POST /donations - creating donation');
                 const body = JSON.parse(options.body as string);
                 // @ts-ignore
-                const donationId = await client.mutation(api.donations.create, body);
+                const donationId = await client.mutation(api.donations.create, withAuth(body));
                 console.log('📝 Donation created with ID:', donationId);
                 // Return donation object with id property
                 return { data: { id: donationId } };
@@ -624,9 +663,9 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const queryParams = new URLSearchParams(queryString);
             const relawanId = queryParams.get('relawan_id');
             if (relawanId) {
-                const result = await client.query(api.muzakkis.listByRelawan, {
+                const result = await client.query(api.muzakkis.listByRelawan, withAuth({
                     relawanId: relawanId as any,
-                });
+                }));
                 return { data: result };
             }
         }
@@ -634,14 +673,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'muzakki' && pathParts.length === 2 && method === 'GET') {
             const id = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.muzakkis.get, { id });
+            const result = await client.query(api.muzakkis.get, withAuth({ id }));
             return { data: result };
         }
         // POST /muzakki
         if (pathParts[0] === 'muzakki' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.muzakkis.create, body);
+            const result = await client.mutation(api.muzakkis.create, withAuth(body));
             return { data: result };
         }
         // PUT /muzakki/:id
@@ -649,14 +688,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const id = pathParts[1];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.muzakkis.update, { id, ...body });
+            const result = await client.mutation(api.muzakkis.update, withAuth({ id, ...body }));
             return { data: result };
         }
         // DELETE /muzakki/:id
         if (pathParts[0] === 'muzakki' && pathParts.length === 2 && method === 'DELETE') {
             const id = pathParts[1];
             // @ts-ignore
-            const result = await client.mutation(api.muzakkis.deleteMuzakki, { id });
+            const result = await client.mutation(api.muzakkis.deleteMuzakki, withAuth({ id }));
             return { data: result };
         }
 
@@ -665,14 +704,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'communications' && pathParts.length === 2 && method === 'GET') {
             const muzakkiId = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.muzakkis.listCommunications, { muzakkiId });
+            const result = await client.query(api.muzakkis.listCommunications, withAuth({ muzakkiId }));
             return { data: result };
         }
         // POST /communications
         if (pathParts[0] === 'communications' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.muzakkis.addCommunication, body);
+            const result = await client.mutation(api.muzakkis.addCommunication, withAuth(body));
             return { data: result };
         }
 
@@ -680,35 +719,35 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /regus
         if (pathParts[0] === 'regus' && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.regus.list, {});
+            const result = await client.query(api.regus.list, withAuth({}));
             return { data: result };
         }
         // POST /regus
         if (pathParts[0] === 'regus' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.regus.create, body);
+            const result = await client.mutation(api.regus.create, withAuth(body));
             return { data: result };
         }
         // GET /regu/:id
         if (pathParts[0] === 'regu' && pathParts.length === 2 && method === 'GET') {
             const id = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.regus.get, { id });
+            const result = await client.query(api.regus.get, withAuth({ id }));
             return { data: result };
         }
         // GET /regu/by-code/:code
         if (pathParts[0] === 'regu' && pathParts[1] === 'by-code' && method === 'GET') {
             const code = pathParts[2];
             // @ts-ignore
-            const result = await client.query(api.regus.getByCode, { code });
+            const result = await client.query(api.regus.getByCode, withAuth({ code }));
             return { data: result };
         }
         // GET /regu/:id/members
         if (pathParts[0] === 'regu' && pathParts.length === 3 && pathParts[2] === 'members' && method === 'GET') {
             const reguId = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.regus.getMembers, { reguId });
+            const result = await client.query(api.regus.getMembers, withAuth({ reguId }));
             return { data: result };
         }
         // POST /regu/:id/members
@@ -716,7 +755,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const reguId = pathParts[1];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.regus.addMember, { reguId, userId: body.userId });
+            const result = await client.mutation(api.regus.addMember, withAuth({ reguId, userId: body.userId }));
             return { data: result };
         }
 
@@ -724,21 +763,21 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /programs
         if (pathParts[0] === 'programs' && pathParts.length === 1 && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.programs.list, {});
+            const result = await client.query(api.programs.list, withAuth({}));
             return { data: result };
         }
         // GET /programs/:id
         if (pathParts[0] === 'programs' && pathParts.length === 2 && method === 'GET') {
             const id = pathParts[1];
             // @ts-ignore
-            const result = await client.query(api.programs.get, { id });
+            const result = await client.query(api.programs.get, withAuth({ id }));
             return { data: result };
         }
         // POST /programs
         if (pathParts[0] === 'programs' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.programs.create, body);
+            const result = await client.mutation(api.programs.create, withAuth(body));
             return { data: result };
         }
 
@@ -746,14 +785,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         // GET /templates
         if (pathParts[0] === 'templates' && method === 'GET') {
             // @ts-ignore
-            const result = await client.query(api.templates.list, {});
+            const result = await client.query(api.templates.list, withAuth({}));
             return { data: result };
         }
         // POST /templates
         if (pathParts[0] === 'templates' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.templates.create, body);
+            const result = await client.mutation(api.templates.create, withAuth(body));
             return { data: result };
         }
 
@@ -784,7 +823,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const oldPhone = pathParts[2];
             const body = JSON.parse(options.body as string);
             // @ts-ignore
-            const result = await client.mutation(api.auth.updatePhone, { oldPhone, newPhone: body.newPhone });
+            const result = await client.mutation(api.auth.updatePhone, withAuth({ oldPhone, newPhone: body.newPhone }));
             return { data: result };
         }
 
@@ -793,21 +832,21 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
         if (pathParts[0] === 'chat' && pathParts.length === 2 && method === 'GET') {
             const reguId = pathParts[1];
             // @ts-ignore - api.chat might not be generated yet in types
-            const result = await client.query(api.chat.list, {
+            const result = await client.query(api.chat.list, withAuth({
                 reguId: reguId,
-            });
+            }));
             return { data: result };
         }
         // Route: POST /chat
         if (pathParts[0] === 'chat' && method === 'POST') {
             const body = JSON.parse(options.body as string);
             // @ts-ignore - api.chat might not be generated yet in types
-            const result = await client.mutation(api.chat.send, {
+            const result = await client.mutation(api.chat.send, withAuth({
                 regu_id: body.regu_id,
                 sender_id: body.sender_id,
                 sender_name: body.sender_name,
                 message: body.message,
-            });
+            }));
             return { data: result };
         }
 

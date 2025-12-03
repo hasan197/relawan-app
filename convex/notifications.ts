@@ -1,9 +1,18 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 export const getByUser = query({
-    args: { userId: v.id("users") },
+    args: { userId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        // Verify user is requesting their own notifications
+        if (args.userId !== user.subject && user.role !== "admin") {
+            throw new Error("Unauthorized: Can only view your own notifications");
+        }
+
         const notifications = await ctx.db
             .query("notifications")
             .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -25,8 +34,17 @@ export const getByUser = query({
 });
 
 export const markAsRead = mutation({
-    args: { id: v.id("notifications") },
+    args: { id: v.id("notifications"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        // Verify ownership
+        const notification = await ctx.db.get(args.id);
+        if (notification && notification.userId !== user.subject && user.role !== "admin") {
+            throw new Error("Unauthorized: Can only mark your own notifications as read");
+        }
+
         await ctx.db.patch(args.id, { read: true });
         return { success: true };
     },
@@ -44,8 +62,11 @@ export const create = mutation({
             v.literal("reminder")
         ),
         action_url: v.optional(v.string()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("notifications", {
             userId: args.userId,
             title: args.title,

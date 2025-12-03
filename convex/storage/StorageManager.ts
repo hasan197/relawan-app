@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 import { action } from "../_generated/server";
+import { api, internal } from "../_generated/api";
 import { StorageProvider, StorageUploadResult, StorageDownloadResult, StorageFileContentResult } from "./StorageProvider";
 import { BackblazeStorageProvider } from "./BackblazeStorageProvider";
 import { ConvexStorageProvider } from "./ConvexStorageProvider";
@@ -127,9 +128,14 @@ export const uploadFileToStorage = action({
     fileType: v.string(),
     donationId: v.id("donations"),
     provider: v.optional(v.union(v.literal("backblaze"), v.literal("convex"))),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     try {
+      const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+      if (!user) {
+        throw new Error("Unauthenticated call to uploadFileToStorage");
+      }
       console.log('🚀 Starting storage upload for donation:', args.donationId);
       console.log('📁 File info:', {
         fileName: args.fileName,
@@ -167,9 +173,14 @@ export const getStorageDownloadUrl = action({
   args: {
     fileName: v.string(),
     provider: v.optional(v.union(v.literal("backblaze"), v.literal("convex"))),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     try {
+      const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+      if (!user) {
+        throw new Error("Unauthenticated call to getStorageDownloadUrl");
+      }
       console.log('🔗 Getting storage download URL for:', args.fileName);
 
       const storageManager = StorageManager.getInstance();
@@ -194,9 +205,14 @@ export const getStorageFileContent = action({
   args: {
     fileUrl: v.string(),
     provider: v.optional(v.union(v.literal("backblaze"), v.literal("convex"))),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     try {
+      const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+      if (!user) {
+        throw new Error("Unauthenticated call to getStorageFileContent");
+      }
       console.log('📄 Getting storage file content from:', args.fileUrl);
 
       const storageManager = StorageManager.getInstance();

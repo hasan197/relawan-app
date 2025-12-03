@@ -1,12 +1,15 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserFromToken } from "./auth";
 
 /**
  * List muzakkis for a relawan
  */
 export const listByRelawan = query({
-    args: { relawanId: v.id("users") },
+    args: { relawanId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const muzakkis = await ctx.db
             .query("muzakkis")
             .withIndex("by_created_by", (q) => q.eq("createdBy", args.relawanId))
@@ -28,8 +31,10 @@ export const listByRelawan = query({
 });
 
 export const get = query({
-    args: { id: v.id("muzakkis") },
+    args: { id: v.id("muzakkis"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const m = await ctx.db.get(args.id);
         if (!m) return null;
         return {
@@ -59,8 +64,11 @@ export const create = mutation({
         ),
         notes: v.optional(v.string()),
         relawan_id: v.id("users"),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("muzakkis", {
             name: args.name,
             phone: args.phone,
@@ -87,8 +95,11 @@ export const update = mutation({
         )),
         notes: v.optional(v.string()),
         relawan_id: v.id("users"), // Just for verification if needed
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const { id, relawan_id, ...updates } = args;
         await ctx.db.patch(id, {
             ...updates,
@@ -99,8 +110,10 @@ export const update = mutation({
 });
 
 export const deleteMuzakki = mutation({
-    args: { id: v.id("muzakkis") },
+    args: { id: v.id("muzakkis"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         await ctx.db.delete(args.id);
         return { success: true };
     },
@@ -108,8 +121,10 @@ export const deleteMuzakki = mutation({
 
 // Communications
 export const listCommunications = query({
-    args: { muzakkiId: v.id("muzakkis") },
+    args: { muzakkiId: v.id("muzakkis"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const comms = await ctx.db
             .query("communications")
             .withIndex("by_muzakki", (q) => q.eq("muzakkiId", args.muzakkiId))
@@ -138,8 +153,11 @@ export const addCommunication = mutation({
             v.literal("other")
         ),
         notes: v.string(),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("communications", {
             muzakkiId: args.muzakki_id,
             relawanId: args.relawan_id,

@@ -1,14 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
+import { getUserFromToken } from "./auth";
 
 // ==================== USER MANAGEMENT ====================
 
 // Get all users (Admin only)
 export const getAllUsers = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     const users = await ctx.db.query("users").collect();
-    
+
     // Enrich with regu information
     const enrichedUsers = await Promise.all(
       users.map(async (user) => {
@@ -17,7 +23,7 @@ export const getAllUsers = query({
           const regu = await ctx.db.get(user.regu_id);
           reguName = regu?.name || null;
         }
-        
+
         return {
           ...user,
           regu_name: reguName,
@@ -37,8 +43,13 @@ export const createUser = mutation({
     email: v.optional(v.string()),
     role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin")),
     regu_id: v.optional(v.id("regus")),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await getUserFromToken(ctx, args.token);
+    if (!identity || identity.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Check if phone already exists
     const existingUser = await ctx.db
       .query("users")
@@ -72,8 +83,13 @@ export const updateUser = mutation({
     email: v.optional(v.string()),
     role: v.optional(v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin"))),
     regu_id: v.optional(v.id("regus")),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     const { userId, ...updates } = args;
 
     // Check if phone already exists (if updating phone)
@@ -101,8 +117,13 @@ export const updateUser = mutation({
 export const deleteUser = mutation({
   args: {
     userId: v.id("users"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Check if user has dependencies
     const muzakkis = await ctx.db
       .query("muzakkis")
@@ -127,21 +148,22 @@ export const deleteUser = mutation({
 
 // Get all regus
 export const getAllRegus = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
     const regus = await ctx.db.query("regus").collect();
-    
+
     // Enrich with member count and pembimbing info
     const enrichedRegus = await Promise.all(
       regus.map(async (regu) => {
         // Get pembimbing info
         const pembimbing = await ctx.db.get(regu.pembimbingId);
-        
+
         // Count members
         const members = await ctx.db
           .query("users")
           .withIndex("by_regu", (q) => q.eq("regu_id", regu._id))
           .collect();
-        
+
         // Calculate total donations from members
         const memberIds = members.map(m => m._id);
         const donations = await Promise.all(
@@ -153,7 +175,7 @@ export const getAllRegus = query({
             return memberDonations.reduce((sum, d) => sum + d.amount, 0);
           })
         );
-        
+
         const totalDonations = donations.reduce((sum, amount) => sum + amount, 0);
 
         return {
@@ -176,8 +198,13 @@ export const createRegu = mutation({
     name: v.string(),
     pembimbingId: v.id("users"),
     targetAmount: v.optional(v.number()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Generate join code
     const generateJoinCode = () => {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -218,8 +245,13 @@ export const updateRegu = mutation({
     name: v.optional(v.string()),
     pembimbingId: v.optional(v.id("users")),
     targetAmount: v.optional(v.number()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     const { reguId, ...updates } = args;
 
     // If pembimbing is being updated, update old and new pembimbing's regu_id
@@ -231,7 +263,7 @@ export const updateRegu = mutation({
           regu_id: undefined,
           updatedAt: Date.now(),
         });
-        
+
         // Set regu_id for new pembimbing
         await ctx.db.patch(updates.pembimbingId, {
           regu_id: reguId,
@@ -253,8 +285,13 @@ export const updateRegu = mutation({
 export const deleteRegu = mutation({
   args: {
     reguId: v.id("regus"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Check if regu has members
     const members = await ctx.db
       .query("users")
@@ -274,9 +311,14 @@ export const deleteRegu = mutation({
 
 // Get all muzakkis
 export const getAllMuzakkis = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
     const muzakkis = await ctx.db.query("muzakkis").collect();
-    
+
     // Enrich with relawan name
     const enrichedMuzakkis = await Promise.all(
       muzakkis.map(async (muzakki) => {
@@ -303,8 +345,13 @@ export const createMuzakki = mutation({
     category: v.union(v.literal("muzakki"), v.literal("donatur"), v.literal("prospek")),
     createdBy: v.id("users"),
     notes: v.optional(v.string()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
     // Check if phone already exists
     const existingMuzakki = await ctx.db
       .query("muzakkis")
@@ -344,8 +391,13 @@ export const updateMuzakki = mutation({
     category: v.optional(v.union(v.literal("muzakki"), v.literal("donatur"), v.literal("prospek"))),
     status: v.optional(v.union(v.literal("baru"), v.literal("follow-up"), v.literal("donasi"))),
     notes: v.optional(v.string()),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
     const { muzakkiId, ...updates } = args;
 
     // Check if phone already exists (if updating phone)
@@ -373,8 +425,13 @@ export const updateMuzakki = mutation({
 export const deleteMuzakki = mutation({
   args: {
     muzakkiId: v.id("muzakkis"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
     // Check if muzakki has donations
     const donations = await ctx.db
       .query("donations")
@@ -394,7 +451,12 @@ export const deleteMuzakki = mutation({
 
 // Get global statistics
 export const getGlobalStats = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Get all data
     const [users, muzakkis, regus, donations] = await Promise.all([
       ctx.db.query("users").collect(),
@@ -408,7 +470,7 @@ export const getGlobalStats = query({
     const totalDonations = donations
       .filter(d => d.type === "incoming")
       .reduce((sum, d) => sum + d.amount, 0);
-    
+
     const pendingDonations = donations.filter(d => d.status === "pending" || d.status === undefined).length;
 
     const byCategory = donations
@@ -431,9 +493,14 @@ export const getGlobalStats = query({
 
 // Get regu statistics
 export const getReguStats = query({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     const regus = await ctx.db.query("regus").collect();
-    
+
     // Get all users and donations for enrichment
     const users = await ctx.db.query("users").collect();
     const donations = await ctx.db.query("donations").collect();
@@ -444,10 +511,10 @@ export const getReguStats = query({
       regus.map(async (regu) => {
         // Count members in this regu
         const members = users.filter(u => u.regu_id === regu._id);
-        
+
         // Calculate total donations from members
         const memberIds = members.map(m => m._id);
-        const reguDonations = donations.filter(d => 
+        const reguDonations = donations.filter(d =>
           d.type === "incoming" && memberIds.includes(d.relawanId)
         );
         const totalDonations = reguDonations.reduce((sum, d) => sum + d.amount, 0);
@@ -478,7 +545,12 @@ export const getReguStats = query({
 
 // Reset entire database (Admin only - DANGEROUS)
 export const resetDatabase = mutation({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     // Get all data
     const [users, regus, muzakkis, donations, programs, templates, notifications, communications, activities, targets, otpLogs, chatMessages] = await Promise.all([
       ctx.db.query("users").collect(),
@@ -527,7 +599,7 @@ export const resetDatabase = mutation({
     ]);
 
     console.log('✅ Database cleared!');
-    
+
     return {
       success: true,
       message: 'Database berhasil di-reset',
@@ -538,9 +610,14 @@ export const resetDatabase = mutation({
 
 // Seed initial data (Admin only)
 export const seedDatabase = mutation({
-  handler: async (ctx) => {
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
     console.log('🌱 SEEDING DATABASE...');
-    
+
     const generateJoinCode = () => {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let code = '';
@@ -549,7 +626,7 @@ export const seedDatabase = mutation({
       }
       return code;
     };
-    
+
     // ============================================
     // 1. CREATE ADMIN USER
     // ============================================
@@ -562,9 +639,9 @@ export const seedDatabase = mutation({
       regu_id: undefined,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Admin created:', adminId);
-    
+
     // ============================================
     // 2. CREATE PEMBIMBING USERS
     // ============================================
@@ -577,7 +654,7 @@ export const seedDatabase = mutation({
       regu_id: undefined, // Will be set after creating regu
       createdAt: Date.now(),
     });
-    
+
     const pembimbing2Id = await ctx.db.insert("users", {
       fullName: 'Ustadzah Fatimah',
       phone: '+6281234567892',
@@ -587,10 +664,10 @@ export const seedDatabase = mutation({
       regu_id: undefined,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Pembimbing 1 created:', pembimbing1Id);
     console.log('✅ Pembimbing 2 created:', pembimbing2Id);
-    
+
     // ============================================
     // 3. CREATE REGUS
     // ============================================
@@ -604,7 +681,7 @@ export const seedDatabase = mutation({
       totalDonations: 0,
       createdAt: Date.now(),
     });
-    
+
     const regu2JoinCode = generateJoinCode();
     const regu2Id = await ctx.db.insert("regus", {
       name: 'Regu Sakinah',
@@ -615,21 +692,21 @@ export const seedDatabase = mutation({
       totalDonations: 0,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Regu 1 created:', regu1Id, 'Code:', regu1JoinCode);
     console.log('✅ Regu 2 created:', regu2Id, 'Code:', regu2JoinCode);
-    
+
     // Update pembimbing with regu_id
     await ctx.db.patch(pembimbing1Id, {
       regu_id: regu1Id,
       updatedAt: Date.now(),
     });
-    
+
     await ctx.db.patch(pembimbing2Id, {
       regu_id: regu2Id,
       updatedAt: Date.now(),
     });
-    
+
     // ============================================
     // 4. CREATE RELAWAN USERS
     // ============================================
@@ -642,7 +719,7 @@ export const seedDatabase = mutation({
       regu_id: regu1Id,
       createdAt: Date.now(),
     });
-    
+
     const relawan2Id = await ctx.db.insert("users", {
       fullName: 'Siti Nurhaliza',
       phone: '+6281234567894',
@@ -652,7 +729,7 @@ export const seedDatabase = mutation({
       regu_id: regu1Id,
       createdAt: Date.now(),
     });
-    
+
     const relawan3Id = await ctx.db.insert("users", {
       fullName: 'Ahmad Fauzi',
       phone: '+6281234567895',
@@ -662,11 +739,11 @@ export const seedDatabase = mutation({
       regu_id: regu2Id,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Relawan 1 created:', relawan1Id);
     console.log('✅ Relawan 2 created:', relawan2Id);
     console.log('✅ Relawan 3 created:', relawan3Id);
-    
+
     // ============================================
     // 5. CREATE SAMPLE MUZAKKI
     // ============================================
@@ -682,7 +759,7 @@ export const seedDatabase = mutation({
       lastContact: Date.now(),
       createdAt: Date.now(),
     });
-    
+
     const muzakki2Id = await ctx.db.insert("muzakkis", {
       name: 'Ibu Siti',
       phone: '+628567890124',
@@ -695,10 +772,10 @@ export const seedDatabase = mutation({
       lastContact: Date.now(),
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Muzakki 1 created:', muzakki1Id);
     console.log('✅ Muzakki 2 created:', muzakki2Id);
-    
+
     // ============================================
     // 6. CREATE SAMPLE DONATIONS
     // ============================================
@@ -715,7 +792,7 @@ export const seedDatabase = mutation({
       receiptNumber: 'ZK001',
       createdAt: Date.now(),
     });
-    
+
     const donation2Id = await ctx.db.insert("donations", {
       donorName: 'Anonymous',
       relawanId: relawan2Id,
@@ -727,10 +804,10 @@ export const seedDatabase = mutation({
       notes: 'Menunggu bukti transfer',
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Donation 1 created:', donation1Id);
     console.log('✅ Donation 2 created:', donation2Id);
-    
+
     // ============================================
     // 7. CREATE SAMPLE PROGRAMS
     // ============================================
@@ -744,7 +821,7 @@ export const seedDatabase = mutation({
       isActive: true,
       createdAt: Date.now(),
     });
-    
+
     const program2Id = await ctx.db.insert("programs", {
       title: 'Program Beasiswa Yatim',
       description: 'Beasiswa untuk anak yatim piatu',
@@ -755,10 +832,10 @@ export const seedDatabase = mutation({
       isActive: true,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Program 1 created:', program1Id);
     console.log('✅ Program 2 created:', program2Id);
-    
+
     // ============================================
     // 8. CREATE SAMPLE TEMPLATES
     // ============================================
@@ -772,7 +849,7 @@ export const seedDatabase = mutation({
       isShared: true,
       createdAt: Date.now(),
     });
-    
+
     const template2Id = await ctx.db.insert("messageTemplates", {
       name: 'Template Follow Up',
       category: 'follow-up',
@@ -783,12 +860,12 @@ export const seedDatabase = mutation({
       isShared: false,
       createdAt: Date.now(),
     });
-    
+
     console.log('✅ Template 1 created:', template1Id);
     console.log('✅ Template 2 created:', template2Id);
-    
+
     console.log('🌱 DATABASE SEEDING COMPLETED!');
-    
+
     return {
       success: true,
       message: 'Database berhasil di-seed',

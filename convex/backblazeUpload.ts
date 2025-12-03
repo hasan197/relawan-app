@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 import { action, mutation } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 // Import new storage system
@@ -17,8 +18,13 @@ export const uploadFileToB2 = action({
     fileName: v.string(),
     fileType: v.string(),
     donationId: v.id("donations"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+    if (!user) {
+      throw new Error("Unauthenticated call to uploadFileToB2");
+    }
     console.log('🔄 Using legacy uploadFileToB2 - redirecting to StorageManager');
 
     // Force reset to ensure we pick up latest env vars
@@ -46,8 +52,13 @@ export const uploadFileToB2 = action({
 export const getDownloadUrl = action({
   args: {
     fileName: v.string(),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+    if (!user) {
+      throw new Error("Unauthenticated call to getDownloadUrl");
+    }
     console.log('🔄 Using legacy getDownloadUrl - redirecting to StorageManager');
 
     // Use new StorageManager directly
@@ -69,8 +80,13 @@ export const getDownloadUrl = action({
 export const serveBuktiTransfer = action({
   args: {
     fileUrl: v.string(),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await ctx.runQuery(api.auth.verifyToken, { token: args.token });
+    if (!user) {
+      throw new Error("Unauthenticated call to serveBuktiTransfer");
+    }
     console.log('🔄 Using legacy serveBuktiTransfer - redirecting to StorageManager');
 
     // Use new StorageManager directly

@@ -1,9 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 export const list = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const regus = await ctx.db.query("regus").collect();
         return regus.map((r) => ({
             id: r._id,
@@ -16,8 +19,10 @@ export const list = query({
 });
 
 export const get = query({
-    args: { id: v.id("regus") },
+    args: { id: v.id("regus"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const r = await ctx.db.get(args.id);
         if (!r) return null;
 
@@ -96,11 +101,17 @@ export const get = query({
 });
 
 export const getByCode = query({
-    args: { code: v.string() },
+    args: { code: v.string(), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         try {
-            // @ts-ignore
-            const r = await ctx.db.get(args.code);
+            // Try to find by join code
+            const r = await ctx.db
+                .query("regus")
+                .withIndex("by_join_code", (q) => q.eq("joinCode", args.code))
+                .first();
+
             if (!r) return null;
 
             // Get pembimbing name
@@ -172,8 +183,10 @@ export const getByCode = query({
 });
 
 export const getMembers = query({
-    args: { reguId: v.string() },
+    args: { reguId: v.id("regus"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const members = await ctx.db
             .query("users")
             .withIndex("by_regu", (q) => q.eq("regu_id", args.reguId))
@@ -213,8 +226,10 @@ export const getMembers = query({
 });
 
 export const addMember = mutation({
-    args: { reguId: v.id("regus"), userId: v.id("users") },
+    args: { reguId: v.id("regus"), userId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         await ctx.db.patch(args.userId, { regu_id: args.reguId });
         return { success: true };
     },
@@ -225,8 +240,11 @@ export const create = mutation({
         name: v.string(),
         pembimbing_id: v.id("users"),
         description: v.optional(v.string()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("regus", {
             name: args.name,
             pembimbingId: args.pembimbing_id,

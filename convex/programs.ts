@@ -1,9 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 export const list = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const programs = await ctx.db
             .query("programs")
             .filter((q) => q.eq(q.field("isActive"), true))
@@ -28,8 +31,10 @@ export const list = query({
 });
 
 export const get = query({
-    args: { id: v.id("programs") },
+    args: { id: v.id("programs"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const p = await ctx.db.get(args.id);
         if (!p) return null;
 
@@ -67,8 +72,11 @@ export const create = mutation({
         start_date: v.optional(v.string()),
         end_date: v.optional(v.string()),
         status: v.optional(v.union(v.literal("active"), v.literal("inactive"), v.literal("completed"))),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("programs", {
             title: args.title,
             description: args.description,
@@ -89,8 +97,10 @@ export const create = mutation({
 
 // Admin functions
 export const adminList = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const programs = await ctx.db.query("programs").collect();
 
         return programs.map((p) => ({
@@ -126,8 +136,11 @@ export const adminCreate = mutation({
         end_date: v.optional(v.string()),
         status: v.optional(v.union(v.literal("active"), v.literal("inactive"), v.literal("completed"))),
         image_url: v.optional(v.string()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const programId = await ctx.db.insert("programs", {
             title: args.title,
             category: args.category,
@@ -164,8 +177,11 @@ export const adminUpdate = mutation({
         status: v.optional(v.union(v.literal("active"), v.literal("inactive"), v.literal("completed"))),
         image_url: v.optional(v.string()),
         collected_amount: v.optional(v.number()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const { programId, ...updates } = args;
 
         // Build patch data
@@ -176,7 +192,7 @@ export const adminUpdate = mutation({
             ...(updates.description !== undefined && { description: updates.description }),
             ...(updates.start_date !== undefined && { startDate: new Date(updates.start_date).getTime() }),
             ...(updates.end_date !== undefined && { endDate: new Date(updates.end_date).getTime() }),
-            ...(updates.status !== undefined && { 
+            ...(updates.status !== undefined && {
                 status: updates.status,
                 isActive: updates.status !== "inactive"
             }),
@@ -184,7 +200,7 @@ export const adminUpdate = mutation({
             ...(updates.collected_amount !== undefined && { collectedAmount: updates.collected_amount }),
             updatedAt: Date.now(),
         };
-        
+
         // Apply patch and return updated document
         await ctx.db.patch(programId, patchData);
         const finalProgram = await ctx.db.get(programId);
@@ -195,19 +211,25 @@ export const adminUpdate = mutation({
 export const adminDelete = mutation({
     args: {
         programId: v.id("programs"),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         await ctx.db.delete(args.programId);
         return { success: true };
     },
 });
 
 export const collect = mutation({
-    args: { 
-        programId: v.id("programs"), 
-        amount: v.number() 
+    args: {
+        programId: v.id("programs"),
+        amount: v.number(),
+        token: v.optional(v.string())
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const program = await ctx.db.get(args.programId);
         if (!program) {
             throw new Error("Program tidak ditemukan");

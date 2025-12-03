@@ -1,9 +1,12 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserFromToken } from "./auth";
 
 export const list = query({
-    args: { reguId: v.string() },
+    args: { reguId: v.string(), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const messages = await ctx.db
             .query("chatMessages")
             .withIndex("by_regu", (q) => q.eq("regu_id", args.reguId))
@@ -27,8 +30,17 @@ export const send = mutation({
         sender_id: v.string(),
         sender_name: v.string(),
         message: v.string(),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        // Verify sender_id matches authenticated user
+        if (args.sender_id !== user.tokenIdentifier && args.sender_id !== user.subject) {
+            throw new Error("Cannot send message as another user");
+        }
+
         const now = Date.now();
         const id = await ctx.db.insert("chatMessages", {
             regu_id: args.regu_id,

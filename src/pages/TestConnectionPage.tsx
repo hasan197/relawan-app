@@ -4,7 +4,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { apiCall, SERVER_URL } from '../lib/supabase';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { projectId, publicAnonKey } from '@/utils/supabase/info';
 
 interface TestConnectionPageProps {
   onBack?: () => void;

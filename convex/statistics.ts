@@ -1,5 +1,6 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserFromToken } from "./auth";
 
 /**
  * Get statistics for a relawan
@@ -7,8 +8,16 @@ import { v } from "convex/values";
  * to ensure compatibility with the frontend
  */
 export const getRelawanStatistics = query({
-    args: { relawanId: v.id("users") },
+    args: { relawanId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        // Verify user is requesting their own stats or is admin
+        if (args.relawanId !== user.subject && user.role !== "admin") {
+            throw new Error("Unauthorized: Can only view your own statistics");
+        }
+
         // Get all donations for this relawan
         const donations = await ctx.db
             .query("donations")
@@ -97,8 +106,10 @@ export const getRelawanStatistics = query({
 });
 
 export const getGlobalStats = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const donations = await ctx.db.query("donations").collect();
         const muzakkis = await ctx.db.query("muzakkis").collect();
         const relawans = await ctx.db.query("users").filter(q => q.eq(q.field("role"), "relawan")).collect();
@@ -118,8 +129,10 @@ export const getGlobalStats = query({
 });
 
 export const getReguStats = query({
-    args: {},
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user || user.role !== "admin") throw new Error("Unauthorized");
         const regus = await ctx.db.query("regus").collect();
         const stats = [];
 
