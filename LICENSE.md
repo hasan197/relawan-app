@@ -1,64 +1,147 @@
-### **WAQF SOFTWARE LICENSE (WSL-1.0)**
-**Relawan Zakat / Zakat Volunteer Application**
+# WAQF SOFTWARE LICENSE (WSL-1.1)
+## Relawan Zakat / Zakat Volunteer Application
 
-**Version 1.0 — 30 November 2025**
-**Dedicated as: Waqf LilLāhi Ta‘ālā (An Endowment for God, the Exalted)**
-**Jurisdiction: Global Muslim Community (Ummah)**
+**Version 1.1 — 30 November 2025**  
+**Dedicated as: Waqf LilLāhi Ta‘ālā (An Endowment for God, the Exalted)**  
+**Jurisdiction: Global Muslim Community (Ummah)**  
+**Waqif (Endower): Mohamad Hasan**  
+**Email: hasan197@gmail.com**
 
 ---
 
-### **ENGLISH VERSION**
+## ENGLISH VERSION
 
-**PREAMBLE**
+### PREAMBLE
 
 In the name of Allah, the Most Gracious, the Most Merciful.
 
-This software project, "Relawan Zakat" (Zakat Volunteer Application), including all its source code, documentation, and related assets, is hereby declared and endowed as a perpetual **Waqf** (Islamic endowment). It is dedicated solely for the pleasure of Allah Subḥānahu wa Ta‘ālā and for the benefit of the Muslim Ummah and all of humanity. The objective is to support charitable, educational, da'wah, humanitarian, and other virtuous activities aligned with Islamic principles.
+This software project, "Relawan Zakat" (Zakat Volunteer Application), including all its source code, documentation, and related assets, is hereby declared and endowed as a perpetual **Waqf** (Islamic endowment). This Waqf is established in accordance with Islamic Shari'ah principles and is dedicated solely for the pleasure of Allah Subḥānahu wa Ta‘ālā and for the benefit of the Muslim Ummah and all of humanity. The objective is to support charitable, educational, da'wah, humanitarian, and other virtuous activities aligned with Islamic principles.
 
-This license defines the terms under which this Waqf software may be used, modified, improved, and shared, ensuring its charitable status is preserved in perpetuity.
+### 1. DEFINITIONS
 
-**1. WAQF DECLARATION & OWNERSHIP**
+1.1 **"Software"** means the source code, documentation, and related materials made available under this license.  
+1.2 **"Waqf"** means an Islamic endowment that is permanently dedicated to Allah's cause and cannot be sold, inherited, or given away.  
+1.3 **"Waqif"** means Mohamad Hasan, the endower of this Waqf.  
+1.4 **"User"** means any individual or entity exercising rights under this license.  
+1.5 **"Derivative Works"** means any modification, adaptation, or extension of the Software.  
+1.6 **"Non-Waqf Services"** means services including but not limited to hosting, installation, support, training, customization, and maintenance.
 
-1.1. All intellectual property rights to this software are permanently dedicated as Waqf, a religious endowment in the path of Allah.
-1.2. This dedication is perpetual, irrevocable, and non-reversible.
-1.3. The Waqf assets (the software) shall:
-    a) Never be sold, licensed for a fee, or commercially exploited.
-    b) Never be privatized, claimed as exclusive property, or made proprietary.
-    c) Never be used as a core part of a commercial, for-profit product or service.
+### 2. WAQF DECLARATION & OWNERSHIP
 
-**2. PERMITTED USE**
+2.1 The Software and all associated intellectual property rights are permanently dedicated as Waqf, a religious endowment in the path of Allah.  
+2.2 This Waqf is established in perpetuity and is irrevocable under Islamic Law.  
+2.3 The Waqf assets (the Software source code and documentation) shall:  
+   a) Never be sold, licensed for a fee, or commercially exploited.  
+   b) Never be privatized, claimed as exclusive property, or made proprietary.  
+   c) Never be used as a core part of a commercial, for-profit product or service.  
+   d) Always remain freely available under the terms of this WSL-1.1 license.
 
-The software may be used, copied, and deployed freely for any purpose that aligns with Islamic Shari'ah and brings benefit to the creation of Allah, including but not limited to:
-- Muslim institutions, mosques, Zakat and Waqf organizations.
-- Charitable, humanitarian, and non-governmental organizations.
-- Community service and social welfare initiatives.
-- Educational, academic, and research activities.
-- Non-profit technological development and collaboration.
-- Integration into other non-profit or Waqf-based software projects.
+### 3. SCOPE OF WAQF
 
-Users are granted the right to:
-- Run, install, and deploy the software.
-- Study, modify, and improve the source code.
-- Distribute original or modified versions.
-- Fork the project and contribute back to the community.
+3.1 **Included in Waqf:**  
+   - The complete source code of the Software  
+   - Documentation and related materials  
+   - Any derivative works created from the original Software
 
-All derivative works (modifications, forks, distributions) must remain under this identical Waqf Software License (WSL-1.0).
+3.2 **Excluded from Waqf:**  
+   - Hosting services  
+   - Installation and deployment services  
+   - Technical support and maintenance  
+   - Training and consultation  
+   - Custom development work  
+   - Any other services not explicitly included in Section 3.1
 
-**3. PROHIBITED USE**
+### 4. PERMISSIONS & RIGHTS GRANTED
 
-This software may not be used, in whole or in part, for:
-3.1. Commercial purposes, including selling the software, offering it as a paid SaaS (Software as a Service), or including it in a commercial product.
-3.2. Any activity explicitly forbidden by Islamic Shari'ah (e.g., promoting usury, gambling, indecency).
-3.3. Use by organizations involved in activities contrary to Islamic ethics, or those engaged in oppression, harm, or exploitation.
-3.4. Claiming exclusive intellectual property rights, patenting, or re-licensing under any proprietary or less restrictive terms.
-3.5. Any action that would restrict the software's availability or undermine its perpetual Waqf status.
+4.1 **Permitted Use:** The Software may be used, copied, and deployed freely for any purpose that aligns with Islamic Shari'ah, including but not limited to:  
+   - Muslim institutions, mosques, Zakat and Waqf organizations  
+   - Charitable, humanitarian, and non-governmental organizations  
+   - Community service and social welfare initiatives  
+   - Educational, academic, and research activities  
+   - Non-profit technological development and collaboration
 
-Violation of these terms automatically revokes the right to use the software.
+4.2 **User Rights:** Users are granted the following rights:  
+   - To use, run, install, and deploy the Software  
+   - To study, modify, and improve the source code  
+   - To distribute original or modified versions  
+   - To create and distribute Derivative Works  
+   - To contribute back to the community
 
-**4. MAINTENANCE & COMMUNITY RIGHTS**
+4.3 **Non-Waqf Services:**  
+   The Waqif and other service providers may offer Non-Waqf Services related to the Software. These services are not part of the Waqf and may be provided for a fee. The availability of such services does not affect the Waqf status of the Software itself.
 
-4.1. The global Muslim community (Ummah) is the primary beneficiary and holds collective rights to:
-    a) Maintain and update the software.
+### 5. DERIVATIVE WORKS
+
+5.1 All Derivative Works must:  
+   a) Be licensed under this same WSL-1.1 license  
+   b) Preserve all original copyright notices and this license  
+   c) Clearly state the modifications made  
+   d) Not impose additional restrictions on the Waqf nature of the Software
+
+5.2 Contributors to Derivative Works grant the global Muslim community a perpetual, worldwide, non-exclusive, royalty-free license to use their contributions under the terms of this WSL-1.1 license.
+
+### 6. PROHIBITED ACTIONS
+
+6.1 The Software may not be used, in whole or in part, for:  
+   a) Commercial purposes, including selling the Software, offering it as a paid SaaS, or including it in a commercial product  
+   b) Any activity explicitly forbidden by Islamic Shari'ah (e.g., promoting usury, gambling, indecency)  
+   c) Use by organizations involved in activities contrary to Islamic ethics  
+   d) Claiming exclusive intellectual property rights or patenting the Software  
+   e) Re-licensing under any proprietary or less restrictive terms  
+   f) Any action that would restrict the Software's availability or undermine its Waqf status
+
+6.2 Violation of these terms automatically terminates all rights granted under this license.
+
+### 7. MAINTENANCE & COMMUNITY RIGHTS
+
+7.1 The global Muslim community (Ummah) is the primary beneficiary and holds collective rights to:  
+   a) Maintain and update the Software  
+   b) Fix bugs and security vulnerabilities  
+   c) Develop and add beneficial features  
+   d) Ensure its continued availability and openness
+
+7.2 No individual or organization may claim exclusive rights to the maintenance or development of the Software.
+
+### 8. NON-WAQF SERVICES
+
+8.1 The following services are explicitly excluded from the Waqf and may be offered commercially:  
+   - Hosting and server provisioning  
+   - Installation and deployment assistance  
+   - Technical support and troubleshooting  
+   - Training and workshops  
+   - Custom development and integration  
+   - Maintenance and updates for specific deployments
+
+8.2 Service providers must clearly distinguish between the Waqf Software and their commercial services, and must not imply that the Waqf status applies to their services.
+
+### 9. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE WAQIF OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### 10. JURISDICTION AND DISPUTE RESOLUTION
+
+10.1 This Waqf is established under the principles of Islamic Shari'ah.  
+10.2 Any disputes shall be resolved through mutual consultation (Shura) by a panel of Muslim scholars and technical experts.  
+10.3 The language of interpretation shall be English, with Arabic as the reference for Shari'ah matters.
+
+### 11. ACCEPTANCE AND COMPLIANCE
+
+11.1 By using, modifying, or distributing the Software, you agree to comply with all terms of this license.  
+11.2 If you do not agree with any part of these terms, you must cease using the Software immediately.
+
+### 12. AMENDMENTS
+
+12.1 This license may be updated to address new concerns or legal requirements while preserving the Waqf status.  
+12.2 Users are encouraged to use the latest version of the license for all Derivative Works.
+
+---
+
+**WAQF RECORD**  
+Project: Relawan Zakat / Zakat Volunteer Application  
+Waqif: Mohamad Hasan  
+Email: hasan197@gmail.com  
+Date: 30 November 2025  
+Status: Perpetual Waqf
     b) Fix bugs and security vulnerabilities.
     c) Develop and add new, beneficial features.
     d) Ensure its continuous and open availability.
@@ -75,7 +158,7 @@ Violation of these terms automatically revokes the right to use the software.
 **6. INTELLECTUAL PROPERTY STATUS**
 
 6.1. Intellectual Property is endowed as Waqf and is no longer subject to conventional ownership.
-6.2. All contributions, forks, and derivative works automatically inherit this Waqf status and must be distributed under the same WSL-1.0 license.
+6.2. All contributions, forks, and derivative works automatically inherit this Waqf status and must be distributed under the same WSL-1.1 license.
 6.3. This license document must be included in all distributions of the original or modified software.
 
 **7. DISCLAIMER OF WARRANTY**
@@ -103,7 +186,7 @@ This license is globally applicable in all jurisdictions where the principles of
 **Primary Beneficiaries:** The Muslim Ummah and all of humanity.
 
 ---
-**END OF WAQF SOFTWARE LICENSE (WSL-1.0) - ENGLISH**
+**END OF WAQF SOFTWARE LICENSE (WSL-1.1) - ENGLISH**
 ---
 
 ### **VERSI BAHASA INDONESIA**
@@ -141,7 +224,7 @@ Pengguna diberikan hak untuk:
 - Mendistribusikan versi asli atau versi yang telah dimodifikasi.
 - Memfork proyek dan berkontribusi kembali kepada komunitas.
 
-Semua produk turunan (modifikasi, fork, distribusi) harus tetap menggunakan Lisensi Perangkat Lunak Wakaf (WSL-1.0) yang identik ini.
+Semua produk turunan (modifikasi, fork, distribusi) harus tetap menggunakan Lisensi Perangkat Lunak Wakaf (WSL-1.1) yang identik ini.
 
 **3. PENGGUNAAN YANG DILARANG**
 
@@ -174,7 +257,7 @@ Pelanggaran terhadap syarat-syarat ini secara otomatis mencabut hak untuk menggu
 **6. STATUS KEKAYAAN INTELEKTUAL**
 
 6.1. Kekayaan Intelektual telah diwakafkan dan tidak lagi tunduk pada kepemilikan konvensional.
-6.2. Semua kontribusi, fork, dan produk turunan secara otomatis mewarisi status Wakaf ini dan harus didistribusikan di bawah lisensi WSL-1.0 yang sama.
+6.2. Semua kontribusi, fork, dan produk turunan secara otomatis mewarisi status Wakaf ini dan harus didistribusikan di bawah lisensi WSL-1.1 yang sama.
 6.3. Dokumen lisensi ini harus disertakan dalam semua distribusi perangkat lunak, baik yang asli maupun yang telah dimodifikasi.
 
 **7. PENOLAKAN JAMINAN**
@@ -202,7 +285,7 @@ Lisensi ini berlaku secara global di semua yurisdiksi di mana prinsip-prinsip Wa
 **Penerima Manfaat Utama:** Umat Islam dan seluruh umat manusia.
 
 ---
-**AKHIR DARI LISENSI PERANGKAT LUNAK WAKAF (WSL-1.0) - BAHASA INDONESIA**
+**AKHIR DARI LISENSI PERANGKAT LUNAK WAKAF (WSL-1.1) - BAHASA INDONESIA**
 ---
 
 ### **النسخة العربية**
@@ -240,7 +323,7 @@ Lisensi ini berlaku secara global di semua yurisdiksi di mana prinsip-prinsip Wa
 - توزيع النسخ الأصلية أو المعدلة.
 - إنشاء مشتقات (Fork) للمشروع والمساهمة مرة أخرى مع المجتمع.
 
-يجب أن تبقى جميع الأعمال المشتقة (التعديلات، المشتقات، التوزيعات) خاضعة لهذه الرخصة الوقفية ذاتها (WSL-1.0).
+يجب أن تبقى جميع الأعمال المشتقة (التعديلات، المشتقات، التوزيعات) خاضعة لهذه الرخصة الوقفية ذاتها (WSL-1.1).
 
 **٣. الاستخدام المحظور**
 
@@ -273,7 +356,7 @@ Lisensi ini berlaku secara global di semua yurisdiksi di mana prinsip-prinsip Wa
 **٦. حالة الملكية الفكرية**
 
 ٦.١. الملكية الفكرية محبوسة وقفاً ولم تعد خاضعة للملكية التقليدية.
-٦.٢. جميع المساهمات والمشتقات (Forks) والأعمال المشتقة ترث تلقائياً هذا status الوقف ويجب توزيعها تحت نفس الرخصة WSL-1.0.
+٦.٢. جميع المساهمات والمشتقات (Forks) والأعمال المشتقة ترث تلقائياً هذا status الوقف ويجب توزيعها تحت نفس الرخصة WSL-1.1.
 ٦.٣. يجب تضمين وثيقة الرخصة هذه في جميع توزيعات البرنامج الأصلي أو المعدل.
 
 **٧. إخلاء المسؤولية عن الضمان**
@@ -301,5 +384,5 @@ status الوقف لهذا البرنامج أبدي. فهو:
 **المستفيدون الأساسيون:** الأمة الإسلامية وجميع الإنسانية المحتاجة.
 
 ---
-**نهاية رخصة البرنامج الوقفية (WSL-1.0) - النسخة العربية**
+**نهاية رخصة البرنامج الوقفية (WSL-1.1) - النسخة العربية**
 ---
