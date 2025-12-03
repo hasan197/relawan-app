@@ -1,49 +1,58 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery, QueryCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
 
-    if (identity) {
-      try {
-        const user = await ctx.db
-          .query("users")
-          .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-          .first();
+    if (user) {
+      console.log('Found user via token:', user._id);
 
-        if (user) {
-          console.log('Found user via Convex identity:', user._id);
-
-          let reguName = undefined;
-          if (user.regu_id) {
-            const regu = await ctx.db.get(user.regu_id as any);
-            reguName = regu?.name;
-          }
-
-          return {
-            _id: user._id,
-            fullName: user.fullName,
-            phone: user.phone,
-            city: user.city,
-            role: user.role,
-            regu_id: user.regu_id || null,
-            regu_name: reguName,
-            isPhoneVerified: user.isPhoneVerified,
-            tokenIdentifier: user.tokenIdentifier,
-            _creationTime: user._creationTime,
-            createdAt: user.createdAt
-          };
-        }
-      } catch (error) {
-        console.error('Error fetching user via identity:', error);
+      let reguName = undefined;
+      if (user.regu_id) {
+        const regu = await ctx.db.get(user.regu_id);
+        reguName = regu?.name;
       }
+
+      return {
+        _id: user._id,
+        fullName: user.fullName,
+        phone: user.phone,
+        city: user.city,
+        role: user.role,
+        regu_id: user.regu_id || null,
+        regu_name: reguName,
+        isPhoneVerified: user.isPhoneVerified,
+        tokenIdentifier: user.tokenIdentifier,
+        _creationTime: user._creationTime,
+        createdAt: user.createdAt
+      };
     }
 
-    console.log('No valid Convex identity found');
+    console.log('No valid user found for token');
     return null;
+  },
+});
+
+// Helper to get user from token
+export async function getUserFromToken(ctx: QueryCtx, token: string | undefined) {
+  if (!token) return null;
+
+  // Token format: "phone:<phone>"
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_token", (q) => q.eq("tokenIdentifier", token))
+    .first();
+
+  return user;
+}
+
+export const verifyToken = internalQuery({
+  args: { token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    return await getUserFromToken(ctx, args.token);
   },
 });
 
@@ -94,7 +103,7 @@ export const login = mutation({
 
     let reguName = undefined;
     if (updatedUser.regu_id) {
-      const regu = await ctx.db.get(updatedUser.regu_id as any);
+      const regu = await ctx.db.get(updatedUser.regu_id);
       reguName = regu?.name;
     }
 
@@ -117,14 +126,14 @@ export const login = mutation({
 });
 
 // Helper function to find user by phone (with format handling)
-async function findUserByPhone(ctx: any, phone: string) {
+async function findUserByPhone(ctx: QueryCtx, phone: string) {
   // Try different phone number formats
   const formats = [
     phone, // original format
     phone.startsWith('0') ? `+62${phone.substring(1)}` : null,
     phone.startsWith('62') ? `0${phone.substring(2)}` : null,
     phone.startsWith('+62') ? `0${phone.substring(3)}` : null
-  ].filter(Boolean);
+  ].filter((f): f is string => !!f);
 
   for (const format of formats) {
     const user = await ctx.db
@@ -181,7 +190,7 @@ export const sendOtp = mutation({
         phone: args.phone,
         ...otpData,
         isPhoneVerified: false,
-        role: "user", // Default role
+        role: "relawan", // Default role
         fullName: "", // Will be set during registration
         city: "",     // Will be set during registration
         createdAt: now
@@ -231,8 +240,8 @@ export const register = mutation({
       fullName: args.fullName,
       phone: args.phone,
       city: args.city,
-      role: args.role || "relawan", // Default role is "relawan"
-      regu_id: null,
+      role: (args.role as "relawan" | "pembimbing" | "admin") || "relawan", // Default role is "relawan"
+      regu_id: undefined,
       isPhoneVerified: false,
       createdAt: now,
       updatedAt: now
@@ -277,7 +286,7 @@ export const verifyOtp = mutation({
     }
 
     // Check if user is blocked
-    if (user.otpAttempts >= maxAttempts) {
+    if ((user.otpAttempts || 0) >= maxAttempts) {
       const timeSinceLastAttempt = now - (user.lastOtpSentAt || 0);
       if (timeSinceLastAttempt < blockDuration) {
         const remaining = Math.ceil((blockDuration - timeSinceLastAttempt) / 60000);
@@ -315,8 +324,8 @@ export const verifyOtp = mutation({
     // Check if OTP is expired
     if (!user.otpExpiresAt || user.otpExpiresAt < now) {
       await ctx.db.patch(user._id, {
-        otp: null,
-        otpExpiresAt: null,
+        otp: undefined,
+        otpExpiresAt: undefined,
         updatedAt: now
       });
 
@@ -367,7 +376,7 @@ export const verifyOtp = mutation({
 
     let reguName = undefined;
     if (updatedUser.regu_id) {
-      const regu = await ctx.db.get(updatedUser.regu_id as any);
+      const regu = await ctx.db.get(updatedUser.regu_id);
       reguName = regu?.name;
     }
 

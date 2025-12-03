@@ -17,10 +17,28 @@ export async function apiCall(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> {
+  // Try to get token from localStorage
+  const storedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+  // Use stored token if available, otherwise fall back to publicAnonKey
+  const token = storedToken || publicAnonKey;
+
+  // Prepare headers with Authorization
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    ...options.headers,
+  };
+
+  // Update options with headers
+  const updatedOptions = {
+    ...options,
+    headers,
+  };
+
   // Route to Convex if configured
   if (BACKEND_PROVIDER === 'convex') {
     console.log(`🔀 Backend: Convex (${endpoint})`);
-    return routeToConvex(endpoint, options);
+    return routeToConvex(endpoint, updatedOptions);
   }
 
   // Otherwise, use Supabase Edge Functions (default)
@@ -31,25 +49,22 @@ export async function apiCall(
   const method = options.method || 'GET';
   const isReadOnly = method === 'GET';
 
-  // Use publicAnonKey for all requests since backend doesn't validate JWT
-  const token = publicAnonKey;
-
   console.log(`📡 API Call: ${method} ${endpoint}`, {
     isReadOnly,
-    usingPublicKey: true
+    usingPublicKey: !storedToken,
+    hasAuthToken: !!storedToken
   });
 
   try {
     // Handle FormData - don't set Content-Type for FormData
     const isFormData = options.body instanceof FormData;
-    
+
     const response = await fetch(`${SERVER_URL}${endpoint}`, {
-      ...options,
+      ...updatedOptions,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        ...headers,
         // Only set Content-Type for non-FormData requests
         ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...options.headers,
       },
     });
 

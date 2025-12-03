@@ -1,16 +1,29 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 export const listByRelawan = query({
-    args: { relawanId: v.id("users") },
+    args: { relawanId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        console.log('🔍 listByRelawan called with:', { relawanId: args.relawanId, hasToken: !!args.token });
+        
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) {
+            console.log('❌ Unauthenticated in listByRelawan');
+            throw new Error("Unauthenticated");
+        }
+        
+        console.log('✅ Authenticated user:', user._id);
+        
         const donations = await ctx.db
             .query("donations")
             .withIndex("by_relawan", (q) => q.eq("relawanId", args.relawanId))
             .order("desc")
             .collect();
 
-        return donations.map((d) => ({
+        console.log('📊 Found donations:', donations.length);
+
+        const result = donations.map((d) => ({
             id: d._id,
             amount: d.amount,
             category: d.category,
@@ -22,12 +35,17 @@ export const listByRelawan = query({
             notes: d.notes,
             created_at: new Date(d.createdAt).toISOString(),
         }));
+        
+        console.log('✅ Returning mapped donations:', result.length);
+        return result;
     },
 });
 
 export const listByMuzakki = query({
-    args: { muzakkiId: v.id("muzakkis") },
+    args: { muzakkiId: v.id("muzakkis"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         // Note: Schema doesn't have by_muzakki index on donations, but it has donorId.
         // We might need to add an index or filter.
         // For now, we'll filter in memory or add index if needed.
@@ -80,8 +98,11 @@ export const create = mutation({
         bukti_transfer_url: v.union(v.string(), v.null()),
         payment_method: v.optional(v.string()),
         receipt_number: v.optional(v.string()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const id = await ctx.db.insert("donations", {
             amount: args.amount,
             category: args.category,
@@ -124,15 +145,18 @@ export const updateBuktiTransferUrl = mutation({
     args: {
         donationId: v.id("donations"),
         buktiTransferUrl: v.string(),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         console.log('🔄 Updating buktiTransferUrl for donation:', args.donationId);
         console.log('📄 Setting URL:', args.buktiTransferUrl);
-        
+
         await ctx.db.patch(args.donationId, {
             buktiTransferUrl: args.buktiTransferUrl,
         });
-        
+
         console.log('✅ Database update completed for donation:', args.donationId);
         return { success: true };
     },
@@ -145,8 +169,11 @@ export const validate = mutation({
         adminName: v.string(),
         action: v.union(v.literal("validate"), v.literal("reject")),
         rejectionReason: v.optional(v.string()),
+        token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const donation = await ctx.db.get(args.donationId);
         if (!donation) {
             throw new Error("Donation not found");
@@ -169,10 +196,12 @@ export const validate = mutation({
 });
 
 export const getById = query({
-    args: { donationId: v.id("donations") },
+    args: { donationId: v.id("donations"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const donation = await ctx.db.get(args.donationId);
-        
+
         if (!donation) {
             return null;
         }
@@ -202,7 +231,10 @@ export const getById = query({
 });
 
 export const listAll = query({
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const donations = await ctx.db
             .query("donations")
             .order("desc")
@@ -233,7 +265,10 @@ export const listAll = query({
 });
 
 export const listPending = query({
-    handler: async (ctx) => {
+    args: { token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
         const donations = await ctx.db
             .query("donations")
             .filter((q) => q.eq(q.field("status"), "pending"))

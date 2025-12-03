@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserFromToken } from "./auth";
 
 /**
  * Generate upload information for file upload to Backblaze B2
@@ -9,8 +10,11 @@ export const generateUploadUrl = mutation({
     fileType: v.string(),
     fileName: v.string(),
     fileSize: v.number(),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     // For Backblaze B2, we don't need presigned URLs
     // We'll upload directly from the backend
     return {
@@ -32,8 +36,11 @@ export const confirmUpload = mutation({
     fileName: v.string(),
     fileType: v.string(),
     fileSize: v.number(),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     // Update the donation with the file URL
     await ctx.db.patch(args.donationId, {
       buktiTransferUrl: args.fileUrl,
@@ -52,10 +59,13 @@ export const confirmUpload = mutation({
 export const getFileInfo = query({
   args: {
     donationId: v.id("donations"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const donation = await ctx.db.get(args.donationId);
-    
+
     if (!donation) {
       throw new Error("Donation not found");
     }
@@ -73,10 +83,13 @@ export const getFileInfo = query({
 export const deleteFile = mutation({
   args: {
     donationId: v.id("donations"),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
     const donation = await ctx.db.get(args.donationId);
-    
+
     if (!donation || !donation.buktiTransferUrl) {
       return { success: false, error: "No file to delete" };
     }
