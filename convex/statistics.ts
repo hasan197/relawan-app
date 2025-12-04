@@ -14,7 +14,7 @@ export const getRelawanStatistics = query({
         if (!user) throw new Error("Unauthenticated");
 
         // Verify user is requesting their own stats or is admin
-        if (args.relawanId !== user.subject && user.role !== "admin") {
+        if (args.relawanId !== user._id && user.role !== "admin") {
             throw new Error("Unauthorized: Can only view your own statistics");
         }
 

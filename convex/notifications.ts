@@ -9,7 +9,7 @@ export const getByUser = query({
         if (!user) throw new Error("Unauthenticated");
 
         // Verify user is requesting their own notifications
-        if (args.userId !== user.subject && user.role !== "admin") {
+        if (args.userId !== user._id && user.role !== "admin") {
             throw new Error("Unauthorized: Can only view your own notifications");
         }
 
@@ -41,7 +41,7 @@ export const markAsRead = mutation({
 
         // Verify ownership
         const notification = await ctx.db.get(args.id);
-        if (notification && notification.userId !== user.subject && user.role !== "admin") {
+        if (notification && notification.userId !== user._id && user.role !== "admin") {
             throw new Error("Unauthorized: Can only mark your own notifications as read");
         }
 

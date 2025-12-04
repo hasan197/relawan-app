@@ -131,7 +131,7 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
 
     // Get Convex client (token is passed in arguments, not via setAuth)
     const client = getConvexClient();
-    
+
     if (token) {
         console.log('🔐 Convex Auth Token will be passed in arguments');
     } else {
@@ -563,8 +563,17 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             } else {
                 console.log('📄 Detected JSON in POST /donations - creating donation');
                 const body = JSON.parse(options.body as string);
+
+                // Map frontend fields to Convex schema
+                // Frontend sends: muzakki_id, Convex expects: donor_id
+                const convexBody = {
+                    ...body,
+                    donor_id: body.muzakki_id, // Map muzakki_id to donor_id
+                };
+                delete convexBody.muzakki_id; // Remove old field name
+
                 // @ts-ignore
-                const donationId = await client.mutation(api.donations.create, withAuth(body));
+                const donationId = await client.mutation(api.donations.create, withAuth(convexBody));
                 console.log('📝 Donation created with ID:', donationId);
                 // Return donation object with id property
                 return { data: { id: donationId } };

@@ -6,15 +6,15 @@ export const listByRelawan = query({
     args: { relawanId: v.id("users"), token: v.optional(v.string()) },
     handler: async (ctx, args) => {
         console.log('🔍 listByRelawan called with:', { relawanId: args.relawanId, hasToken: !!args.token });
-        
+
         const user = await getUserFromToken(ctx, args.token);
         if (!user) {
             console.log('❌ Unauthenticated in listByRelawan');
             throw new Error("Unauthenticated");
         }
-        
+
         console.log('✅ Authenticated user:', user._id);
-        
+
         const donations = await ctx.db
             .query("donations")
             .withIndex("by_relawan", (q) => q.eq("relawanId", args.relawanId))
@@ -35,7 +35,7 @@ export const listByRelawan = query({
             notes: d.notes,
             created_at: new Date(d.createdAt).toISOString(),
         }));
-        
+
         console.log('✅ Returning mapped donations:', result.length);
         return result;
     },
@@ -88,7 +88,7 @@ export const create = mutation({
         donor_name: v.string(),
         donor_id: v.optional(v.id("muzakkis")),
         relawan_id: v.id("users"),
-        relawan_name: v.string(),
+        relawan_name: v.optional(v.string()),
         event_name: v.optional(v.string()),
         type: v.union(
             v.literal("incoming"),
@@ -103,13 +103,21 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+
+        // Fetch relawan name if not provided
+        let relawanName = args.relawan_name;
+        if (!relawanName) {
+            const relawan = await ctx.db.get(args.relawan_id);
+            relawanName = relawan?.fullName || "Unknown";
+        }
+
         const id = await ctx.db.insert("donations", {
             amount: args.amount,
             category: args.category,
             donorName: args.donor_name,
             donorId: args.donor_id,
             relawanId: args.relawan_id,
-            relawanName: args.relawan_name,
+            relawanName: relawanName,
             eventName: args.event_name,
             type: args.type,
             notes: args.notes,
