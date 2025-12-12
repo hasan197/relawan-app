@@ -81,13 +81,15 @@ export default defineSchema({
     notes: v.optional(v.string()),
     lastContact: v.optional(v.number()),
     createdBy: v.id("users"),
+    relawan_id: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
     .index("by_phone", ["phone"])
     .index("by_status", ["status"])
     .index("by_category", ["category"])
-    .index("by_created_by", ["createdBy"]),
+    .index("by_created_by", ["createdBy"])
+    .index("by_relawan", ["relawan_id"]),
 
   // Donations table
   donations: defineTable({

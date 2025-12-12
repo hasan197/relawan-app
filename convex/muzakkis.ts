@@ -76,6 +76,7 @@ export const create = mutation({
             status: args.status,
             notes: args.notes,
             createdBy: args.relawan_id,
+            relawan_id: args.relawan_id,
             createdAt: Date.now(),
         });
         return id;

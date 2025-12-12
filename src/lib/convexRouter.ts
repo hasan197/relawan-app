@@ -288,8 +288,9 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             }
             if (relawanId) {
                 // @ts-ignore
-                const result = await client.query(api.donationsAdmin.getDonationStats, withAuth({ relawan_id: relawanId as any }));
-                return { data: result };
+                const result = await client.query(api.donations.listByRelawan, withAuth({ relawanId }));
+                // Ensure we always return an array
+                return { data: Array.isArray(result) ? result : [] };
             }
         }
         // GET /donations/pending
@@ -544,12 +545,14 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             if (relawanId) {
                 // @ts-ignore
                 const result = await client.query(api.donations.listByRelawan, withAuth({ relawanId }));
-                return { data: result };
+                // Ensure we always return an array
+                return { data: Array.isArray(result) ? result : [] };
             }
             if (muzakkiId) {
                 // @ts-ignore
                 const result = await client.query(api.donations.listByMuzakki, withAuth({ muzakkiId }));
-                return { data: result };
+                // Ensure we always return an array
+                return { data: Array.isArray(result) ? result : [] };
             }
             // If no filter, maybe return all? Or empty.
             return { data: [] };

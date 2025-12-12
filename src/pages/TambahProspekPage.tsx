@@ -5,7 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useAppContext } from '../contexts/AppContext';
 import { useAddMuzakki } from '../hooks/useMuzakki';
 
@@ -18,12 +18,22 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
   const { user } = useAppContext();
   const { addMuzakki, adding } = useAddMuzakki();
   
-  const [formData, setFormData] = useState({
+  type StatusType = 'baru' | 'follow-up' | 'donasi';
+  
+  const [formData, setFormData] = useState<{
+    name: string;
+    phone: string;
+    city: string;
+    notes: string;
+    status: StatusType;
+    category: 'prospek';
+  }>({
     name: '',
     phone: '',
     city: '',
     notes: '',
-    status: 'baru' as const
+    status: 'baru',
+    category: 'prospek'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,7 +122,7 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
             <div>
               <Label>Status Awal</Label>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                {(['baru', 'follow-up', 'donasi'] as const).map((status) => (
+                {(['baru', 'follow-up', 'donasi'] as StatusType[]).map((status) => (
                   <button
                     key={status}
                     type="button"

@@ -345,6 +345,7 @@ export const createMuzakki = mutation({
     category: v.union(v.literal("muzakki"), v.literal("donatur"), v.literal("prospek")),
     createdBy: v.id("users"),
     notes: v.optional(v.string()),
+    status: v.union(v.literal("baru"), v.literal("follow-up"), v.literal("donasi")),
     token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -352,14 +353,15 @@ export const createMuzakki = mutation({
     if (!user) {
       throw new Error("Unauthenticated");
     }
-    // Check if phone already exists
+    // Check if phone already exists for this relawan
     const existingMuzakki = await ctx.db
       .query("muzakkis")
       .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+      .filter((q) => q.eq(q.field("relawan_id"), args.createdBy))
       .first();
 
     if (existingMuzakki) {
-      throw new Error("Nomor telepon sudah terdaftar");
+      throw new Error("Nomor telepon sudah terdaftar untuk relawan ini");
     }
 
     const muzakkiId = await ctx.db.insert("muzakkis", {
@@ -368,9 +370,10 @@ export const createMuzakki = mutation({
       address: args.address,
       city: args.city,
       category: args.category,
-      status: "baru",
+      status: args.status || "baru",
       notes: args.notes,
       createdBy: args.createdBy,
+      relawan_id: args.createdBy, // Use createdBy as relawan_id
       lastContact: Date.now(),
       createdAt: Date.now(),
     });
@@ -756,6 +759,7 @@ export const seedDatabase = mutation({
       status: 'donasi',
       notes: 'Donatur rutin',
       createdBy: relawan1Id,
+      relawan_id: relawan1Id,
       lastContact: Date.now(),
       createdAt: Date.now(),
     });
@@ -769,6 +773,7 @@ export const seedDatabase = mutation({
       status: 'follow-up',
       notes: 'Potensi donatur besar',
       createdBy: relawan2Id,
+      relawan_id: relawan2Id,
       lastContact: Date.now(),
       createdAt: Date.now(),
     });

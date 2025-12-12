@@ -80,12 +80,20 @@ export function useDonations(relawanId: string | null) {
   };
 
   const getTotalDonations = () => {
+    if (!Array.isArray(donations) || typeof donations.filter !== 'function') {
+      console.warn('⚠️ getTotalDonations: donations is not an array or filter is missing', donations);
+      return 0;
+    }
     return donations
       .filter(d => d.type === 'incoming')
       .reduce((sum, d) => sum + d.amount, 0);
   };
 
   const getTotalDistributed = () => {
+    if (!Array.isArray(donations) || typeof donations.filter !== 'function') {
+      console.warn('⚠️ getTotalDistributed: donations is not an array or filter is missing', donations);
+      return 0;
+    }
     return donations
       .filter(d => d.type === 'outgoing')
       .reduce((sum, d) => sum + d.amount, 0);
@@ -98,6 +106,11 @@ export function useDonations(relawanId: string | null) {
       sedekah: 0,
       wakaf: 0
     };
+
+    if (!Array.isArray(donations) || typeof donations.filter !== 'function') {
+      console.warn('⚠️ getDonationsByCategory: donations is not an array or filter is missing', donations);
+      return byCategory;
+    }
 
     donations
       .filter(d => d.type === 'incoming')

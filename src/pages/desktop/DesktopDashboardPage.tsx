@@ -52,7 +52,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
     },
     {
       title: 'Aktivitas',
-      value: donations.length.toString(),
+      value: (donations?.length || 0).toString(),
       change: '-2.1%',
       trend: 'down' as const,
       icon: Activity,
@@ -89,7 +89,7 @@ export function DesktopDashboardPage({ onNavigate }: DesktopDashboardPageProps) 
   ];
 
   // Recent Activities
-  const recentActivities = donations.slice(0, 5).map(d => ({
+  const recentActivities = (donations || []).slice(0, 5).map(d => ({
     id: d.id,
     type: d.category,
     amount: d.amount,

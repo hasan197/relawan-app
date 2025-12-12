@@ -364,6 +364,7 @@ export function useAddMuzakki() {
       city?: string;
       notes?: string;
       status?: 'baru' | 'follow-up' | 'donasi';
+      category: 'muzakki' | 'donatur' | 'prospek';
     }
   ) => {
     setAdding(true);
@@ -375,8 +376,13 @@ export function useAddMuzakki() {
       const response = await apiCall('/muzakki', {
         method: 'POST',
         body: JSON.stringify({
-          relawan_id: relawanId,
-          ...data
+          createdBy: relawanId,
+          name: data.name,
+          phone: data.phone,
+          city: data.city,
+          notes: data.notes,
+          category: data.category,
+          status: data.status
         })
       });
       return response.data;
