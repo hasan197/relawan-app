@@ -1,12 +1,14 @@
-import { ArrowLeft, Share2, ExternalLink, Calendar, Target, Users, TrendingUp, Loader2 } from 'lucide-react';
+import { Share2, ExternalLink, Loader2, Users, Calendar, Target, TrendingUp } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { formatCurrency, copyToClipboard } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
+import { usePrograms } from '../hooks/usePrograms';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { toast } from 'sonner@2.0.3';
-import { useSingleProgram } from '../hooks/usePrograms.tsx';
+import { toast } from 'sonner';
+import { copyToClipboard } from '../lib/utils';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface DetailProgramPageProps {
   programId?: string;
@@ -14,15 +16,16 @@ interface DetailProgramPageProps {
 }
 
 export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps) {
-  const { program, loading } = useSingleProgram(programId || null);
+  const { programs, loading } = usePrograms();
+  const program = programs.find(p => p.id === programId);
 
-  const progress = program ? (program.collected / program.target) * 100 : 0;
-  const daysLeft = program ? Math.ceil((new Date(program.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const progress = program ? (program.collected_amount || 0) / (program.target_amount || 1) * 100 : 0;
+  const daysLeft = program ? Math.ceil((new Date(program.created_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   const handleShare = async () => {
     if (!program) return;
 
-    const shareText = `${program.title}\n\n${program.description}\n\nTarget: ${formatCurrency(program.target)}\nTerkumpul: ${formatCurrency(program.collected)}\n\nLihat detail program ini di aplikasi ZISWAF Manager`;
+    const shareText = `${program.title}\n\n${program.description}\n\nTarget: ${formatCurrency(program.target_amount || 0)}\nTerkumpul: ${formatCurrency(program.collected_amount || 0)}\n\nLihat detail program ini di aplikasi ZISWAF Manager`;
     
     if (navigator.share) {
       navigator.share({
@@ -59,17 +62,9 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
   if (!program) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onBack}
-              className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </button>
-            <h2 className="text-white">Detail Program</h2>
-          </div>
-        </div>
+        <HeaderWithBack 
+          pageName="Detail Program"
+        />
         <div className="px-4 py-8">
           <Card className="p-8 text-center">
             <p className="text-gray-600">Program tidak ditemukan</p>
@@ -95,24 +90,16 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
 
   return (
     <div className="min-h-screen bg-gray-50 pb-4">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Detail Program</h2>
-        </div>
-      </div>
+      <HeaderWithBack 
+        pageName="Detail Program"
+        onBack={onBack}
+      />
 
       <div className="px-4 -mt-2 pb-6">
         {/* Hero Image */}
         <div className="mb-4 -mx-4 px-4">
           <ImageWithFallback
-            src={program.image}
+            src={program.image_url}
             alt={program.title}
             className="w-full h-48 object-cover rounded-2xl"
           />
@@ -143,11 +130,11 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
             <div className="flex items-end justify-between mb-2">
               <div>
                 <p className="text-gray-500 text-sm">Terkumpul</p>
-                <p className="text-2xl text-primary-600">{formatCurrency(program.collected)}</p>
+                <p className="text-2xl text-primary-600">{formatCurrency(program.collected_amount || 0)}</p>
               </div>
               <div className="text-right">
                 <p className="text-gray-500 text-sm">Target</p>
-                <p className="text-gray-900">{formatCurrency(program.target)}</p>
+                <p className="text-gray-900">{formatCurrency(program.target_amount || 0)}</p>
               </div>
             </div>
             <Progress value={progress} className="h-3" />
@@ -161,7 +148,7 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
               </div>
               <div>
                 <p className="text-gray-500 text-xs">Donatur</p>
-                <p className="text-gray-900 font-semibold">{program.contributors}</p>
+                <p className="text-gray-900 font-semibold">-</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -186,7 +173,7 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Lokasi</p>
-                <p className="text-gray-900">{program.location}</p>
+                <p className="text-gray-900">-</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -194,8 +181,8 @@ export function DetailProgramPage({ programId, onBack }: DetailProgramPageProps)
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Berakhir pada</p>
-                <p className="text-gray-900">{new Date(program.endDate).toLocaleDateString('id-ID', {
+                <p className="text-gray-500 text-sm">Dibuat pada</p>
+                <p className="text-gray-900">{new Date(program.created_at).toLocaleDateString('id-ID', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric'

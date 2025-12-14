@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Search, Copy, Plus, MessageSquare, DollarSign, Heart, Sparkles, Calendar, Loader2, Send } from 'lucide-react';
+import { Search, Copy, Plus, MessageSquare, DollarSign, Heart, Sparkles, Calendar, Loader2, Send } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner@2.0.3';
 import { useTemplates } from '../hooks/useTemplates';
 import { copyToClipboard } from '../lib/utils';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface TemplatePesanPageProps {
   onBack?: () => void;
@@ -38,9 +39,14 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
 
   // Filter templates
   const filteredTemplates = templates.filter(template => {
+    // Skip null or undefined templates
+    if (!template) return false;
+    
+    // Skip templates without required properties
+    if (!template.title || !template.message) return false;
+    
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         template.message?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         template.content?.toLowerCase().includes(searchQuery.toLowerCase());
+                         template.message.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -85,19 +91,13 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-4">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div className="flex-1">
-            <h2 className="text-white">Template Pesan</h2>
-          </div>
-          {/* Add Template Button - Moved to Header */}
+      <HeaderWithBack 
+        pageName="Template Pesan"
+      />
+
+      <div className="px-4 -mt-4 pb-6">
+        {/* Add Template Button */}
+        <div className="mb-4 flex justify-end">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -217,19 +217,21 @@ export function TemplatePesanPage({ onBack }: TemplatePesanPageProps) {
             {filteredTemplates.map((template) => (
               <Card key={template.id} className="p-3 hover:shadow-lg transition-shadow">
                 <div className="mb-2">
-                  <h3 className="text-gray-900 text-sm font-medium mb-1.5 line-clamp-2">{template.title}</h3>
+                  <h3 className="text-gray-900 text-sm font-medium mb-1.5 line-clamp-2">
+                    {template.title || 'Tanpa Judul'}
+                  </h3>
                   <Badge className="bg-primary-100 text-primary-700 border-none text-xs">
-                    {categories.find(c => c.id === template.category)?.label || template.category}
+                    {categories.find(c => c.id === template.category)?.label || template.category || 'Tidak Dikategorikan'}
                   </Badge>
                 </div>
 
                 <p className="text-gray-600 text-xs mb-3 whitespace-pre-wrap line-clamp-3">
-                  {template.message || template.content || ''}
+                  {template.message || 'Tidak ada konten'}
                 </p>
 
                 <div className="flex flex-col gap-1.5">
                   <Button
-                    onClick={() => handleCopyTemplate(template.message || template.content || '')}
+                    onClick={() => handleCopyTemplate(template.message || '')}
                     variant="outline"
                     size="sm"
                     className="w-full h-8 text-xs"

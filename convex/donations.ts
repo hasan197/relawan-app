@@ -183,8 +183,8 @@ export const updateBuktiTransferUrl = mutation({
 export const validate = mutation({
     args: {
         donationId: v.id("donations"),
-        adminId: v.id("users"),
-        adminName: v.string(),
+        adminId: v.optional(v.id("users")),
+        adminName: v.optional(v.string()),
         action: v.union(v.literal("validate"), v.literal("reject")),
         rejectionReason: v.optional(v.string()),
         token: v.optional(v.string()),
@@ -193,15 +193,18 @@ export const validate = mutation({
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
         
-        // Verify admin_id matches authenticated user or user is admin
-        if (args.adminId !== user._id && args.adminId !== user.tokenIdentifier && user.role !== "admin") {
+        // Use authenticated user's ID instead of requiring adminId from args
+        const adminId = args.adminId || user._id || user.tokenIdentifier;
+        
+        // Verify user has admin role or is validating their own donations
+        if (user.role !== "admin" && (adminId !== user._id && adminId !== user.tokenIdentifier)) {
             console.error('Admin validation mismatch:', {
-                provided_admin_id: args.adminId,
+                provided_admin_id: adminId,
                 user_id: user._id,
                 user_tokenIdentifier: user.tokenIdentifier,
                 user_role: user.role
             });
-            throw new Error("Unauthorized: Cannot validate donation as another user");
+            throw new Error("Unauthorized: Cannot validate donation");
         }
         
         const donation = await ctx.db.get(args.donationId);
@@ -211,8 +214,8 @@ export const validate = mutation({
 
         const updateData: any = {
             status: args.action === "validate" ? "validated" : "rejected",
-            validatedBy: args.adminId,
-            validatedByName: args.adminName,
+            validatedBy: adminId,
+            validatedByName: args.adminName || user.fullName || "Admin",
             validatedAt: Date.now(),
         };
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Share2, ExternalLink, Loader2 } from 'lucide-react';
+import { Share2, ExternalLink, Loader2 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -8,6 +8,7 @@ import { formatCurrency } from '../lib/utils';
 import { usePrograms } from '../hooks/usePrograms';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ProgramCardSkeleton } from '../components/LoadingState';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface ProgramPageProps {
   onBack?: () => void;
@@ -54,23 +55,9 @@ export function ProgramPage({ onBack, onNavigate }: ProgramPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-4">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div>
-            <h2 className="text-white">Program ZISWAF</h2>
-            <p className="text-primary-100 text-sm">
-              {loading ? 'Memuat...' : `${programs.length} program tersedia`}
-            </p>
-          </div>
-        </div>
-      </div>
+      <HeaderWithBack 
+        pageName="Program ZISWAF"
+      />
 
       <div className="px-4 py-4">
         {/* Category Filter */}

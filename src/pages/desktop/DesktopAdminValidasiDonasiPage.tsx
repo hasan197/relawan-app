@@ -9,7 +9,7 @@ import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { apiCall } from '../../lib/supabase';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency, formatRelativeTime } from '../../lib/utils';
@@ -112,8 +112,6 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
       const response = await apiCall(`/donations/${selectedDonation.id}/validate`, {
         method: 'POST',
         body: JSON.stringify({
-          admin_id: user.id,
-          admin_name: user.name,
           action: validationAction,
           rejection_reason: validationAction === 'reject' ? rejectionReason : null
         })

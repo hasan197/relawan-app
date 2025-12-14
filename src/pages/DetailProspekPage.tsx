@@ -5,7 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { getInitials, formatRelativeTime, formatCurrency } from '../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useSingleMuzakki, useCommunications, useUpdateMuzakki, useAddCommunication, useDeleteMuzakki } from '../hooks/useMuzakki';
 import { useMuzakkiDonations } from '../hooks/useDonations';
 import { useState, useEffect } from 'react';
@@ -15,6 +15,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Input } from '../components/ui/input';
 import { useAppContext } from '../contexts/AppContext';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface DetailProspekPageProps {
   muzakkiId?: string;
@@ -29,7 +30,7 @@ export function DetailProspekPage({ muzakkiId, onBack }: DetailProspekPageProps)
   const { donations, loading: donLoading } = useMuzakkiDonations(muzakkiId || null);
   const { updateMuzakki, updating } = useUpdateMuzakki();
   const { addCommunication, adding } = useAddCommunication();
-  const { deleteMuzakki, deleting } = useDeleteMuzakki();
+  const { deleteMuzakki } = useDeleteMuzakki();
 
   const [isCommDialogOpen, setIsCommDialogOpen] = useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
@@ -76,7 +77,7 @@ export function DetailProspekPage({ muzakkiId, onBack }: DetailProspekPageProps)
     window.location.href = `tel:${muzakki.phone}`;
   };
 
-  const handleChangeStatus = (newStatus: string) => {
+  const handleChangeStatus = (newStatus: 'baru' | 'follow-up' | 'donasi') => {
     if (!muzakki) return;
     updateMuzakki(muzakkiId || '', { status: newStatus })
       .then(() => {
@@ -191,18 +192,10 @@ export function DetailProspekPage({ muzakkiId, onBack }: DetailProspekPageProps)
 
   return (
     <div className="min-h-screen bg-gray-50 pb-4">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-6">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Detail Muzakki</h2>
-        </div>
-      </div>
+      <HeaderWithBack 
+        onBack={onBack}
+        pageName="Detail Muzakki"
+      />
 
       <div className="px-4 -mt-4 pb-6">
         {/* Profile Card */}

@@ -520,14 +520,11 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const body = JSON.parse(options.body as string);
             console.log('🔍 Validation body:', body);
             // @ts-ignore
-            const result = await client.mutation(api.donations.validate, {
+            const result = await client.mutation(api.donations.validate, withAuth({
                 donationId: donationId as any,
-                adminId: body.admin_id as any,
-                adminName: body.admin_name,
                 action: body.action === 'approve' ? 'validate' : 'reject',
                 rejectionReason: body.rejection_reason || undefined
-            });
-            console.log('✅ Validation result:', result);
+            }));            console.log('✅ Validation result:', result);
             return { success: true, data: result };
         }
 
@@ -626,23 +623,6 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                     } 
                 };
             }
-        }
-        // POST /donations/:id/validate
-        if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'validate' && method === 'POST') {
-            console.log('🔍 Validation endpoint hit:', pathParts);
-            const donationId = pathParts[1];
-            const body = JSON.parse(options.body as string);
-            console.log('🔍 Validation body:', body);
-            // @ts-ignore
-            const result = await client.mutation(api.donations.validate, {
-                donationId: donationId as any,
-                adminId: body.admin_id as any,
-                adminName: body.admin_name,
-                action: body.action === 'approve' ? 'validate' : 'reject',
-                rejectionReason: body.rejection_reason || undefined
-            });
-            console.log('✅ Validation result:', result);
-            return { success: true, data: result };
         }
         // GET /donations/:id/bukti-transfer - serve bukti transfer file
         if (pathParts[0] === 'donations' && pathParts.length === 3 && pathParts[2] === 'bukti-transfer' && method === 'GET') {
