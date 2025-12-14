@@ -31,8 +31,7 @@ import {
   Zap
 } from 'lucide-react';
 import { motion } from 'motion/react';
-
-type NavItem = "dashboard" | "donatur" | "laporan" | "profil" | "admin-dashboard" | "admin-validasi-donasi" | "admin-data" | "admin-tools";
+import type { NavItem } from '../components/BottomNavigation';
 
 interface ProfilPageProps {
   onNavigate?: (page: NavItem | 'template' | 'program' | 'regu' | 'my-regus' | 'create-regu' | 'regu-qr-code' | 'chat-regu' | 'materi-promosi' | 'notifikasi' | 'pengaturan') => void;

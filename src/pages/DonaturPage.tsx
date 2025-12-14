@@ -1,15 +1,28 @@
 import { useState } from 'react';
 import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
-import { useAppContext } from '../contexts/AppContext';
-import { Muzakki } from '../types';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
-import { getInitials, formatRelativeTime } from '../lib/utils';
-import { Search, UserPlus, Phone, MapPin } from 'lucide-react';
+import { getInitials } from '../lib/utils';
+import { useAppContext } from '../contexts/AppContext';
+import { Search, Phone, UserPlus as UserPlusIcon, MapPin, Upload } from 'lucide-react';
+import type { NavItem } from '../components/BottomNavigation';
 import { Input } from '../components/ui/input';
-import { Upload } from 'lucide-react';
+import { formatRelativeTime } from '../lib/utils';
+
+// Define Muzakki interface since it's missing
+interface Muzakki {
+  id: string;
+  name: string;
+  phone: string;
+  city?: string;
+  status: 'baru' | 'follow-up' | 'donasi';
+  category: 'prospek' | 'muzakki';
+  avatar?: string;
+  last_contact?: string;
+  notes?: string;
+}
 
 interface DonaturPageProps {
   onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program' | 'notifikasi' | 'import-kontak' | 'tambah-prospek') => void;
@@ -21,8 +34,12 @@ export function DonaturPage({ onNavigate, onSelectMuzakki }: DonaturPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'semua' | Muzakki['status']>('semua');
 
-  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
-    onNavigate?.(item);
+  const handleNavigation = (item: NavItem) => {
+    // Filter to only allow navigation items that are supported by this page
+    const supportedPages = ['dashboard', 'donatur', 'laporan', 'profil', 'notifikasi'] as const;
+    if (supportedPages.includes(item as any)) {
+      onNavigate?.(item as any);
+    }
   };
 
   const filteredMuzakki = muzakkiList.filter(muzakki => {
@@ -77,7 +94,7 @@ export function DonaturPage({ onNavigate, onSelectMuzakki }: DonaturPageProps) {
                 onClick={() => onNavigate?.('tambah-prospek')}
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                <UserPlus className="h-4 w-4" />
+                <UserPlusIcon className="h-4 w-4" />
                 <span>Tambah</span>
               </button>
             </div>

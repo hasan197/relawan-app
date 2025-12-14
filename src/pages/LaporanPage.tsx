@@ -11,19 +11,20 @@ import { Progress } from '../components/ui/progress';
 import { useAppContext } from '../contexts/AppContext';
 import { useStatistics } from '../hooks/useStatistics';
 import { useRegu } from '../hooks/useRegu';
+import type { NavItem } from '../components/BottomNavigation';
 
 interface LaporanPageProps {
-  onNavigate?: (page: any) => void;
+  onNavigate?: (page: NavItem) => void;
 }
 
 export function LaporanPage({ onNavigate }: LaporanPageProps) {
-  const [activeNav, setActiveNav] = useState<'dashboard' | 'donatur' | 'laporan' | 'profil'>('laporan');
+  const [activeNav, setActiveNav] = useState<NavItem>('laporan');
   const [selectedPeriod, setSelectedPeriod] = useState('bulan-ini');
   const { user } = useAppContext();
   const { statistics, loading: statsLoading } = useStatistics(user?.id || null);
   const { members, loading: reguLoading } = useRegu(user?.regu_id || null);
 
-  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
+  const handleNavigation = (item: NavItem) => {
     setActiveNav(item);
     onNavigate?.(item);
   };

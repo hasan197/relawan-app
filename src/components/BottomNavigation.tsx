@@ -1,7 +1,7 @@
 import { Home, Users, BarChart3, User, Shield, CheckCircle, Database } from "lucide-react";
 import { useAppContext } from "../contexts/AppContext";
 
-type NavItem = "dashboard" | "donatur" | "laporan" | "profil" | "admin-dashboard" | "admin-validasi-donasi" | "admin-data" | "admin-tools";
+export type NavItem = "dashboard" | "donatur" | "laporan" | "profil" | "admin-dashboard" | "admin-validasi-donasi" | "admin-data" | "admin-tools" | "notifikasi";
 
 interface BottomNavigationProps {
   active: NavItem;

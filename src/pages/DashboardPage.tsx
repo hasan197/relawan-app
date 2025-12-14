@@ -33,6 +33,7 @@ import { useAppContext } from "../contexts/AppContext";
 import { useStatistics } from "../hooks/useStatistics";
 import { motion } from "motion/react";
 import { DashboardSkeleton, StatsCardSkeleton } from "../components/LoadingState";
+import type { NavItem } from "../components/BottomNavigation";
 
 interface DashboardPageProps {
   onNavigate?: (page: any) => void;
@@ -41,17 +42,13 @@ interface DashboardPageProps {
 export function DashboardPage({
   onNavigate,
 }: DashboardPageProps) {
-  const [activeNav, setActiveNav] = useState<
-    "dashboard" | "donatur" | "laporan" | "profil"
-  >("dashboard");
+  const [activeNav, setActiveNav] = useState<NavItem>("dashboard");
   const { user, muzakkiError, donationsError } = useAppContext();
   const { statistics, loading } = useStatistics(
     user?.id || null,
   );
 
-  const handleNavigation = (
-    item: "dashboard" | "donatur" | "laporan" | "profil",
-  ) => {
+  const handleNavigation = (item: NavItem) => {
     setActiveNav(item);
     onNavigate?.(item);
   };

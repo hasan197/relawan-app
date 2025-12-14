@@ -68,7 +68,7 @@ export function TambahProspekPageWithBackend({ onBack, onSave }: TambahProspekPa
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
-          <h2 className="text-white">Tambah Muzakki Baru</h2>
+          <h2 className="text-white">Tambah Donatur Baru</h2>
         </div>
       </div>
 

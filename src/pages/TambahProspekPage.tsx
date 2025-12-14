@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { useAppContext } from '../contexts/AppContext';
 import { useAddMuzakki } from '../hooks/useMuzakki';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface TambahProspekPageProps {
   onBack?: () => void;
@@ -60,18 +61,9 @@ export function TambahProspekPage({ onBack, onSave }: TambahProspekPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-4">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Tambah Muzakki Baru</h2>
-        </div>
-      </div>
+      <HeaderWithBack 
+        pageName="Tambah Donatur Baru"
+      />
 
       <div className="px-4 -mt-4 pb-6">
         <Card className="p-6 shadow-card">

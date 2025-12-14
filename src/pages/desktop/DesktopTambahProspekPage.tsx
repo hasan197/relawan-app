@@ -73,7 +73,7 @@ export function DesktopTambahProspekPage({ onNavigate, onBack, onSave }: Desktop
   return (
     <div className="min-h-screen bg-gray-50">
       <DesktopTopbar 
-        title="Tambah Muzakki Baru" 
+        title="Tambah Donatur Baru" 
         subtitle="Isi formulir untuk menambahkan muzakki baru"
         onNavigate={onNavigate}
       />

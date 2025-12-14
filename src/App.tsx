@@ -226,6 +226,19 @@ function AppContent() {
     }
   };
 
+  useEffect(() => {
+    // Handle custom navigation events
+    const handleGoBackInApp = () => {
+      handleBackNavigation();
+    };
+
+    window.addEventListener('goBackInApp', handleGoBackInApp);
+    
+    return () => {
+      window.removeEventListener('goBackInApp', handleGoBackInApp);
+    };
+  }, [navigationHistory]);
+
   const renderMobilePage = () => {
     switch (currentPage) {
       case 'splash':

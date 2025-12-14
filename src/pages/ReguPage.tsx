@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Users, TrendingUp, Award, MessageSquare, Loader2, QrCode, Plus } from 'lucide-react';
+import { Users, TrendingUp, Award, MessageSquare, Loader2, QrCode, Plus } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
@@ -8,6 +8,7 @@ import { getInitials, formatCurrency } from '../lib/utils';
 import { Progress } from '../components/ui/progress';
 import { useAppContext } from '../contexts/AppContext';
 import { useRegu } from '../hooks/useRegu';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface ReguPageProps {
   onBack?: () => void;
@@ -24,17 +25,11 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   if (!user?.regu_id) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <button 
-              onClick={onBack}
-              className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </button>
-            <h2 className="text-white">Regu Saya</h2>
-          </div>
-        </div>
+        <HeaderWithBack 
+          pageName="Regu Saya"
+          onNotificationClick={() => onNavigate?.('notifikasi')}
+          onStatsClick={() => onNavigate?.('laporan')}
+        />
 
         <div className="px-4 py-8">
           <Card className="p-8 text-center">
@@ -87,18 +82,11 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-6">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Regu Saya</h2>
-        </div>
-      </div>
+      <HeaderWithBack 
+        pageName="Regu Saya"
+        onNotificationClick={() => onNavigate?.('notifikasi')}
+        onStatsClick={() => onNavigate?.('laporan')}
+      />
 
       <div className="px-4 -mt-4 pb-6">
         {loading ? (
