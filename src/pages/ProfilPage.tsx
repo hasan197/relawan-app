@@ -1,4 +1,5 @@
 import { BottomNavigation } from '../components/BottomNavigation';
+import { Header } from '../components/Header';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
@@ -31,15 +32,17 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+type NavItem = "dashboard" | "donatur" | "laporan" | "profil" | "admin-dashboard" | "admin-validasi-donasi" | "admin-data" | "admin-tools";
+
 interface ProfilPageProps {
-  onNavigate?: (page: 'dashboard' | 'donatur' | 'laporan' | 'profil' | 'template' | 'program') => void;
+  onNavigate?: (page: NavItem | 'template' | 'program' | 'regu' | 'my-regus' | 'create-regu' | 'regu-qr-code' | 'chat-regu' | 'materi-promosi' | 'notifikasi' | 'pengaturan') => void;
 }
 
 export function ProfilPage({ onNavigate }: ProfilPageProps) {
   const { user, logout } = useAppContext();
   const { statistics, loading } = useStatistics(user?.id || null);
   
-  const handleNavigation = (item: 'dashboard' | 'donatur' | 'laporan' | 'profil') => {
+  const handleNavigation = (item: NavItem) => {
     onNavigate?.(item);
   };
 
@@ -121,33 +124,14 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
   const RoleIcon = getRoleIcon();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 pb-24">
-      {/* Modern Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-500 pt-6 pb-32 px-4 overflow-hidden">
-        {/* Decorative Background */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-white/80 text-sm mb-1">Profil Saya</p>
-              <h1 className="text-white text-2xl">Halo, {user?.full_name?.split(' ')[0] || 'Relawan'}! 👋</h1>
-            </div>
-            <Button
-              onClick={() => console.log('Edit profil')}
-              className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
-              size="sm"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-4 -mt-24 relative z-10">
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <Header 
+        pageName="Profil"
+        onNotificationClick={() => onNavigate?.('notifikasi')}
+        onStatsClick={() => onNavigate?.('laporan')}
+      />
+                      
+        <div className="px-4 -mt-4 relative z-10">
         {/* Profile Card - Floating Design */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

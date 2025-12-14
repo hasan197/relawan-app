@@ -7,6 +7,7 @@ import { useAppContext } from '../contexts/AppContext';
 interface HeaderProps {
   onNotificationClick?: () => void;
   onStatsClick?: () => void;
+  pageName?: string;
 }
 
 const getGreeting = () => {
@@ -17,21 +18,15 @@ const getGreeting = () => {
   return 'Selamat Malam';
 };
 
-export function Header({ onNotificationClick, onStatsClick }: HeaderProps) {
+export function Header({ onNotificationClick, onStatsClick, pageName }: HeaderProps) {
   const { user } = useAppContext();
   
   return (
-    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-      <div className="flex items-start justify-between mb-6">
+    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-8 rounded-b-3xl shadow-lg">
+      <div className="flex items-start justify-between mb-0">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border-2 border-white shadow-md">
-            <AvatarFallback className="bg-primary-700 text-white">
-              {getInitials(user?.full_name || 'Relawan')}
-            </AvatarFallback>
-          </Avatar>
           <div>
-            <p className="text-primary-50 text-sm">{getGreeting()} 👋</p>
-            <p className="text-white mt-0.5 font-medium">{user?.full_name || 'Relawan ZISWAF'}</p>
+            <h2 className="text-white mb-1">{pageName || 'Dashboard'}</h2>
           </div>
         </div>
         

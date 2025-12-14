@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { Header } from '../components/Header';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
 import { getInitials, formatCurrency } from '../lib/utils';
-import { Trophy, TrendingUp, Calendar, Download, Bell, Loader2 } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Download, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Progress } from '../components/ui/progress';
 import { useAppContext } from '../contexts/AppContext';
@@ -45,24 +46,11 @@ export function LaporanPage({ onNavigate }: LaporanPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-white mb-1">Laporan & Statistik</h2>
-            <p className="text-primary-100 text-sm">
-              {user?.full_name || 'Relawan'}
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate?.('notifikasi')}
-            className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <Bell className="h-5 w-5 text-white" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-        </div>
-      </div>
+      <Header 
+        pageName="Laporan & Statistik"
+        onNotificationClick={() => onNavigate?.('notifikasi')}
+        onStatsClick={() => onNavigate?.('laporan')}
+      />
       
       <div className="px-4 -mt-4">
         {/* Summary Card */}
