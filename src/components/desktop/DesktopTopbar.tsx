@@ -1,4 +1,4 @@
-import { Search, Bell, Settings, HelpCircle, ChevronDown } from 'lucide-react';
+import { Search, Bell, Settings, HelpCircle, ChevronDown, Code2 } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -14,9 +14,22 @@ interface DesktopTopbarProps {
 
 export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProps) {
   const { user } = useAppContext();
+  const isMvvmMode = typeof window !== 'undefined' && (window.location.pathname || '').startsWith('/mvvm');
+
+  const toggleMvvmMode = () => {
+    if (typeof window === 'undefined') return;
+
+    const path = window.location.pathname || '/';
+    if (path.startsWith('/mvvm')) {
+      window.location.assign('/');
+      return;
+    }
+
+    window.location.assign('/mvvm');
+  };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
+    <div className="relative bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
       <div className="flex items-center justify-between">
         {/* Title Section */}
         <div>
@@ -57,6 +70,22 @@ export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProp
           </button>
 
           {/* Settings */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleMvvmMode}
+            className="gap-2"
+          >
+            <Code2 className="h-4 w-4" />
+            {isMvvmMode ? (
+              <>
+                Normal                
+              </>
+            ) : (
+              'MVVM'
+            )}
+          </Button>
+
           <button 
             onClick={() => onNavigate?.('pengaturan')}
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"

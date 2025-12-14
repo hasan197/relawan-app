@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from './components/ui/sonner';
+import { DraftRibbon } from './components/ui/draft-ribbon.tsx';
 import { SplashScreen } from './pages/SplashScreen';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -65,6 +66,7 @@ import { DebugPage } from './pages/DebugPage';
 import { QuickTestPage } from './pages/QuickTestPage';
 import { AdminToolsPage } from './pages/AdminToolsPage';
 import { DatabaseResetPage } from './pages/DatabaseResetPage';
+import { GeneratorResiPageMvvm } from './pages/mvvm/GeneratorResiPageMvvm';
 
 type Page = 
   | 'splash'
@@ -117,13 +119,28 @@ function AppContent() {
     if (urlParams.get('test') === 'quick') {
       return 'quick-test';
     }
+
+    // MVVM sandbox routing (path prefix)
+    const path = window.location.pathname || '/';
+    if (path.startsWith('/mvvm')) {
+      const mvvmPath = path.replace(/^\/mvvm\/?/, '');
+      if (mvvmPath === 'generator-resi') {
+        return 'generator-resi';
+      }
+    }
+
     return 'splash';
   });
+  const isMvvmMode = (window.location.pathname || '').startsWith('/mvvm');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errorType, setErrorType] = useState<'error' | 'no-user-id' | 'offline' | '404'>('error');
   const [navigationHistory, setNavigationHistory] = useState<Page[]>([]);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const [selectedMuzakkiId, setSelectedMuzakkiId] = useState<string | null>(null);
+
+  const setPage = (page: string) => {
+    setCurrentPage(page as Page);
+  };
 
   // Track navigation history when page changes (excluding back navigation)
   useEffect(() => {
@@ -191,9 +208,9 @@ function AppContent() {
     }
   }, [loading, isAuthenticated, currentPage, user, logout]);
 
-  const handleNavigation = (page: Page) => {
-    setNavigationHistory([...navigationHistory, page]);
-    setCurrentPage(page);
+  const handleNavigation = (page: string) => {
+    setNavigationHistory([...navigationHistory, page as Page]);
+    setCurrentPage(page as Page);
     // Scroll to top setiap pindah halaman
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
@@ -339,7 +356,9 @@ function AppContent() {
         return <ChatReguPageWithBackend onBack={() => setCurrentPage('regu')} />;
       
       case 'generator-resi':
-        return <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
+        return isMvvmMode
+          ? <GeneratorResiPageMvvm onBack={() => setCurrentPage('dashboard')} />
+          : <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
       
       case 'notifikasi':
         return <NotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
@@ -368,16 +387,16 @@ function AppContent() {
         return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
       
       case 'admin-dashboard':
-        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setCurrentPage} />;
+        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setPage} />;
       
       case 'admin-validasi-donasi':
         return <AdminValidasiDonasiPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
       
       case 'admin-data':
-        return <AdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
+        return <AdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setPage} />;
       
       case 'admin-tools':
-        return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setCurrentPage} />;
+        return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setPage} />;
       
       case 'database-reset':
         return <DatabaseResetPage onBack={() => setCurrentPage('admin-dashboard')} />;
@@ -512,6 +531,9 @@ function AppContent() {
             
             case 'database-reset':
               return <DesktopDatabaseResetPage onBack={() => setCurrentPage('admin-tools')} />;
+
+            case 'generator-resi':
+              return renderMobilePage();
             
             // For pages without desktop version, use mobile version
             default:
@@ -524,6 +546,9 @@ function AppContent() {
 
   return (
     <>
+      {isMvvmMode && (
+        <DraftRibbon text="MVVM" color="yellow" position="top-left" />
+      )}
       {isDesktop ? renderDesktopPage() : renderMobilePage()}
       <Toaster 
         position="bottom-center" 
