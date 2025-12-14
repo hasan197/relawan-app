@@ -57,6 +57,7 @@ export function useMuzakki(relawanId: string | null) {
     city?: string;
     notes?: string;
     status?: 'baru' | 'follow-up' | 'donasi';
+    category?: 'muzakki' | 'donatur' | 'prospek';
   }) => {
     console.log('🔍 addMuzakki called with data:', data);
     console.log('🔍 Current relawanId:', relawanId);
@@ -78,6 +79,7 @@ export function useMuzakki(relawanId: string | null) {
         method: 'POST',
         body: JSON.stringify({
           relawan_id: relawanId,
+          category: data.category || 'prospek', // Default to 'prospek' if not provided
           ...data
         })
       });
@@ -376,7 +378,6 @@ export function useAddMuzakki() {
       const response = await apiCall('/muzakki', {
         method: 'POST',
         body: JSON.stringify({
-          createdBy: relawanId,
           name: data.name,
           phone: data.phone,
           city: data.city,

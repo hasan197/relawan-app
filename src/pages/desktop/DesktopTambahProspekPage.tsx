@@ -7,7 +7,8 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { useAppContext } from '../../contexts/AppContext';
-import { toast } from 'sonner@2.0.3';
+import { useAddMuzakki } from '../../hooks/useMuzakki';
+import { toast } from 'sonner';
 
 interface DesktopTambahProspekPageProps {
   onNavigate?: (page: string) => void;
@@ -16,7 +17,8 @@ interface DesktopTambahProspekPageProps {
 }
 
 export function DesktopTambahProspekPage({ onNavigate, onBack, onSave }: DesktopTambahProspekPageProps) {
-  const { addMuzakki, loading } = useAppContext();
+  const { user } = useAppContext();
+  const { addMuzakki, adding } = useAddMuzakki();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -36,16 +38,19 @@ export function DesktopTambahProspekPage({ onNavigate, onBack, onSave }: Desktop
       return;
     }
 
+    if (!user?.id) {
+      toast.error('User tidak ditemukan. Silakan login kembali.');
+      return;
+    }
+
     try {
-      await addMuzakki({
+      await addMuzakki(user.id, {
         name: formData.name,
         phone: formData.phone,
-        email: formData.email || undefined,
         city: formData.city || undefined,
-        address: formData.address || undefined,
-        occupation: formData.occupation || undefined,
         status: formData.status,
-        notes: formData.notes || undefined
+        notes: formData.notes || undefined,
+        category: 'prospek'
       });
 
       toast.success('Muzakki berhasil ditambahkan!');
@@ -224,10 +229,10 @@ export function DesktopTambahProspekPage({ onNavigate, onBack, onSave }: Desktop
                   <div className="space-y-3">
                     <Button 
                       type="submit"
-                      disabled={loading}
+                      disabled={adding}
                       className="w-full bg-primary-600 hover:bg-primary-700 gap-2"
                     >
-                      {loading ? (
+                      {adding ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       ) : (
                         <>

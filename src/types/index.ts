@@ -18,7 +18,6 @@ export interface Muzakki {
   status: 'baru' | 'follow-up' | 'donasi';
   notes?: string;
   lastContact?: Date;
-  createdBy: string;
   createdAt: Date;
 }
 

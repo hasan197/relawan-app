@@ -12,7 +12,7 @@ export const listByRelawan = query({
         if (!user) throw new Error("Unauthenticated");
         const muzakkis = await ctx.db
             .query("muzakkis")
-            .withIndex("by_created_by", (q) => q.eq("createdBy", args.relawanId))
+            .withIndex("by_relawan", (q) => q.eq("relawan_id", args.relawanId))
             .collect();
 
         // Map to match Supabase response format if needed
@@ -57,26 +57,33 @@ export const create = mutation({
         name: v.string(),
         phone: v.string(),
         city: v.optional(v.string()),
+        category: v.optional(v.union(v.literal("muzakki"), v.literal("donatur"), v.literal("prospek"))),
         status: v.union(
             v.literal("baru"),
             v.literal("follow-up"),
             v.literal("donasi")
         ),
         notes: v.optional(v.string()),
-        relawan_id: v.id("users"),
         token: v.optional(v.string()),
+        // createdBy: v.optional(v.string()), // Add createdBy to the validator
     },
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+        
+        // Use authenticated user ID as relawan_id, fallback to createdBy from args if available
+        const relawan_id = user._id;
+        if (!relawan_id) throw new Error("No user ID available for creating muzakki");
+        
         const id = await ctx.db.insert("muzakkis", {
             name: args.name,
             phone: args.phone,
             city: args.city,
+            category: args.category || "prospek", // Default to "prospek" if not provided
             status: args.status,
             notes: args.notes,
-            createdBy: args.relawan_id,
-            relawan_id: args.relawan_id,
+            createdBy: user._id,
+            relawan_id: relawan_id,
             createdAt: Date.now(),
         });
         return id;
@@ -159,6 +166,17 @@ export const addCommunication = mutation({
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+        
+        // Verify relawan_id matches authenticated user
+        if (args.relawan_id !== user._id && args.relawan_id !== user.tokenIdentifier) {
+            console.error('Communication relawan mismatch:', {
+                provided_relawan_id: args.relawan_id,
+                user_id: user._id,
+                user_tokenIdentifier: user.tokenIdentifier
+            });
+            throw new Error("Unauthorized: Cannot add communication as another user");
+        }
+        
         const id = await ctx.db.insert("communications", {
             muzakkiId: args.muzakki_id,
             relawanId: args.relawan_id,

@@ -103,6 +103,16 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+        
+        // Verify relawan_id matches authenticated user for donation creation
+        if (args.relawan_id !== user._id && args.relawan_id !== user.tokenIdentifier) {
+            console.error('Donation creation relawan mismatch:', {
+                provided_relawan_id: args.relawan_id,
+                user_id: user._id,
+                user_tokenIdentifier: user.tokenIdentifier
+            });
+            throw new Error("Unauthorized: Cannot create donation as another user");
+        }
 
         // Fetch relawan name if not provided
         let relawanName = args.relawan_name;
@@ -182,6 +192,18 @@ export const validate = mutation({
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+        
+        // Verify admin_id matches authenticated user or user is admin
+        if (args.adminId !== user._id && args.adminId !== user.tokenIdentifier && user.role !== "admin") {
+            console.error('Admin validation mismatch:', {
+                provided_admin_id: args.adminId,
+                user_id: user._id,
+                user_tokenIdentifier: user.tokenIdentifier,
+                user_role: user.role
+            });
+            throw new Error("Unauthorized: Cannot validate donation as another user");
+        }
+        
         const donation = await ctx.db.get(args.donationId);
         if (!donation) {
             throw new Error("Donation not found");

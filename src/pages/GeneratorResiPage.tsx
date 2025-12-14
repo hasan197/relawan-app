@@ -75,28 +75,27 @@ export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
       formData.append('file', buktiFile);
       formData.append('donation_id', donationId);
 
-      const response = await fetch(
-        `https://cqeranzfqkccdqadpica.supabase.co/functions/v1/make-server-f689ca3f/donations/upload-bukti`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxZXJhbnpmcWtjY2RxYWRwaWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEzMzcxMTgsImV4cCI6MjA0NjkxMzExOH0.6Uyy-d1VXz_DvdbK40W0yvIqZBz4GJc3SFn9k_WN27s`
-          },
-          body: formData
-        }
-      );
+      // Log the form data for debugging
+      console.log('📤 Uploading file:', {
+        fileName: buktiFile.name,
+        size: buktiFile.size,
+        type: buktiFile.type,
+        donationId: donationId
+      });
 
-      const result = await response.json();
+      // Use the dedicated upload endpoint through apiCall
+      const result = await apiCall('/donations/upload-bukti', {
+        method: 'POST',
+        body: formData
+      });
 
-      if (!response.ok) {
-        console.error('Upload failed with status:', response.status, result);
-        throw new Error(result.error || `Upload failed with status ${response.status}`);
-      }
+      console.log('📥 Upload response:', result);
 
-      if (result.success) {
-        return result.data.url;
+      if (result.success && result.url) {
+        // URL already updated in handleFileUpload, no need for PATCH
+        return result.url;
       } else {
-        throw new Error(result.error || 'Upload failed');
+        throw new Error(result.error || 'Upload failed: No URL returned');
       }
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -157,20 +156,9 @@ export function GeneratorResiPage({ onBack }: GeneratorResiPageProps) {
       const donationId = response.data.id;
 
       // Upload bukti if exists
-      let buktiUrl: string | null = null;
       if (buktiFile) {
         toast.info('Mengupload bukti transfer...');
-        buktiUrl = await uploadBuktiTransfer(donationId);
-
-        // Update donation with bukti URL
-        if (buktiUrl) {
-          await apiCall(`/donations/${donationId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-              bukti_transfer_url: buktiUrl
-            })
-          });
-        }
+        await uploadBuktiTransfer(donationId);
       }
 
       // Generate receipt

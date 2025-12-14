@@ -37,7 +37,13 @@ export const send = mutation({
         if (!user) throw new Error("Unauthenticated");
 
         // Verify sender_id matches authenticated user
-        if (args.sender_id !== user.tokenIdentifier && args.sender_id !== user.subject) {
+        if (args.sender_id !== user.tokenIdentifier && args.sender_id !== user.subject && args.sender_id !== user._id) {
+            console.error('Authentication mismatch:', {
+                provided_sender_id: args.sender_id,
+                user_tokenIdentifier: user.tokenIdentifier,
+                user_subject: user.subject,
+                user_id: user._id
+            });
             throw new Error("Cannot send message as another user");
         }
 
