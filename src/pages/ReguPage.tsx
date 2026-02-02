@@ -25,7 +25,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   if (!user?.regu_id) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <HeaderWithBack 
+        <HeaderWithBack
           pageName="Regu Saya"
           onNotificationClick={() => onNavigate?.('notifikasi')}
           onStatsClick={() => onNavigate?.('laporan')}
@@ -38,15 +38,15 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
               {isPembimbingWithoutRegu ? 'Anda belum memiliki regu' : 'Anda belum tergabung dalam regu'}
             </p>
             <p className="text-gray-400 text-sm mb-4">
-              {isPembimbingWithoutRegu 
+              {isPembimbingWithoutRegu
                 ? 'Sebagai pembimbing, Anda dapat membuat regu baru untuk mengelola relawan'
                 : 'Scan QR code dari pembimbing atau masukkan kode regu untuk bergabung'
               }
             </p>
-            
+
             {/* Tombol Buat Regu untuk Pembimbing */}
             {isPembimbingWithoutRegu && (
-              <Button 
+              <Button
                 onClick={() => onNavigate?.('create-regu')}
                 className="bg-primary-600 hover:bg-primary-700 mt-2"
               >
@@ -54,10 +54,10 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
                 Buat Regu Baru
               </Button>
             )}
-            
+
             {/* Tombol Gabung Regu untuk Relawan */}
             {!isPembimbingWithoutRegu && (
-              <Button 
+              <Button
                 onClick={() => onNavigate?.('join-regu')}
                 className="bg-primary-600 hover:bg-primary-700 mt-2"
               >
@@ -76,16 +76,17 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   const reguProgress = (reguDonations / reguTarget) * 100;
 
   // Sort members by total_donations (leaderboard)
-  const sortedMembers = [...members].sort((a, b) => 
+  const sortedMembers = [...members].sort((a, b) =>
     (b.total_donations || 0) - (a.total_donations || 0)
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeaderWithBack 
+      <HeaderWithBack
         pageName="Regu Saya"
         onNotificationClick={() => onNavigate?.('notifikasi')}
         onStatsClick={() => onNavigate?.('laporan')}
+        customPadding="px-4 py-8"
       />
 
       <div className="px-4 -mt-4 pb-6">
@@ -101,7 +102,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
                 <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                
+
                 <div className="flex-1">
                   <h3 className="text-gray-900 mb-1">{regu?.name || user?.regu_name || 'Regu'}</h3>
                   <p className="text-gray-600 mb-2">
@@ -136,15 +137,15 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Button 
+                <Button
                   className="bg-primary-600 hover:bg-primary-700"
                   onClick={() => onNavigate?.('chat-regu')}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Chat Regu
                 </Button>
-                
-                <Button 
+
+                <Button
                   variant="outline"
                   onClick={() => onNavigate?.('regu-qr-code')}
                 >
@@ -161,13 +162,13 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
                 <p className="text-gray-500 text-sm mb-1">Peringkat</p>
                 <p className="text-gray-900">#1</p>
               </Card>
-              
+
               <Card className="p-4 text-center">
                 <Users className="h-6 w-6 text-blue-600 mx-auto mb-2" />
                 <p className="text-gray-500 text-sm mb-1">Anggota</p>
                 <p className="text-gray-900">{members.length}</p>
               </Card>
-              
+
               <Card className="p-4 text-center">
                 <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
                 <p className="text-gray-500 text-sm mb-1">Prestasi</p>
@@ -178,7 +179,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
             {/* Leaderboard */}
             <Card className="p-6">
               <h3 className="text-gray-900 mb-4">Leaderboard Regu</h3>
-              
+
               <div className="space-y-3">
                 {sortedMembers.length === 0 ? (
                   <div className="text-center py-8">
@@ -188,21 +189,20 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
                 ) : (
                   sortedMembers.map((member, index) => (
                     <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className={`text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full ${
-                        index === 0 ? 'bg-yellow-100 text-yellow-600' :
+                      <div className={`text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full ${index === 0 ? 'bg-yellow-100 text-yellow-600' :
                         index === 1 ? 'bg-gray-100 text-gray-600' :
-                        index === 2 ? 'bg-orange-100 text-orange-600' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
+                          index === 2 ? 'bg-orange-100 text-orange-600' :
+                            'bg-gray-100 text-gray-500'
+                        }`}>
                         {index + 1}
                       </div>
-                      
+
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="bg-primary-100 text-primary-700">
                           {getInitials(member.full_name)}
                         </AvatarFallback>
                       </Avatar>
-                      
+
                       <div className="flex-1 min-w-0">
                         <p className="text-gray-900 truncate">
                           {member.full_name}
@@ -214,7 +214,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
                           {member.total_muzakki || 0} muzakki
                         </p>
                       </div>
-                      
+
                       <div className="text-right">
                         <p className="text-green-600 font-medium">
                           {formatCurrency(member.total_donations || 0)}

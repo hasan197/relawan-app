@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { formatRelativeTime, formatCurrency } from '../lib/utils';
 import { useAppContext } from '../contexts/AppContext';
 import { useStatistics } from '../hooks/useStatistics';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface RiwayatAktivitasPageProps {
   onBack?: () => void;
@@ -65,24 +66,16 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div>
-            <h2 className="text-white">Riwayat Aktivitas</h2>
-            <p className="text-primary-100 text-sm">
-              {loading ? 'Memuat...' : `${filteredActivities.length} aktivitas`}
-            </p>
-          </div>
-        </div>
+      <HeaderWithBack
+        pageName="Riwayat Aktivitas"
+        subtitle={loading ? 'Memuat...' : `${filteredActivities.length} aktivitas`}
+        onBack={onBack}
+        sticky
+      />
 
-        {/* Filter Buttons */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+      {/* Filter Buttons */}
+      <div className="px-4 pt-3 bg-white border-b border-gray-200">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-4">
           {[
             { id: 'all', label: 'Semua', count: activities.length },
             { id: 'donation', label: 'Donasi', count: activities.filter(a => a.type === 'donation').length },
@@ -92,11 +85,10 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
             <button
               key={filter.id}
               onClick={() => setFilterType(filter.id as any)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                filterType === filter.id
-                  ? 'bg-white text-primary-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
+              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors font-medium ${filterType === filter.id
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               {filter.label} ({filter.count})
             </button>
@@ -114,8 +106,8 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
           <Card className="p-8 text-center">
             <div className="text-gray-400 text-4xl mb-2">📋</div>
             <p className="text-gray-600 mb-1">
-              {filterType === 'all' 
-                ? 'Belum ada aktivitas' 
+              {filterType === 'all'
+                ? 'Belum ada aktivitas'
                 : `Belum ada aktivitas ${getActivityLabel(filterType).toLowerCase()}`}
             </p>
             <p className="text-gray-400 text-sm">
@@ -130,7 +122,7 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
                   <div className={`p-3 rounded-full ${getActivityBgColor(activity.type)}`}>
                     {getActivityIcon(activity.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex-1">
@@ -144,7 +136,7 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
                           </Badge>
                         )}
                       </div>
-                      
+
                       {activity.amount && (
                         <div className="text-right ml-3">
                           <p className="text-green-600 font-medium">
@@ -153,7 +145,7 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
                         </div>
                       )}
                     </div>
-                    
+
                     <p className="text-gray-400 text-xs mt-2">
                       {formatRelativeTime(activity.time)}
                     </p>

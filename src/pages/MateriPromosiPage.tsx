@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
 import { copyToClipboard } from '../lib/utils';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface MateriPromosiPageProps {
   onBack?: () => void;
@@ -95,7 +96,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
 
   const handleShare = (material: Material) => {
     const shareText = material.caption || material.description;
-    
+
     if (navigator.share) {
       navigator.share({
         title: material.title,
@@ -129,31 +130,24 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Materi Promosi</h2>
-        </div>
-      </div>
+      <HeaderWithBack
+        pageName="Materi Promosi"
+        onBack={onBack}
+        sticky
+      />
 
-      <div className="px-4 -mt-4 pb-6">
+      <div className="px-4 pt-3">
         {/* Category Filter */}
-        <Card className="p-4 mb-4 shadow-card">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <Card className="px-4 pt-4 mb-4 shadow-card">
+          <div className="flex gap-2 overflow-x-auto pb-4">
             {(['semua', 'zakat', 'infaq', 'sedekah', 'wakaf', 'umum'] as const).map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${selectedCategory === category
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
@@ -213,7 +207,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
                         Unduh
                       </Button>
                     )}
-                    
+
                     {material.caption && (
                       <Button
                         variant="outline"
@@ -225,7 +219,7 @@ export function MateriPromosiPage({ onBack }: MateriPromosiPageProps) {
                         Salin
                       </Button>
                     )}
-                    
+
                     <Button
                       size="sm"
                       className="w-full h-7 text-xs bg-primary-600 hover:bg-primary-700"

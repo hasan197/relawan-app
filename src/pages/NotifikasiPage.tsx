@@ -7,6 +7,7 @@ import { formatRelativeTime } from '../lib/utils';
 import { useAppContext } from '../contexts/AppContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { toast } from 'sonner@2.0.3';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface NotifikasiPageProps {
   onBack?: () => void;
@@ -60,50 +61,32 @@ export function NotifikasiPage({ onBack, onNavigate }: NotifikasiPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div className="flex-1">
-            <h2 className="text-white">Notifikasi</h2>
-            {unreadCount > 0 && (
-              <p className="text-primary-100 text-sm">
-                {unreadCount} notifikasi belum dibaca
-              </p>
-            )}
-          </div>
-          <div className="relative">
-            <Bell className="h-6 w-6 text-white" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </div>
-        </div>
+      <HeaderWithBack
+        pageName="Notifikasi"
+        subtitle={unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : undefined}
+        onBack={onBack}
+        sticky
+      />
 
-        {/* Filter Tabs */}
+      {/* Filter Tabs */}
+      <div className="px-4 py-3 bg-white border-b border-gray-200">
         <div className="flex gap-2">
           <button
             onClick={() => setFilter('all')}
-            className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
               filter === 'all'
-                ? 'bg-white text-primary-600'
-                : 'bg-white/20 text-white hover:bg-white/30'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             Semua ({notifications.length})
           </button>
           <button
             onClick={() => setFilter('unread')}
-            className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
               filter === 'unread'
-                ? 'bg-white text-primary-600'
-                : 'bg-white/20 text-white hover:bg-white/30'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             Belum Dibaca ({unreadCount})

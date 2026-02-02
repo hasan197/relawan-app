@@ -11,6 +11,7 @@ import { toast } from 'sonner@2.0.3';
 import { useAppContext } from '../contexts/AppContext';
 import { useDonations } from '../hooks/useDonations';
 import { apiCall } from '../lib/supabase';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface GeneratorResiPageProps {
   onBack?: () => void;
@@ -269,18 +270,13 @@ Semoga menjadi amal jariyah yang berkah ✨
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 sticky top-0 z-10 shadow-lg">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="font-semibold text-lg">Lapor Donasi</h1>
-            <p className="text-sm text-primary-100">Catat & upload bukti transfer</p>
-          </div>
-          <Receipt className="h-6 w-6 opacity-80" />
-        </div>
-      </div>
+      <HeaderWithBack
+        pageName="Lapor Donasi"
+        subtitle="Catat & upload bukti transfer"
+        onBack={onBack}
+        rightIcon={Receipt}
+        sticky
+      />
 
       <div className="p-4 space-y-4">
         {/* Form */}

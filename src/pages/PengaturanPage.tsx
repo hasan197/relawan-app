@@ -5,6 +5,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner@2.0.3';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface PengaturanPageProps {
   onBack?: () => void;
@@ -39,19 +40,13 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <h2 className="text-white">Pengaturan</h2>
-        </div>
-      </div>
+      <HeaderWithBack
+        pageName="Pengaturan"
+        onBack={onBack}
+        sticky
+      />
 
-      <div className="px-4 -mt-4 pb-6 max-w-2xl mx-auto">
+      <div className="px-4 mt-4 pb-6 max-w-2xl mx-auto">
         {/* Notifications */}
         <Card className="mb-4 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
@@ -60,7 +55,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               <h4 className="text-gray-700">Notifikasi</h4>
             </div>
           </div>
-          
+
           <div className="divide-y divide-gray-100">
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
@@ -122,7 +117,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               <h4 className="text-gray-700">Tampilan</h4>
             </div>
           </div>
-          
+
           <div className="divide-y divide-gray-100">
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
@@ -163,7 +158,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               <h4 className="text-gray-700">Keamanan & Privasi</h4>
             </div>
           </div>
-          
+
           <div className="divide-y divide-gray-100">
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
@@ -195,7 +190,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               <h4 className="text-gray-700">Data & Penyimpanan</h4>
             </div>
           </div>
-          
+
           <div className="divide-y divide-gray-100">
             <div className="px-4 py-4 flex items-center justify-between">
               <div>
@@ -209,7 +204,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
               />
             </div>
 
-            <button 
+            <button
               onClick={handleClearCache}
               className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
@@ -227,7 +222,7 @@ export function PengaturanPage({ onBack }: PengaturanPageProps) {
           <div className="px-4 py-3 bg-red-50 border-b border-red-100">
             <h4 className="text-red-700 text-sm">Zona Berbahaya</h4>
           </div>
-          
+
           <div className="p-4">
             <Button
               variant="outline"

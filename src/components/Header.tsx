@@ -8,6 +8,7 @@ interface HeaderProps {
   onNotificationClick?: () => void;
   onStatsClick?: () => void;
   pageName?: string;
+  customPadding?: string;
 }
 
 const getGreeting = () => {
@@ -18,26 +19,26 @@ const getGreeting = () => {
   return 'Selamat Malam';
 };
 
-export function Header({ onNotificationClick, onStatsClick, pageName }: HeaderProps) {
+export function Header({ onNotificationClick, onStatsClick, pageName, customPadding }: HeaderProps) {
   const { user } = useAppContext();
-  
+
   return (
-    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-8 rounded-b-3xl shadow-lg">
+    <div className={`bg-gradient-to-r from-primary-500 to-primary-600 ${customPadding || 'px-4 py-8'} rounded-b-3xl shadow-lg`}>
       <div className="flex items-start justify-between mb-0">
         <div className="flex items-center gap-3">
           <div>
             <h2 className="text-white mb-1">{pageName || 'Dashboard'}</h2>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={onStatsClick}
             className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >
             <TrendingUp className="h-5 w-5 text-white" />
           </button>
-          <button 
+          <button
             onClick={onNotificationClick}
             className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
           >

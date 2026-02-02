@@ -8,6 +8,7 @@ import { getInitials, formatRelativeTime } from '../lib/utils';
 import { useAppContext } from '../contexts/AppContext';
 import { useChat } from '../hooks/useChat';
 import { toast } from 'sonner@2.0.3';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface ChatReguPageWithBackendProps {
   onBack?: () => void;
@@ -67,34 +68,30 @@ export function ChatReguPageWithBackend({ onBack }: ChatReguPageWithBackendProps
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div className="flex-1">
-            <h3 className="text-white">{user?.regu_name || 'Chat Regu'}</h3>
-            <p className="text-primary-100 text-sm">
-              {loading ? 'Memuat...' : `${messages.length} pesan`}
-            </p>
-          </div>
+      <HeaderWithBack
+        pageName={user?.regu_name || 'Chat Regu'}
+        subtitle={loading ? 'Memuat...' : `${messages.length} pesan`}
+        onBack={onBack}
+        rightIcon={RefreshCw}
+        sticky
+      />
+
+      {/* Messages Area - flex layout for messages + input */}
+      <div className="flex flex-col bg-gray-50" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        {/* Refresh Button */}
+        <div className="p-2 flex justify-end">
           <button
             onClick={refetch}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-all"
             disabled={loading}
           >
-            <RefreshCw className={`h-5 w-5 text-white ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
-      </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <Loader2 className="h-8 w-8 animate-spin mb-2" />
@@ -194,6 +191,7 @@ export function ChatReguPageWithBackend({ onBack }: ChatReguPageWithBackendProps
             </Button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

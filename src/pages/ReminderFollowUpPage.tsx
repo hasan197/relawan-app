@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Calendar, MessageCircle, Phone, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { getInitials, formatRelativeTime } from '../lib/utils';
 import { toast } from 'sonner@2.0.3';
+import { HeaderWithBack } from '../components/HeaderWithBack';
 
 interface ReminderFollowUpPageProps {
   onBack?: () => void;
@@ -116,29 +117,15 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button 
-            onClick={onBack}
-            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div className="flex-1">
-            <h2 className="text-white">Reminder Follow-up</h2>
-            <p className="text-primary-100">
-              {followUps.length} muzakki perlu dihubungi
-            </p>
-          </div>
-          {highPriorityCount > 0 && (
-            <Badge className="bg-red-500 text-white border-none">
-              {highPriorityCount} urgent
-            </Badge>
-          )}
-        </div>
-      </div>
+      <HeaderWithBack
+        pageName="Reminder Follow-up"
+        subtitle={`${followUps.length} muzakki perlu dihubungi`}
+        onBack={onBack}
+        rightIcon={highPriorityCount > 0 ? AlertCircle : undefined}
+        sticky
+      />
 
-      <div className="px-4 -mt-4 pb-6">
+      <div className="px-4 mt-4 pb-6">
         {/* Filters */}
         <Card className="p-4 mb-4 shadow-card">
           <div className="flex gap-2 overflow-x-auto pb-2">
@@ -146,11 +133,10 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
               <button
                 key={priority}
                 onClick={() => setFilter(priority)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  filter === priority
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${filter === priority
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 {priority === 'semua' ? 'Semua' : priority === 'high' ? 'Tinggi' : priority === 'medium' ? 'Sedang' : 'Rendah'}
                 {priority !== 'semua' && (
@@ -174,7 +160,7 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
                     {getInitials(item.muzakkiName)}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1">
                   <h4 className="text-gray-900 mb-1">{item.muzakkiName}</h4>
                   {getPriorityBadge(item.priority)}
@@ -185,11 +171,11 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    Terakhir dihubungi {formatRelativeTime(item.lastContact)} 
+                    Terakhir dihubungi {formatRelativeTime(item.lastContact)}
                     ({item.daysSinceContact} hari lalu)
                   </span>
                 </div>
-                
+
                 {item.notes && (
                   <p className="text-gray-600 bg-gray-50 p-2 rounded">
                     💡 {item.notes}
@@ -205,7 +191,7 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
                 >
                   <Phone className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   className="bg-green-600 hover:bg-green-700"
@@ -214,7 +200,7 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
                   <MessageCircle className="h-4 w-4 mr-1" />
                   <span>WA</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="sm"

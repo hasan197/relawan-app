@@ -6,13 +6,13 @@ import { Button } from '../components/ui/button';
 import { getInitials, formatCurrency } from '../lib/utils';
 import { useAppContext } from '../contexts/AppContext';
 import { useStatistics } from '../hooks/useStatistics';
-import { 
-  User, 
-  Phone, 
-  Users, 
-  FileText, 
-  MessageSquare, 
-  Settings, 
+import {
+  User,
+  Phone,
+  Users,
+  FileText,
+  MessageSquare,
+  Settings,
   LogOut,
   ChevronRight,
   Bell,
@@ -40,7 +40,7 @@ interface ProfilPageProps {
 export function ProfilPage({ onNavigate }: ProfilPageProps) {
   const { user, logout } = useAppContext();
   const { statistics, loading } = useStatistics(user?.id || null);
-  
+
   const handleNavigation = (item: NavItem) => {
     onNavigate?.(item);
   };
@@ -124,13 +124,14 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <Header 
+      <Header
         pageName="Profil"
         onNotificationClick={() => onNavigate?.('notifikasi')}
         onStatsClick={() => onNavigate?.('laporan')}
+        customPadding="px-4 py-8"
       />
-                      
-        <div className="px-4 -mt-4 relative z-10">
+
+      <div className="px-4 -mt-4 relative z-10">
         {/* Profile Card - Floating Design */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -149,12 +150,12 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
                   </AvatarFallback>
                 </Avatar>
               </motion.div>
-              
+
               <h3 className="text-gray-900 text-xl mb-1">{user?.full_name || 'Relawan'}</h3>
               <p className="text-gray-500 mb-3 flex items-center gap-1">
                 📍 {user?.city || 'Kota belum diisi'}
               </p>
-              
+
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${getRoleBadgeStyle()} shadow-lg`}>
                 <RoleIcon className="h-4 w-4" />
                 <span className="text-sm">
@@ -229,8 +230,8 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
         ))}
 
         {/* Logout Button - Enhanced Design */}
-        <motion.button 
-          className="w-full p-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-50 to-pink-50 text-red-600 rounded-xl hover:from-red-100 hover:to-pink-100 transition-all shadow-md border border-red-100" 
+        <motion.button
+          className="w-full p-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-50 to-pink-50 text-red-600 rounded-xl hover:from-red-100 hover:to-pink-100 transition-all shadow-md border border-red-100"
           onClick={handleLogout}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -242,7 +243,7 @@ export function ProfilPage({ onNavigate }: ProfilPageProps) {
           <span>Keluar dari Akun</span>
         </motion.button>
 
-        <motion.p 
+        <motion.p
           className="text-center text-gray-400 mt-6 mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

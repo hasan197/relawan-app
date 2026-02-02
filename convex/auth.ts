@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, QueryCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { generateJWT, verifyJWT } from "./jwtUtils";
 
 export const getCurrentUser = query({
   args: { token: v.optional(v.string()) },
@@ -36,11 +37,21 @@ export const getCurrentUser = query({
   },
 });
 
-// Helper to get user from token
+// Helper to get user from token (JWT)
 export async function getUserFromToken(ctx: QueryCtx, token: string | undefined) {
   if (!token) return null;
 
-  // Token format: "phone:<phone>"
+  // Try JWT verification first
+  const jwtPayload = await verifyJWT(token);
+  if (jwtPayload) {
+    // Get user by userId from JWT
+    const user = await ctx.db.get(jwtPayload.userId as Id<"users">);
+    if (user && user.phone === jwtPayload.phone) {
+      return user;
+    }
+  }
+
+  // Fallback to old token format for backward compatibility
   const user = await ctx.db
     .query("users")
     .withIndex("by_token", (q) => q.eq("tokenIdentifier", token))
@@ -81,7 +92,8 @@ export const login = mutation({
       throw new Error("OTP has expired");
     }
 
-    // OTP is valid, generate token identifier
+    // OTP is valid, generate JWT and token identifier
+    const jwtToken = generateJWT(user._id.toString(), user.phone);
     const tokenIdentifier = `phone:${user.phone}`;
 
     // Update user record
@@ -120,7 +132,8 @@ export const login = mutation({
         isPhoneVerified: true,
         tokenIdentifier,
         backend: process.env.CONVEX_CLOUD_ENVIRONMENT || 'development'
-      }
+      },
+      access_token: jwtToken // Return JWT token
     };
   }
 });
@@ -342,8 +355,9 @@ export const verifyOtp = mutation({
       throw new Error("OTP has expired. Please request a new one.");
     }
 
-    // OTP is valid, update user record
-    const tokenIdentifier = `phone:${user.phone}`;
+    // OTP is valid, update user record and generate JWT
+    const jwtToken = generateJWT(user._id.toString(), user.phone);
+    const tokenIdentifier = `phone:${user.phone}`; // Keep for backward compatibility
 
     // Update user record
     await ctx.db.patch(user._id, {
@@ -398,7 +412,8 @@ export const verifyOtp = mutation({
     return {
       success: true,
       user: userResponse,
-      access_token: tokenIdentifier // For compatibility with frontend
+      access_token: jwtToken, // Return JWT token
+      token_identifier: tokenIdentifier // Keep for compatibility
     };
   },
 });

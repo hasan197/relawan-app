@@ -68,7 +68,7 @@ import { AdminToolsPage } from './pages/AdminToolsPage';
 import { DatabaseResetPage } from './pages/DatabaseResetPage';
 import { GeneratorResiPageMvvm } from './pages/mvvm/GeneratorResiPageMvvm';
 
-type Page = 
+type Page =
   | 'splash'
   | 'login'
   | 'register'
@@ -160,25 +160,25 @@ function AppContent() {
     // Check if user is authenticated on mount
     if (!loading) {
       console.log('🔐 Auth Check:', { isAuthenticated, user, currentPage });
-      
+
       if (isAuthenticated) {
         // ✅ User is authenticated
-        
+
         // Check if user has ID (relawan_id)
         if (!user?.id) {
           console.error('❌ User authenticated but NO USER ID found!');
           console.error('User object:', user);
-          
+
           // Force logout if no user ID
           logout();
           setErrorType('no-user-id');
           setCurrentPage('error');
           return;
         }
-        
+
         console.log('✅ User ID exists:', user.id);
         console.log('✅ User authenticated and ready!');
-        
+
         // If on auth pages, redirect to appropriate dashboard based on role
         if (currentPage === 'splash' || currentPage === 'login' || currentPage === 'otp') {
           const targetPage = user.role === 'admin' ? 'admin-dashboard' : 'dashboard';
@@ -188,7 +188,7 @@ function AppContent() {
       } else {
         // ❌ User not authenticated
         console.log('❌ User not authenticated');
-        
+
         // If on protected pages, redirect to login
         const protectedPages = ['dashboard', 'donatur', 'laporan', 'profil', 'tambah-prospek', 'detail-prospek'];
         if (protectedPages.includes(currentPage)) {
@@ -196,7 +196,7 @@ function AppContent() {
           setCurrentPage('login');
           return;
         }
-        
+
         // If on splash, auto-redirect to login after delay
         if (currentPage === 'splash') {
           setTimeout(() => {
@@ -233,7 +233,7 @@ function AppContent() {
     };
 
     window.addEventListener('goBackInApp', handleGoBackInApp);
-    
+
     return () => {
       window.removeEventListener('goBackInApp', handleGoBackInApp);
     };
@@ -243,7 +243,7 @@ function AppContent() {
     switch (currentPage) {
       case 'splash':
         return <SplashScreen onComplete={() => setCurrentPage('login')} />;
-      
+
       case 'login':
         return (
           <LoginPage
@@ -255,7 +255,7 @@ function AppContent() {
             onRegister={() => setCurrentPage('register')}
           />
         );
-      
+
       case 'register':
         return (
           <RegisterPage
@@ -263,10 +263,10 @@ function AppContent() {
             onRegister={() => setCurrentPage('register-success')}
           />
         );
-      
+
       case 'register-success':
         return <RegisterSuccessPage onComplete={() => setCurrentPage('login')} />;
-      
+
       case 'otp':
         return (
           <OTPVerificationPage
@@ -280,42 +280,42 @@ function AppContent() {
             onBack={() => setCurrentPage('login')}
           />
         );
-      
+
       case 'onboarding':
         return <OnboardingPage onComplete={() => setCurrentPage('dashboard')} />;
-      
+
       case 'dashboard':
         return <DashboardPage onNavigate={handleNavigation} />;
-      
+
       case 'donatur':
         return <DonaturPage onNavigate={handleNavigation} onSelectMuzakki={(id) => {
           setSelectedMuzakkiId(id);
           handleNavigation('detail-prospek');
         }} />;
-      
+
       case 'laporan':
         return <LaporanPage onNavigate={handleNavigation} />;
-      
+
       case 'profil':
-        return user?.role === 'admin' 
+        return user?.role === 'admin'
           ? <AdminProfilPage onNavigate={handleNavigation} />
           : <ProfilPage onNavigate={handleNavigation} />;
-      
+
       case 'template':
         return <TemplatePesanPage onBack={handleBackNavigation} />;
-      
+
       case 'template-pesan':
         return <TemplatePesanPage onBack={handleBackNavigation} />;
-      
+
       case 'program':
         return <ProgramPage onBack={() => setCurrentPage('dashboard')} />;
-      
+
       case 'detail-program':
         return <DetailProgramPage onBack={() => setCurrentPage('program')} />;
-      
+
       case 'detail-prospek':
         return <DetailProspekPage muzakkiId={selectedMuzakkiId || undefined} onBack={() => setCurrentPage('donatur')} />;
-      
+
       case 'tambah-prospek':
         return (
           <TambahProspekPage
@@ -326,16 +326,16 @@ function AppContent() {
             }}
           />
         );
-      
+
       case 'regu':
         return <ReguPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
-      
+
       case 'regu-qr-code':
         return <ReguQRCodePage onBack={() => setCurrentPage('regu')} />;
-      
+
       case 'join-regu':
         return (
-          <JoinReguPage 
+          <JoinReguPage
             onBack={() => {
               // Back to appropriate page based on auth state
               if (isAuthenticated) {
@@ -350,7 +350,7 @@ function AppContent() {
             }}
           />
         );
-      
+
       case 'create-regu':
         return (
           <CreateReguPage
@@ -361,89 +361,89 @@ function AppContent() {
             }}
           />
         );
-      
+
       case 'my-regus':
-        return <MyRegusPage onBack={() => setCurrentPage('regu')} />;
-      
+        return <MyRegusPage onBack={handleBackNavigation} />;
+
       case 'chat-regu':
-        return <ChatReguPageWithBackend onBack={() => setCurrentPage('regu')} />;
-      
+        return <ChatReguPageWithBackend onBack={handleBackNavigation} />;
+
       case 'generator-resi':
         return isMvvmMode
-          ? <GeneratorResiPageMvvm onBack={() => setCurrentPage('dashboard')} />
-          : <GeneratorResiPage onBack={() => setCurrentPage('dashboard')} />;
-      
+          ? <GeneratorResiPageMvvm onBack={handleBackNavigation} />
+          : <GeneratorResiPage onBack={handleBackNavigation} />;
+
       case 'notifikasi':
-        return <NotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
-      
+        return <NotifikasiPage onBack={handleBackNavigation} />;
+
       case 'import-kontak':
         return (
           <ImportKontakPage
-            onBack={() => setCurrentPage('donatur')}
+            onBack={handleBackNavigation}
             onImport={() => setCurrentPage('donatur')}
           />
         );
-      
+
       case 'reminder-follow-up':
-        return <ReminderFollowUpPage onBack={() => setCurrentPage('dashboard')} />;
-      
+        return <ReminderFollowUpPage onBack={handleBackNavigation} />;
+
       case 'ucapan-terima-kasih':
-        return <UcapanTerimaKasihPage onBack={() => setCurrentPage('dashboard')} />;
-      
+        return <UcapanTerimaKasihPage onBack={handleBackNavigation} />;
+
       case 'riwayat-aktivitas':
-        return <RiwayatAktivitasPage onBack={() => setCurrentPage('laporan')} />;
-      
+        return <RiwayatAktivitasPage onBack={handleBackNavigation} />;
+
       case 'materi-promosi':
-        return <MateriPromosiPage onBack={() => setCurrentPage('profil')} />;
-      
+        return <MateriPromosiPage onBack={handleBackNavigation} />;
+
       case 'pengaturan':
-        return <PengaturanPage onBack={() => setCurrentPage('profil')} />;
-      
+        return <PengaturanPage onBack={handleBackNavigation} />;
+
       case 'admin-dashboard':
-        return <AdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={setPage} />;
-      
+        return <AdminDashboardPage onBack={handleBackNavigation} onNavigate={setPage} />;
+
       case 'admin-validasi-donasi':
-        return <AdminValidasiDonasiPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
-      
+        return <AdminValidasiDonasiPage onBack={handleBackNavigation} onNavigate={handleNavigation} />;
+
       case 'admin-data':
-        return <AdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setPage} />;
-      
+        return <AdminDataManagementPage onBack={handleBackNavigation} onNavigate={setPage} />;
+
       case 'admin-tools':
-        return <AdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={setPage} />;
-      
+        return <AdminToolsPage onBack={handleBackNavigation} onNavigate={setPage} />;
+
       case 'database-reset':
-        return <DatabaseResetPage onBack={() => setCurrentPage('admin-dashboard')} />;
-      
+        return <DatabaseResetPage onBack={handleBackNavigation} />;
+
       case 'test-connection':
-        return <TestConnectionPage onBack={() => setCurrentPage('dashboard')} />;
+        return <TestConnectionPage onBack={handleBackNavigation} />;
 
       case 'quick-test':
-        return <QuickTestPage onBack={() => setCurrentPage('dashboard')} />;
+        return <QuickTestPage onBack={handleBackNavigation} />;
 
       case 'debug':
-        return <DebugPage onBack={() => setCurrentPage('dashboard')} />;
+        return <DebugPage onBack={handleBackNavigation} />;
 
       case 'error':
         return (
           <ErrorPage
             type={errorType}
-            onRetry={() => setCurrentPage('dashboard')}
-            onHome={() => setCurrentPage('dashboard')}
+            onRetry={handleBackNavigation}
+            onHome={handleBackNavigation}
             onLogout={() => {
               logout();
               setCurrentPage('login');
             }}
           />
         );
-      
+
       case 'offline':
         return (
           <OfflinePage
-            onRetry={() => setCurrentPage('dashboard')}
-            onHome={() => setCurrentPage('dashboard')}
+            onRetry={handleBackNavigation}
+            onHome={handleBackNavigation}
           />
         );
-      
+
       default:
         return <DashboardPage onNavigate={handleNavigation} />;
     }
@@ -452,7 +452,7 @@ function AppContent() {
   const renderDesktopPage = () => {
     // Auth pages and system pages (no desktop layout)
     const noLayoutPages = ['splash', 'login', 'register', 'register-success', 'otp', 'onboarding', 'error', 'offline', 'test-connection', 'quick-test', 'debug'];
-    
+
     if (noLayoutPages.includes(currentPage)) {
       return renderMobilePage(); // Use mobile version for auth pages
     }
@@ -464,24 +464,24 @@ function AppContent() {
           switch (currentPage) {
             case 'dashboard':
               return <DesktopDashboardPage onNavigate={handleNavigation} />;
-            
+
             case 'donatur':
               return <DesktopDonaturPage onNavigate={handleNavigation} onSelectMuzakki={(id) => {
                 setSelectedMuzakkiId(id);
                 handleNavigation('detail-prospek');
               }} />;
-            
+
             case 'laporan':
               return <DesktopLaporanPage onNavigate={handleNavigation} />;
-            
+
             case 'profil':
               return user?.role === 'admin'
                 ? <DesktopAdminProfilPage onNavigate={handleNavigation} />
                 : <DesktopProfilPage onNavigate={handleNavigation} />;
-            
+
             case 'program':
               return <DesktopProgramPage onNavigate={handleNavigation} />;
-            
+
             case 'tambah-prospek':
               return (
                 <DesktopTambahProspekPage
@@ -489,33 +489,33 @@ function AppContent() {
                   onSave={() => setCurrentPage('donatur')}
                 />
               );
-            
+
             case 'chat-regu':
               return <DesktopChatReguPage onBack={() => setCurrentPage('regu')} />;
-            
+
             case 'pengaturan':
               return <DesktopPengaturanPage onBack={() => setCurrentPage('profil')} />;
-            
+
             case 'detail-program':
               return <DesktopDetailProgramPage onBack={() => setCurrentPage('program')} />;
-            
+
             case 'detail-prospek':
               return <DesktopDetailProspekPage muzakkiId={selectedMuzakkiId || undefined} onBack={() => setCurrentPage('donatur')} />;
-            
+
             case 'regu':
               return <DesktopReguPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
-            
+
             case 'regu-qr-code':
               return <DesktopReguQRCodePage onBack={() => setCurrentPage('regu')} />;
-            
+
             case 'join-regu':
               return (
-                <DesktopJoinReguPage 
+                <DesktopJoinReguPage
                   onBack={() => setCurrentPage('regu')}
                   onSuccess={() => setCurrentPage('dashboard')}
                 />
               );
-            
+
             case 'create-regu':
               return (
                 <DesktopCreateReguPage
@@ -523,31 +523,31 @@ function AppContent() {
                   onSuccess={() => setCurrentPage('regu')}
                 />
               );
-            
+
             case 'template-pesan':
               return <DesktopTemplatePesanPage onBack={() => setCurrentPage('profil')} />;
-            
+
             case 'notifikasi':
               return <DesktopNotifikasiPage onBack={() => setCurrentPage('dashboard')} />;
-            
+
             case 'admin-dashboard':
               return <DesktopAdminDashboardPage onBack={() => setCurrentPage('dashboard')} onNavigate={handleNavigation} />;
-            
+
             case 'admin-validasi-donasi':
               return <DesktopAdminValidasiDonasiPage onNavigate={handleNavigation} />;
-            
+
             case 'admin-data':
               return <DesktopAdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
-            
+
             case 'admin-tools':
               return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
-            
+
             case 'database-reset':
               return <DesktopDatabaseResetPage onBack={() => setCurrentPage('admin-tools')} />;
 
             case 'generator-resi':
               return renderMobilePage();
-            
+
             // For pages without desktop version, use mobile version
             default:
               return renderMobilePage();
@@ -563,8 +563,8 @@ function AppContent() {
         <DraftRibbon text="MVVM" color="yellow" position="top-left" />
       )}
       {isDesktop ? renderDesktopPage() : renderMobilePage()}
-      <Toaster 
-        position="bottom-center" 
+      <Toaster
+        position="bottom-center"
         closeButton
         richColors
         expand={false}
