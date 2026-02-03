@@ -74,8 +74,8 @@ export function RiwayatAktivitasPage({ onBack }: RiwayatAktivitasPageProps) {
       />
 
       {/* Filter Buttons */}
-      <div className="px-4 pt-3 bg-white border-b border-gray-200">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-4">
+      <div className="px-0 pt-3 bg-white border-b border-gray-200">
+        <div className="flex px-4 gap-2 overflow-x-auto scrollbar-hide pb-4">
           {[
             { id: 'all', label: 'Semua', count: activities.length },
             { id: 'donation', label: 'Donasi', count: activities.filter(a => a.type === 'donation').length },

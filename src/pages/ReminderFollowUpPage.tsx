@@ -127,8 +127,8 @@ export function ReminderFollowUpPage({ onBack }: ReminderFollowUpPageProps) {
 
       <div className="px-4 mt-4 pb-6">
         {/* Filters */}
-        <Card className="p-4 mb-4 shadow-card">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <Card className="px-4 pt-4 mb-4 shadow-card">
+          <div className="flex gap-2 overflow-x-auto pb-4">
             {(['semua', 'high', 'medium', 'low'] as const).map((priority) => (
               <button
                 key={priority}
