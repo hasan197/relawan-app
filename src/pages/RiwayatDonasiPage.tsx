@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Download, Receipt, Eye, Loader2, CheckCircle, Clock, XCircle, Share2, Copy } from 'lucide-react';
+import { Download, Receipt, Eye, Loader2, CheckCircle, Clock, XCircle, Share2, Copy, ExternalLink } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { formatCurrency, formatRelativeTime, copyToClipboard } from '../lib/utils';
 import { toast } from 'sonner';
 import { useAppContext } from '../contexts/AppContext';
 import { apiCall } from '../lib/supabase';
 import { HeaderWithBack } from '../components/HeaderWithBack';
+import { LoadingSpinner } from '../components/LoadingState';
 
 interface Donation {
   id: string;
@@ -34,6 +36,11 @@ export function RiwayatDonasiPage({ onBack }: RiwayatDonasiPageProps) {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'validated' | 'rejected'>('all');
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+  
+  // Bukti transfer modal
+  const [showBuktiModal, setShowBuktiModal] = useState(false);
+  const [buktiUrl, setBuktiUrl] = useState<string | null>(null);
+  const [loadingBukti, setLoadingBukti] = useState(false);
 
   const fetchDonations = async () => {
     if (!user?.id) return;
@@ -209,6 +216,35 @@ Platform Manajemen Relawan Zakat Digital
     toast.success('Resi berhasil diunduh!');
   };
 
+  const openBuktiModal = async (donation: Donation) => {
+    setLoadingBukti(true);
+    setShowBuktiModal(true);
+    setBuktiUrl(null);
+    
+    try {
+      const url = donation.bukti_transfer_url;
+      if (url?.startsWith('http')) {
+        setBuktiUrl(url);
+      } else if (url) {
+        const result = await apiCall('/storage-url', {
+          method: 'POST',
+          body: JSON.stringify({ storageId: url })
+        });
+        if (result.url) {
+          setBuktiUrl(result.url);
+        } else {
+          toast.error('Gagal mendapatkan URL bukti transfer');
+          setShowBuktiModal(false);
+        }
+      }
+    } catch (e) {
+      toast.error('Gagal membuka bukti transfer');
+      setShowBuktiModal(false);
+    } finally {
+      setLoadingBukti(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <HeaderWithBack
@@ -293,6 +329,17 @@ Platform Manajemen Relawan Zakat Digital
                 </div>
 
                 <div className="flex gap-2">
+                  {donation.bukti_transfer_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => openBuktiModal(donation)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Bukti
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -419,6 +466,41 @@ Platform Manajemen Relawan Zakat Digital
           </Card>
         </div>
       )}
+
+      {/* Bukti Transfer Preview Modal */}
+      <Dialog open={showBuktiModal} onOpenChange={setShowBuktiModal}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-[95vw] h-[90vh] flex flex-col p-4">
+          <DialogHeader>
+            <DialogTitle>Bukti Transfer</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 flex items-center justify-center overflow-auto min-h-0">
+            {loadingBukti ? (
+              <LoadingSpinner />
+            ) : buktiUrl ? (
+              <img 
+                src={buktiUrl} 
+                alt="Bukti Transfer" 
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            ) : (
+              <div className="text-gray-500">Gagal memuat bukti transfer</div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowBuktiModal(false)} className="w-full sm:w-auto">
+              Tutup
+            </Button>
+            {buktiUrl && (
+              <Button onClick={() => window.open(buktiUrl, '_blank')} className="w-full sm:w-auto">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Buka di Tab Baru
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

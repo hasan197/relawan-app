@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, XCircle, Eye, Download, Search, Filter, Receipt, Calendar, ExternalLink } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Eye, Download, Search, Filter, Receipt, Calendar } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -242,6 +242,7 @@ Platform Manajemen Relawan Zakat Digital
   };
 
   const openBuktiModal = async (donation: Donation) => {
+    (document.activeElement as HTMLElement)?.blur();
     setLoadingBukti(true);
     setShowBuktiModal(true);
     setBuktiUrl(null);
@@ -685,38 +686,53 @@ Platform Manajemen Relawan Zakat Digital
         </DialogContent>
       </Dialog>
 
-      {/* Bukti Transfer Preview Modal */}
+      {/* Bukti Transfer Preview - Modal */}
       <Dialog open={showBuktiModal} onOpenChange={setShowBuktiModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-[95vw] h-[90vh] flex flex-col p-4">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Bukti Transfer</DialogTitle>
           </DialogHeader>
           
-          <div className="flex-1 flex items-center justify-center overflow-auto min-h-0">
+          <div className="flex items-center justify-center">
             {loadingBukti ? (
               <LoadingSpinner />
             ) : buktiUrl ? (
               <img 
                 src={buktiUrl} 
                 alt="Bukti Transfer" 
-                className="max-w-full max-h-full object-contain rounded-lg"
+                className="max-w-full max-h-[60vh] object-contain rounded-lg"
               />
             ) : (
-              <div className="text-gray-500">Gagal memuat bukti transfer</div>
+              <div className="text-gray-500 py-8">Gagal memuat bukti transfer</div>
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowBuktiModal(false)} className="w-full sm:w-auto">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowBuktiModal(false)} className="flex-1">
               Tutup
             </Button>
             {buktiUrl && (
-              <Button onClick={() => window.open(buktiUrl, '_blank')} className="w-full sm:w-auto">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Buka di Tab Baru
+              <Button onClick={async () => {
+                try {
+                  const response = await fetch(buktiUrl);
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'bukti-transfer.jpg';
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                } catch (e) {
+                  window.open(buktiUrl, '_blank');
+                }
+              }} className="flex-1">
+                <Download className="h-4 w-4 mr-2" />
+                Download
               </Button>
             )}
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -216,12 +216,12 @@ export function DashboardPage({
                     Tambah Donatur
                   </Button>
                   <Button
-                    onClick={() => handleNavigation("laporan")}
+                    onClick={() => handleQuickMenuClick("riwayat-donasi")}
                     className="bg-white/25 text-white hover:bg-white/35 backdrop-blur-sm border border-white/30 shadow-lg"
                     size="sm"
                   >
                     <ArrowUpRight className="h-4 w-4 mr-1" />
-                    Lihat Laporan
+                    Riwayat Donasi
                   </Button>
                 </div>
               </div>
@@ -261,13 +261,6 @@ export function DashboardPage({
             label="Lapor Donasi"
             onClick={() =>
               handleQuickMenuClick("generator-resi")
-            }
-          />
-          <QuickMenuItem
-            icon={<Receipt className="h-5 w-5" />}
-            label="Riwayat Donasi"
-            onClick={() =>
-              handleQuickMenuClick("riwayat-donasi")
             }
           />
           <QuickMenuItem

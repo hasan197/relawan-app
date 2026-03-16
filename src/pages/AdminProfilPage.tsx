@@ -1,4 +1,4 @@
-import { Camera, Edit, Mail, Phone, MapPin, Calendar, Settings, HelpCircle, Info, Shield, ChevronRight } from 'lucide-react';
+import { Camera, Edit, Mail, Phone, MapPin, Calendar, Settings, HelpCircle, Info, Shield, ChevronRight, LogOut } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
@@ -13,7 +13,13 @@ interface AdminProfilPageProps {
 }
 
 export function AdminProfilPage({ onNavigate, onBack }: AdminProfilPageProps) {
-  const { user } = useAppContext();
+  const { user, logout } = useAppContext();
+
+  const handleLogout = () => {
+    console.log('🚪 Logging out...');
+    logout();
+    window.location.reload();
+  };
 
   const quickActions = [
     { id: 'admin-dashboard', label: 'Dashboard Admin', icon: Settings, color: 'bg-purple-600' },
@@ -157,7 +163,7 @@ export function AdminProfilPage({ onNavigate, onBack }: AdminProfilPageProps) {
       </div>
 
       {/* System Info */}
-      <div className="px-6 mt-6 mb-6">
+      <div className="px-6 mt-6 mb-4">
         <Card className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-gray-900 rounded-lg">
@@ -177,7 +183,18 @@ export function AdminProfilPage({ onNavigate, onBack }: AdminProfilPageProps) {
         </Card>
       </div>
 
-      <BottomNavigation currentPage="profil" onNavigate={onNavigate} />
+      {/* Logout Button */}
+      <div className="px-6 mb-6">
+        <button
+          className="w-full p-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-50 to-pink-50 text-red-600 rounded-xl hover:from-red-100 hover:to-pink-100 transition-all shadow-md border border-red-100"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Keluar dari Akun</span>
+        </button>
+      </div>
+
+      <BottomNavigation active="profil" onNavigate={onNavigate} />
     </div>
   );
 }
