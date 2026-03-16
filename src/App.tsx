@@ -278,6 +278,7 @@ function AppContent() {
               setCurrentPage('dashboard');
             }}
             onBack={() => setCurrentPage('login')}
+            onRegister={() => setCurrentPage('register')}
           />
         );
 

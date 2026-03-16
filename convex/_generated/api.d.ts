@@ -22,6 +22,8 @@ import type * as lib_backblazeB2 from "../lib/backblazeB2.js";
 import type * as listUsers from "../listUsers.js";
 import type * as muzakkis from "../muzakkis.js";
 import type * as notifications from "../notifications.js";
+import type * as otp from "../otp.js";
+import type * as otpProviders_ultramsg from "../otpProviders/ultramsg.js";
 import type * as programs from "../programs.js";
 import type * as regus from "../regus.js";
 import type * as seed from "../seed.js";
@@ -62,6 +64,8 @@ declare const fullApi: ApiFromModules<{
   listUsers: typeof listUsers;
   muzakkis: typeof muzakkis;
   notifications: typeof notifications;
+  otp: typeof otp;
+  "otpProviders/ultramsg": typeof otpProviders_ultramsg;
   programs: typeof programs;
   regus: typeof regus;
   seed: typeof seed;

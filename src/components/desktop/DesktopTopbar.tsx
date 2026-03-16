@@ -50,6 +50,8 @@ export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProp
           </div>
 
           {/* Quick Actions */}
+          {/* Hidden: Test DB button - uncomment if needed for debugging */}
+          {/*
           <Button
             variant="outline"
             size="sm"
@@ -59,6 +61,7 @@ export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProp
             <HelpCircle className="h-4 w-4" />
             Test DB
           </Button>
+          */}
 
           {/* Notifications */}
           <button 

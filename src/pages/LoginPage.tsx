@@ -50,9 +50,17 @@ export function LoginPage({
     try {
       const response = await sendOTP(cleanPhone);
 
+      // Check if new user - redirect to registration
+      if (response.isNewUser) {
+        toast.info("Nomor belum terdaftar. Silakan lengkapi data diri Anda.");
+        onRegister?.();
+        return;
+      }
+
       // Show demo OTP for development - karena belum ada third party SMS
       if (response.demo_otp) {
-        toast.success("Kode OTP berhasil dikirim!");
+        toast.success("Kode OTP telah dikirim ke WhatsApp Anda!");
+        /* HIDDEN DEMO OTP
         toast.info(`🔑 Demo OTP: ${response.demo_otp}`, {
           duration: 15000,
           description:
@@ -70,6 +78,7 @@ export function LoginPage({
         console.log(
           "═══════════════════════════════════════════\n",
         );
+        */
       } else {
         toast.success(
           "Kode OTP telah dikirim ke WhatsApp Anda",
@@ -101,7 +110,11 @@ export function LoginPage({
           duration: 5000,
         });
       } else {
-        toast.error(error.message || "Gagal mengirim OTP");
+        const cleanMsg = error.message
+          ?.replace(/Uncaught Error:\s*/g, '')
+          ?.replace(/\[.*?\]\s*/g, '') 
+          || "Gagal mengirim OTP";
+        toast.error(cleanMsg);
       }
     } finally {
       setIsLoading(false);

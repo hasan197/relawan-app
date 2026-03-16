@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, User, Phone, MapPin, ArrowRight, Users, Target, Heart, Zap, Shield } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -22,6 +22,15 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
 
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
+
+  useEffect(() => {
+    // Check for phone from URL query params (when coming from OTP verification for new user)
+    const params = new URLSearchParams(window.location.search);
+    const phoneParam = params.get('phone');
+    if (phoneParam) {
+      setFormData(prev => ({ ...prev, phone: phoneParam }));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +61,24 @@ export function RegisterPage({ onBack, onRegister, onNavigate }: RegisterPagePro
       const result = await register(formData.fullName, cleanPhone, formData.city);
       
       console.log('✅ Registration successful:', result);
+      
+      // Check if there's a temp token from OTP verification (needsRegistration flow)
+      const tempToken = localStorage.getItem('temp_access_token');
+      const tempUser = localStorage.getItem('temp_user');
+      
+      if (tempToken && tempUser) {
+        // Save the token and user from OTP verification
+        localStorage.setItem('access_token', tempToken);
+        localStorage.setItem('user', tempUser);
+        // Clear temp data
+        localStorage.removeItem('temp_access_token');
+        localStorage.removeItem('temp_user');
+        toast.success('Pendaftaran berhasil! Mengalihkan ke dashboard...');
+        // Redirect to dashboard
+        window.location.reload();
+        return;
+      }
+      
       toast.success('Pendaftaran berhasil!');
       onRegister?.();
     } catch (error: any) {

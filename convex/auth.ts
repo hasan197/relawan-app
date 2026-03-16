@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery, QueryCtx } from "./_generated/server";
+import { mutation, query, internalQuery, QueryCtx, internalAction } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { generateJWT, verifyJWT } from "./jwtUtils";
 
@@ -168,66 +169,74 @@ export const sendOtp = mutation({
     const cooldownPeriod = 60 * 1000; // 1 minute cooldown
     const otpExpiresIn = 5 * 60 * 1000; // 5 minutes
 
-    // Find user by phone (with format handling)
-    const user = await findUserByPhone(ctx, args.phone);
+  // Find user by phone (with format handling)
+  const user = await findUserByPhone(ctx, args.phone);
 
-    // For login, user must exist
-    const otpType = args.type || 'login';
-    if (otpType === "login" && !user) {
-      throw new Error("User not found");
-    }
+  const otpType = args.type || 'login';
+  const isNewUser = !user && otpType === 'login';
 
-    // Check cooldown
-    if (user?.lastOtpSentAt && (now - user.lastOtpSentAt < cooldownPeriod)) {
-      const remaining = Math.ceil((cooldownPeriod - (now - user.lastOtpSentAt)) / 1000);
-      throw new Error(`Please wait ${remaining} seconds before requesting a new OTP`);
-    }
+  // Check cooldown
+  if (user?.lastOtpSentAt && (now - user.lastOtpSentAt < cooldownPeriod)) {
+    const remaining = Math.ceil((cooldownPeriod - (now - user.lastOtpSentAt)) / 1000);
+    throw new Error(`Silakan tunggu ${remaining} detik sebelum meminta OTP baru.`);
+  }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpData = {
-      otp,
-      otpExpiresAt: now + otpExpiresIn,
-      otpAttempts: 0,
-      lastOtpSentAt: now,
-      updatedAt: now
-    };
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpData = {
+    otp,
+    otpExpiresAt: now + otpExpiresIn,
+    otpAttempts: 0,
+    lastOtpSentAt: now,
+    updatedAt: now
+  };
 
-    if (user) {
-      // Update existing user
-      await ctx.db.patch(user._id, otpData);
-      console.log("OTP sent to existing user:", user.phone);
-    } else if (otpType === "verify_phone") {
-      // For new user verification, create a temporary user
-      await ctx.db.insert("users", {
-        phone: args.phone,
-        ...otpData,
-        isPhoneVerified: false,
-        role: "relawan", // Default role
-        fullName: "", // Will be set during registration
-        city: "",     // Will be set during registration
-        createdAt: now
-      });
-    }
-
-    // Log OTP activity
-    await ctx.db.insert("otpLogs", {
-      userId: user?._id,
+  let newUserId = user?._id;
+  
+  if (user) {
+    // Update existing user
+    await ctx.db.patch(user._id, otpData);
+    console.log("OTP sent to existing user:", user.phone);
+  } else {
+    // Create new user (for login or verify_phone)
+    const newUser = await ctx.db.insert("users", {
       phone: args.phone,
-      otp,
-      type: otpType,
-      status: "sent",
+      ...otpData,
+      isPhoneVerified: false,
+      role: "relawan", // Default role
+      fullName: "", // Will be set during registration
+      city: "",     // Will be set during registration
       createdAt: now
     });
+    newUserId = newUser;
+    console.log("New user created for OTP:", args.phone);
+  }
 
-    // Always log the OTP to console for development
-    console.log(`OTP for ${args.phone}: ${otp} (valid for 5 minutes)`);
+  // Log OTP activity
+  await ctx.db.insert("otpLogs", {
+    userId: newUserId,
+    phone: args.phone,
+    otp,
+    type: otpType,
+    status: "sent",
+    createdAt: now
+  });
 
-    return {
-      success: true,
-      demo_otp: otp, // Always return OTP for development (no SMS service yet)
-      message: 'OTP sent successfully'
-    };
+  // Always log the OTP to console for development
+  console.log(`OTP for ${args.phone}: ${otp} (valid for 5 minutes)`);
+
+  // Send OTP
+  await ctx.scheduler.runAfter(0, internal.otp.sendOtpMessage, {
+    phone: args.phone,
+    otp: otp
+  });
+
+  return {
+    success: true,
+    demo_otp: otp, // Always return OTP for development (no SMS service yet)
+    isNewUser: isNewUser, // Flag to indicate this is a new user signup
+    message: isNewUser ? 'OTP sent. Please complete your registration.' : 'OTP sent successfully'
+  };
   },
 });
 
@@ -245,6 +254,30 @@ export const register = mutation({
     const existingUser = await findUserByPhone(ctx, args.phone);
 
     if (existingUser) {
+      // If user exists but has incomplete profile, update it
+      if (!existingUser.fullName || !existingUser.city) {
+        await ctx.db.patch(existingUser._id, {
+          fullName: args.fullName,
+          city: args.city,
+          role: (args.role as "relawan" | "pembimbing" | "admin") || existingUser.role || "relawan",
+          updatedAt: now
+        });
+        
+        const updatedUser = await ctx.db.get(existingUser._id);
+        return {
+          success: true,
+          user: {
+            _id: updatedUser!._id,
+            fullName: updatedUser!.fullName,
+            phone: updatedUser!.phone,
+            city: updatedUser!.city,
+            role: updatedUser!.role,
+            regu_id: updatedUser!.regu_id || null,
+            isPhoneVerified: updatedUser!.isPhoneVerified,
+            createdAt: updatedUser!.createdAt
+          }
+        };
+      }
       throw new Error("User already exists");
     }
 
@@ -303,7 +336,7 @@ export const verifyOtp = mutation({
       const timeSinceLastAttempt = now - (user.lastOtpSentAt || 0);
       if (timeSinceLastAttempt < blockDuration) {
         const remaining = Math.ceil((blockDuration - timeSinceLastAttempt) / 60000);
-        throw new Error(`Too many attempts. Please try again in ${remaining} minutes.`);
+        throw new Error(`Terlalu banyak percobaan. Silakan coba lagi dalam ${remaining} menit.`);
       } else {
         // Reset attempts if block time has passed
         await ctx.db.patch(user._id, {
@@ -331,7 +364,7 @@ export const verifyOtp = mutation({
         createdAt: now
       });
 
-      throw new Error(`Invalid OTP. ${attemptsLeft > 0 ? attemptsLeft + ' attempts left.' : 'Account will be temporarily locked after 5 failed attempts.'}`);
+      throw new Error(`Kode OTP salah. ${attemptsLeft > 0 ? 'Sisa ' + attemptsLeft + ' percobaan.' : 'Akun akan dikunci sementara setelah 5 kali gagal.'}`);
     }
 
     // Check if OTP is expired
@@ -352,7 +385,7 @@ export const verifyOtp = mutation({
         createdAt: now
       });
 
-      throw new Error("OTP has expired. Please request a new one.");
+      throw new Error("Kode OTP telah kadaluarsa. Silakan minta kode baru.");
     }
 
     // OTP is valid, update user record and generate JWT
@@ -395,6 +428,8 @@ export const verifyOtp = mutation({
     }
 
     // Return response format that matches frontend expectations
+    const needsRegistration = !updatedUser.fullName || !updatedUser.city;
+    
     const userResponse = {
       id: updatedUser._id,
       full_name: updatedUser.fullName,
@@ -413,7 +448,8 @@ export const verifyOtp = mutation({
       success: true,
       user: userResponse,
       access_token: jwtToken, // Return JWT token
-      token_identifier: tokenIdentifier // Keep for compatibility
+      token_identifier: tokenIdentifier, // Keep for compatibility
+      needsRegistration // Flag to indicate user needs to complete registration
     };
   },
 });

@@ -9,9 +9,10 @@ interface OTPVerificationPageProps {
   phoneNumber?: string;
   onVerify?: () => void;
   onBack?: () => void;
+  onRegister?: () => void;
 }
 
-export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onBack }: OTPVerificationPageProps) {
+export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onBack, onRegister }: OTPVerificationPageProps) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -67,6 +68,17 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
       console.log('✅ User ID:', response.user?.id);
 
       if (response.success) {
+        // Check if user needs to complete registration
+        if (response.needsRegistration) {
+          toast.info("Silakan lengkapi data diri Anda");
+          // Store temp token and redirect to registration
+          localStorage.setItem('temp_access_token', response.access_token);
+          localStorage.setItem('temp_user', JSON.stringify({ ...response.user, phone: phoneNumber }));
+          // Trigger registration completion - navigate to register page with phone
+          onRegister?.();
+          return;
+        }
+        
         toast.success('Login berhasil!');
         console.log('📍 Reloading to refresh auth state...');
         
@@ -77,7 +89,11 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
       }
     } catch (error: any) {
       console.error('❌ OTP verification error:', error);
-      toast.error(error.message || 'Kode OTP salah atau sudah kadaluarsa');
+      const cleanMsg = error.message
+        ?.replace(/Uncaught Error:\s*/g, '')
+        ?.replace(/\[.*?\]\s*/g, '') 
+        || 'Kode OTP salah atau sudah kadaluarsa';
+      toast.error(cleanMsg);
       setIsVerifying(false);
     }
     // Don't set isVerifying to false if success - page will reload
@@ -94,7 +110,8 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
       
       // Show demo OTP for development - karena belum ada third party SMS
       if (response.demo_otp) {
-        toast.success(`Kode OTP baru dikirim!`);
+        toast.success(`Kode OTP baru telah dikirim`);
+        /* HIDDEN DEMO OTP
         toast.info(`🔑 Demo OTP: ${response.demo_otp}`, { 
           duration: 15000,
           description: 'Cek console log untuk melihat OTP (belum ada SMS service)' 
@@ -105,11 +122,16 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
         console.log(`Phone: ${phoneNumber}`);
         console.log(`OTP: ${response.demo_otp}`);
         console.log('═══════════════════════════════════════════\n');
+        */
       } else {
         toast.success('Kode OTP baru telah dikirim');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Gagal mengirim ulang OTP');
+      const cleanMsg = error.message
+        ?.replace(/Uncaught Error:\s*/g, '')
+        ?.replace(/\[.*?\]\s*/g, '') 
+        || 'Gagal mengirim ulang OTP';
+      toast.error(cleanMsg);
     }
   };
 
@@ -185,11 +207,13 @@ export function OTPVerificationPage({ phoneNumber = '08123456789', onVerify, onB
             )}
           </div>
 
+          {/* HIDDEN DEMO OTP INFO
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-gray-500">
               💡 Untuk demo, kode OTP akan ditampilkan di notifikasi
             </p>
           </div>
+          */}
         </Card>
       </div>
     </div>
