@@ -173,7 +173,13 @@ export const sendOtp = mutation({
   const user = await findUserByPhone(ctx, args.phone);
 
   const otpType = args.type || 'login';
-  const isNewUser = !user && otpType === 'login';
+  
+  // Jika user belum ada dan ini mau login, maka tolak
+  if (!user && otpType === 'login') {
+    throw new Error("Nomor belum terdaftar. Silakan daftar terlebih dahulu.");
+  }
+
+  const isNewUser = !user && otpType !== 'login';
 
   // Check cooldown
   if (user?.lastOtpSentAt && (now - user.lastOtpSentAt < cooldownPeriod)) {
@@ -235,7 +241,7 @@ export const sendOtp = mutation({
     success: true,
     demo_otp: otp, // Always return OTP for development (no SMS service yet)
     isNewUser: isNewUser, // Flag to indicate this is a new user signup
-    message: isNewUser ? 'OTP sent. Please complete your registration.' : 'OTP sent successfully'
+    message: 'OTP sent successfully'
   };
   },
 });
