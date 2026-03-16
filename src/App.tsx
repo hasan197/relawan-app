@@ -410,6 +410,25 @@ function AppContent() {
         return <AdminDataManagementPage onBack={handleBackNavigation} onNavigate={setPage} />;
 
       case 'admin-tools':
+        // Check if user is superadmin
+        if (user?.role !== 'superadmin') {
+          return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+                <p className="text-gray-600 mb-4">
+                  Only Super Admin can access Admin Tools.
+                </p>
+                <button 
+                  onClick={handleBackNavigation}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          );
+        }
         return <AdminToolsPage onBack={handleBackNavigation} onNavigate={setPage} />;
 
       case 'database-reset':
@@ -541,7 +560,26 @@ function AppContent() {
               return <DesktopAdminDataManagementPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
 
             case 'admin-tools':
-              return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
+        // Check if user is superadmin
+        if (user?.role !== 'superadmin') {
+          return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+                <p className="text-gray-600 mb-4">
+                  Only Super Admin can access Admin Tools.
+                </p>
+                <button 
+                  onClick={() => setCurrentPage('admin-dashboard')}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return <DesktopAdminToolsPage onBack={() => setCurrentPage('admin-dashboard')} onNavigate={handleNavigation} />;
 
             case 'database-reset':
               return <DesktopDatabaseResetPage onBack={() => setCurrentPage('admin-tools')} />;

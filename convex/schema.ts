@@ -7,7 +7,7 @@ export default defineSchema({
     phone: v.string(),
     city: v.string(),
     email: v.optional(v.string()),
-    role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin")),
+    role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin"), v.literal("superadmin")),
     regu_id: v.optional(v.id("regus")),
     tokenIdentifier: v.optional(v.string()),
     isPhoneVerified: v.optional(v.boolean()),

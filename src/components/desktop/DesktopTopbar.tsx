@@ -1,8 +1,6 @@
-import { Search, Bell, Settings, HelpCircle, ChevronDown, Code2 } from 'lucide-react';
+import { Search, Bell, Settings, ChevronDown } from 'lucide-react';
 import { Input } from '../ui/input';
-import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
 import { useAppContext } from '../../contexts/AppContext';
 import { getInitials } from '../../lib/utils';
 
@@ -14,19 +12,6 @@ interface DesktopTopbarProps {
 
 export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProps) {
   const { user } = useAppContext();
-  const isMvvmMode = typeof window !== 'undefined' && (window.location.pathname || '').startsWith('/mvvm');
-
-  const toggleMvvmMode = () => {
-    if (typeof window === 'undefined') return;
-
-    const path = window.location.pathname || '/';
-    if (path.startsWith('/mvvm')) {
-      window.location.assign('/');
-      return;
-    }
-
-    window.location.assign('/mvvm');
-  };
 
   return (
     <div className="relative bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
@@ -72,7 +57,8 @@ export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProp
             <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
           </button>
 
-          {/* Settings */}
+          {/* Hidden: MVVM toggle button - uncomment if needed for debugging */}
+          {/*
           <Button
             variant="outline"
             size="sm"
@@ -88,6 +74,7 @@ export function DesktopTopbar({ title, subtitle, onNavigate }: DesktopTopbarProp
               'MVVM'
             )}
           </Button>
+          */}
 
           <button 
             onClick={() => onNavigate?.('pengaturan')}

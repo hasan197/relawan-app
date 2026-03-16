@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Doc, Id } from "./_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 import { getUserFromToken } from "./auth";
 
 // ==================== USER MANAGEMENT ====================
@@ -10,7 +10,7 @@ export const getAllUsers = query({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     const users = await ctx.db.query("users").collect();
@@ -41,13 +41,13 @@ export const createUser = mutation({
     fullName: v.string(),
     phone: v.string(),
     email: v.optional(v.string()),
-    role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin")),
+    role: v.union(v.literal("relawan"), v.literal("pembimbing"), v.literal("admin"), v.literal("superadmin")),
     regu_id: v.optional(v.id("regus")),
     token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await getUserFromToken(ctx, args.token);
-    if (!identity || identity.role !== "admin") {
+    if (!identity || identity.role !== "admin" && identity.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     // Check if phone already exists
@@ -64,6 +64,7 @@ export const createUser = mutation({
       fullName: args.fullName,
       phone: args.phone,
       email: args.email || `${args.phone}@ziswaf.app`,
+      city: "Jakarta", // Default city
       role: args.role,
       regu_id: args.regu_id,
       createdAt: Date.now(),
@@ -87,7 +88,7 @@ export const updateUser = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     const { userId, ...updates } = args;
@@ -96,7 +97,7 @@ export const updateUser = mutation({
     if (updates.phone) {
       const existingUser = await ctx.db
         .query("users")
-        .withIndex("by_phone", (q) => q.eq("phone", updates.phone))
+        .withIndex("by_phone", (q) => q.eq("phone", updates.phone!))
         .first();
 
       if (existingUser && existingUser._id !== userId) {
@@ -121,7 +122,7 @@ export const deleteUser = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     // Check if user has dependencies
@@ -202,7 +203,7 @@ export const createRegu = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     // Generate join code
@@ -249,7 +250,7 @@ export const updateRegu = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     const { reguId, ...updates } = args;
@@ -289,7 +290,7 @@ export const deleteRegu = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     // Check if regu has members
@@ -457,7 +458,7 @@ export const getGlobalStats = query({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     // Get all data
@@ -494,12 +495,12 @@ export const getGlobalStats = query({
   },
 });
 
-// Get regu statistics
+// Get regu statistics (Admin & Super Admin)
 export const getReguStats = query({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
     const regus = await ctx.db.query("regus").collect();
@@ -546,13 +547,13 @@ export const getReguStats = query({
 
 // ==================== DATABASE MANAGEMENT ====================
 
-// Reset entire database (Admin only - DANGEROUS)
+// Reset entire database (Super Admin only - DANGEROUS)
 export const resetDatabase = mutation({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
-      throw new Error("Unauthorized: Admin access required");
+    if (!user || user.role !== "superadmin") {
+      throw new Error("Unauthorized: Super Admin access required");
     }
     // Get all data
     const [users, regus, muzakkis, donations, programs, templates, notifications, communications, activities, targets, otpLogs, chatMessages] = await Promise.all([
@@ -611,13 +612,13 @@ export const resetDatabase = mutation({
   },
 });
 
-// Seed initial data (Admin only)
+// Seed initial data (Super Admin only)
 export const seedDatabase = mutation({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getUserFromToken(ctx, args.token);
-    if (!user || user.role !== "admin") {
-      throw new Error("Unauthorized: Admin access required");
+    if (!user || user.role !== "superadmin") {
+      throw new Error("Unauthorized: Super Admin access required");
     }
     console.log('🌱 SEEDING DATABASE...');
 
@@ -631,11 +632,26 @@ export const seedDatabase = mutation({
     };
 
     // ============================================
-    // 1. CREATE ADMIN USER
+    // 1. CREATE SUPER ADMIN USER
+    // ============================================
+    const superadminId = await ctx.db.insert("users", {
+      fullName: 'Super Admin ZISWAF',
+      phone: '+6281234567890',
+      email: 'superadmin@ziswaf.org',
+      city: 'Jakarta',
+      role: 'superadmin',
+      regu_id: undefined,
+      createdAt: Date.now(),
+    });
+
+    console.log('✅ Super Admin created:', superadminId);
+
+    // ============================================
+    // 2. CREATE ADMIN USER
     // ============================================
     const adminId = await ctx.db.insert("users", {
       fullName: 'Admin ZISWAF',
-      phone: '+6281234567890',
+      phone: '+6281234567891',
       email: 'admin@ziswaf.org',
       city: 'Jakarta',
       role: 'admin',
@@ -646,11 +662,11 @@ export const seedDatabase = mutation({
     console.log('✅ Admin created:', adminId);
 
     // ============================================
-    // 2. CREATE PEMBIMBING USERS
+    // 3. CREATE PEMBIMBING USERS
     // ============================================
     const pembimbing1Id = await ctx.db.insert("users", {
       fullName: 'Ustadz Ahmad',
-      phone: '+6281234567891',
+      phone: '+6281234567892',
       email: 'ahmad@ziswaf.org',
       city: 'Jakarta',
       role: 'pembimbing',
@@ -660,7 +676,7 @@ export const seedDatabase = mutation({
 
     const pembimbing2Id = await ctx.db.insert("users", {
       fullName: 'Ustadzah Fatimah',
-      phone: '+6281234567892',
+      phone: '+6281234567893',
       email: 'fatimah@ziswaf.org',
       city: 'Bandung',
       role: 'pembimbing',
@@ -715,7 +731,7 @@ export const seedDatabase = mutation({
     // ============================================
     const relawan1Id = await ctx.db.insert("users", {
       fullName: 'Budi Santoso',
-      phone: '+6281234567893',
+      phone: '+6281234567894',
       email: 'budi@example.com',
       city: 'Jakarta',
       role: 'relawan',
@@ -725,7 +741,7 @@ export const seedDatabase = mutation({
 
     const relawan2Id = await ctx.db.insert("users", {
       fullName: 'Siti Nurhaliza',
-      phone: '+6281234567894',
+      phone: '+6281234567895',
       email: 'siti@example.com',
       city: 'Jakarta',
       role: 'relawan',
@@ -735,7 +751,7 @@ export const seedDatabase = mutation({
 
     const relawan3Id = await ctx.db.insert("users", {
       fullName: 'Ahmad Fauzi',
-      phone: '+6281234567895',
+      phone: '+6281234567896',
       email: 'ahmad@example.com',
       city: 'Bandung',
       role: 'relawan',

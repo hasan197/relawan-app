@@ -259,7 +259,7 @@ export const register = mutation({
         await ctx.db.patch(existingUser._id, {
           fullName: args.fullName,
           city: args.city,
-          role: (args.role as "relawan" | "pembimbing" | "admin") || existingUser.role || "relawan",
+          role: (args.role as "relawan" | "pembimbing" | "admin" | "superadmin") || existingUser.role || "relawan",
           updatedAt: now
         });
         
@@ -286,7 +286,7 @@ export const register = mutation({
       fullName: args.fullName,
       phone: args.phone,
       city: args.city,
-      role: (args.role as "relawan" | "pembimbing" | "admin") || "relawan", // Default role is "relawan"
+      role: (args.role as "relawan" | "pembimbing" | "admin" | "superadmin") || "relawan", // Default role is "relawan"
       regu_id: undefined,
       isPhoneVerified: false,
       createdAt: now,

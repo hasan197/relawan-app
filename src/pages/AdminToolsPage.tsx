@@ -17,7 +17,7 @@ interface AdminToolsPageProps {
 
 export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
   const [phone, setPhone] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'relawan' | 'pembimbing' | 'admin'>('pembimbing');
+  const [selectedRole, setSelectedRole] = useState<'relawan' | 'pembimbing' | 'admin' | 'superadmin'>('pembimbing');
   const [isLoading, setIsLoading] = useState(false);
   const [updatedUser, setUpdatedUser] = useState<any>(null);
   const { user: currentUser, refreshUser } = useAuth();
@@ -82,8 +82,29 @@ export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
   const roles = [
     { value: 'relawan', label: 'Relawan', color: 'bg-blue-100 text-blue-700' },
     { value: 'pembimbing', label: 'Pembimbing', color: 'bg-green-100 text-green-700' },
-    { value: 'admin', label: 'Admin', color: 'bg-purple-100 text-purple-700' }
+    { value: 'admin', label: 'Admin', color: 'bg-purple-100 text-purple-700' },
+    { value: 'superadmin', label: 'Super Admin', color: 'bg-red-100 text-red-700' }
   ];
+
+  // Check if current user is superadmin
+  if (currentUser?.role !== 'superadmin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8 max-w-md">
+          <div className="text-center">
+            <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-6">
+              Only Super Admin can access Admin Tools. Please contact your Super Admin for assistance.
+            </p>
+            <Button onClick={onBack} className="w-full">
+              Go Back
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -183,6 +204,7 @@ export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
                   <p className="text-gray-700">
                     <strong>New Role:</strong>{' '}
                     <Badge className={
+                      updatedUser.role === 'superadmin' ? 'bg-red-100 text-red-700 border-none' :
                       updatedUser.role === 'admin' ? 'bg-purple-100 text-purple-700 border-none' :
                       updatedUser.role === 'pembimbing' ? 'bg-green-100 text-green-700 border-none' :
                       'bg-blue-100 text-blue-700 border-none'
@@ -205,7 +227,8 @@ export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
           <ul className="space-y-1 text-xs text-gray-700">
             <li>• <strong>Relawan:</strong> Basic access, no QR code generation</li>
             <li>• <strong>Pembimbing:</strong> Can generate QR code, manage regu</li>
-            <li>• <strong>Admin:</strong> Full access to all features</li>
+            <li>• <strong>Admin:</strong> Can manage users and regus</li>
+            <li>• <strong>Super Admin:</strong> Full system access including database reset</li>
           </ul>
         </Card>
 
@@ -235,7 +258,7 @@ export function AdminToolsPage({ onBack, onNavigate }: AdminToolsPageProps) {
             </div>
             <div>
               <h3 className="text-gray-900">Database Management</h3>
-              <p className="text-gray-600 text-sm">⚠️ Danger Zone - Admin Only</p>
+              <p className="text-gray-600 text-sm">⚠️ Danger Zone - Super Admin Only</p>
             </div>
           </div>
 
