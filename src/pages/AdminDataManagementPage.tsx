@@ -78,7 +78,7 @@ export function AdminDataManagementPage({ onBack, onNavigate }: AdminDataManagem
         return removeNullValues({
           name: data.name,
           pembimbing_id: data.pembimbing_id, // Use consistent pembimbing_id field
-          target: data.target,
+          target_amount: data.target, // Ensure target is passed as target_amount to Convex
           description: data.description
         });
       
@@ -239,7 +239,19 @@ export function AdminDataManagementPage({ onBack, onNavigate }: AdminDataManagem
         // Create - remove ID if exists
         const { id, ...createData } = formData;
         
-        success = await createItem(createData);
+        let finalCreateData = createData;
+        
+        // Map fields for Convex if needed (Convex expects camelCase for some fields)
+        if (activeTab === 'regu') {
+          finalCreateData = {
+            name: createData.name,
+            pembimbingId: createData.pembimbing_id,
+            targetAmount: createData.target,
+            description: createData.description
+          };
+        }
+        
+        success = await createItem(finalCreateData);
         if (success) {
           toast.success('Data berhasil ditambahkan');
           handleCloseForm();

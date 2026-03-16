@@ -181,7 +181,7 @@ function AppContent() {
 
         // If on auth pages, redirect to appropriate dashboard based on role
         if (currentPage === 'splash' || currentPage === 'login' || currentPage === 'otp') {
-          const targetPage = user.role === 'admin' ? 'admin-dashboard' : 'dashboard';
+          const targetPage = (user.role === 'admin' || user.role === 'superadmin') ? 'admin-dashboard' : 'dashboard';
           console.log('📍 Redirecting from', currentPage, 'to', targetPage, '(role:', user.role, ')');
           setCurrentPage(targetPage);
         }

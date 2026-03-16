@@ -240,6 +240,7 @@ export const create = mutation({
         name: v.string(),
         pembimbing_id: v.id("users"),
         description: v.optional(v.string()),
+        target_amount: v.optional(v.number()),
         token: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
@@ -249,6 +250,7 @@ export const create = mutation({
             name: args.name,
             pembimbingId: args.pembimbing_id,
             description: args.description,
+            targetAmount: args.target_amount,
             createdAt: Date.now(),
         });
         return id;

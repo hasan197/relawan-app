@@ -43,7 +43,7 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
     { id: 'profil', label: 'Profil', icon: User },
   ];
 
-  const menuItems = user?.role === 'admin' ? adminMenuItems : regularMenuItems;
+  const menuItems = (user?.role === 'admin' || user?.role === 'superadmin') ? adminMenuItems : regularMenuItems;
 
   const adminItems: typeof adminMenuItems = [];
 
@@ -62,11 +62,11 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <div className={`w-8 h-8 bg-gradient-to-br rounded-lg flex items-center justify-center ${
-            user?.role === 'admin' 
+            (user?.role === 'admin' || user?.role === 'superadmin') 
               ? 'from-purple-500 to-purple-600' 
               : 'from-primary-500 to-primary-600'
           }`}>
-            {user?.role === 'admin' ? (
+            {(user?.role === 'admin' || user?.role === 'superadmin') ? (
               <Shield className="h-5 w-5 text-white" />
             ) : (
               <TrendingUp className="h-5 w-5 text-white" />
@@ -74,8 +74,8 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
           </div>
           <div>
             <h2 className="text-gray-900">ZISWAF</h2>
-            <p className={user?.role === 'admin' ? 'text-purple-600' : 'text-gray-500'}>
-              {user?.role === 'admin' ? 'Admin Panel' : 'Manager'}
+            <p className={(user?.role === 'admin' || user?.role === 'superadmin') ? 'text-purple-600' : 'text-gray-500'}>
+              {(user?.role === 'admin' || user?.role === 'superadmin') ? 'Admin Panel' : 'Manager'}
             </p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export function DesktopSidebar({ currentPage, onNavigate }: DesktopSidebarProps)
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
                   isActive
-                    ? user?.role === 'admin'
+                    ? (user?.role === 'admin' || user?.role === 'superadmin')
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                       : 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
                     : 'text-gray-600 hover:bg-gray-100'

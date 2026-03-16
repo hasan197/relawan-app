@@ -54,9 +54,9 @@ export function BottomNavigation({
     { id: "profil" as NavItem, label: "Profil", icon: User },
   ];
 
-  const navItems = user?.role === 'admin' ? adminNavItems : regularNavItems;
+    const navItems = (user?.role === 'admin' || user?.role === 'superadmin') ? adminNavItems : regularNavItems;
 
-  const isAdminMode = user?.role === 'admin';
+    const isAdminMode = user?.role === 'admin' || user?.role === 'superadmin';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-1.5 safe-area-bottom">
