@@ -863,6 +863,13 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
             const result = await client.mutation(api.auth.updatePhone, withAuth({ oldPhone, newPhone: body.newPhone }));
             return { data: result };
         }
+        // GET /users/phone/:phone
+        if (pathParts[0] === 'users' && pathParts[1] === 'phone' && pathParts.length === 3 && method === 'GET') {
+            const phone = pathParts[2];
+            // @ts-ignore
+            const result = await client.query(api.auth.getUserByPhone, withAuth({ phone }));
+            return { success: true, user: result };
+        }
 
         // --- CHAT ---
         // Route: /chat/:reguId

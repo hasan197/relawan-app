@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Users, TrendingUp, Award, MessageSquare, Loader2, QrCode, Plus } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
@@ -17,6 +16,15 @@ interface ReguPageProps {
 
 export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
   const { user } = useAppContext();
+  
+  // Debug: Log user data
+  console.log('🔍 ReguPage - User data:', {
+    id: user?.id,
+    role: user?.role,
+    regu_id: user?.regu_id,
+    fullUser: user
+  });
+  
   const { regu, members, loading } = useRegu(user?.regu_id || null);
 
   // Check if user is pembimbing without regu
@@ -27,6 +35,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
       <div className="min-h-screen bg-gray-50">
         <HeaderWithBack
           pageName="Regu Saya"
+          onBack={onBack}
           onNotificationClick={() => onNavigate?.('notifikasi')}
           onStatsClick={() => onNavigate?.('laporan')}
         />
@@ -84,6 +93,7 @@ export function ReguPage({ onBack, onNavigate }: ReguPageProps) {
     <div className="min-h-screen bg-gray-50">
       <HeaderWithBack
         pageName="Regu Saya"
+        onBack={onBack}
         onNotificationClick={() => onNavigate?.('notifikasi')}
         onStatsClick={() => onNavigate?.('laporan')}
         customPadding="px-4 py-8"

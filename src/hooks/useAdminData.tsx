@@ -65,16 +65,23 @@ export function useAdminData(type: DataType): UseAdminDataReturn {
     setError(null);
     try {
       const endpoint = getEndpoint(type, 'list');
+      console.log(`🔍 [useAdminData] Fetching ${type} from:`, endpoint);
       const response = await apiCall(endpoint);
+      console.log(`📦 [useAdminData] Response for ${type}:`, response);
       
       // Handle different response formats from existing backend
       if (response.status === 'success' || response.success || response.data) {
-        setData(response.data || response.value || []);
+        const resultData = response.data || response.value || [];
+        console.log(`✅ [useAdminData] Setting ${type} data:`, resultData);
+        setData(resultData);
       } else {
         // For endpoints that return direct array
-        setData(Array.isArray(response) ? response : []);
+        const resultData = Array.isArray(response) ? response : [];
+        console.log(`✅ [useAdminData] Setting ${type} data (direct array):`, resultData);
+        setData(resultData);
       }
     } catch (err: any) {
+      console.error(`❌ [useAdminData] Error fetching ${type}:`, err);
       setError(err.message || 'Terjadi kesalahan');
       setData([]);
     } finally {

@@ -159,6 +159,40 @@ async function findUserByPhone(ctx: QueryCtx, phone: string) {
   return null;
 }
 
+// Get user by phone number
+export const getUserByPhone = query({
+  args: { phone: v.string(), token: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
+
+    const foundUser = await findUserByPhone(ctx, args.phone);
+    if (!foundUser) {
+      throw new Error("User not found");
+    }
+
+    let reguName = undefined;
+    if (foundUser.regu_id) {
+      const regu = await ctx.db.get(foundUser.regu_id);
+      reguName = regu?.name;
+    }
+
+    return {
+      id: foundUser._id.toString(),
+      full_name: foundUser.fullName,
+      phone: foundUser.phone,
+      city: foundUser.city,
+      role: foundUser.role,
+      regu_id: foundUser.regu_id ? foundUser.regu_id.toString() : null,
+      regu_name: reguName,
+      isPhoneVerified: foundUser.isPhoneVerified,
+      createdAt: foundUser.createdAt
+    };
+  },
+});
+
 export const sendOtp = mutation({
   args: {
     phone: v.string(),

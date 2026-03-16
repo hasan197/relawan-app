@@ -90,6 +90,7 @@ export const get = query({
             pembimbing_id: r.pembimbingId,
             pembimbing_name: pembimbing?.fullName || 'Belum ada pembimbing',
             description: r.description,
+            join_code: r.joinCode,
             member_count: members.length,
             total_donations: totalDonations,
             target_amount: 60000000, // Default target
@@ -169,6 +170,7 @@ export const getByCode = query({
                 pembimbing_id: r.pembimbingId,
                 pembimbing_name: pembimbing?.fullName || 'Belum ada pembimbing',
                 description: r.description,
+                join_code: r.joinCode,
                 member_count: members.length,
                 total_donations: totalDonations,
                 target_amount: 60000000,
@@ -246,13 +248,43 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const user = await getUserFromToken(ctx, args.token);
         if (!user) throw new Error("Unauthenticated");
+
+        // Generate join code
+        const generateJoinCode = () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        };
+
+        const joinCode = generateJoinCode();
+
         const id = await ctx.db.insert("regus", {
             name: args.name,
             pembimbingId: args.pembimbing_id,
             description: args.description,
-            targetAmount: args.target_amount,
+            targetAmount: args.target_amount || 60000000,
+            joinCode,
+            memberCount: 0,
+            totalDonations: 0,
             createdAt: Date.now(),
         });
-        return id;
+
+        // Update pembimbing's regu_id
+        await ctx.db.patch(args.pembimbing_id, {
+            regu_id: id,
+            updatedAt: Date.now(),
+        });
+
+        const regu = await ctx.db.get(id);
+        return {
+            id: regu!._id,
+            name: regu!.name,
+            join_code: regu!.joinCode,
+            target_amount: regu!.targetAmount,
+            pembimbing_id: regu!.pembimbingId,
+        };
     },
 });

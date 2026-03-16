@@ -1,7 +1,13 @@
+import { useState } from 'react';
+import { ArrowLeft, Check, Users, QrCode, Loader2 } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useCreateRegu } from '../hooks/useRegu';
 import { formatCurrency, copyToClipboard } from '../lib/utils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 interface CreateReguPageProps {
   onBack?: () => void;
@@ -9,7 +15,7 @@ interface CreateReguPageProps {
 }
 
 export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
-  const { user } = useAppContext();
+  const { user, refreshUser } = useAppContext();
   const { createRegu, creating } = useCreateRegu();
   
   const [formData, setFormData] = useState({
@@ -54,6 +60,9 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
       setCreatedRegu(newRegu);
       toast.success('Regu berhasil dibuat! ✨');
       
+      // Refresh user data to get updated regu_id
+      await refreshUser();
+      
       // Reset form
       setFormData({
         name: '',
@@ -76,7 +85,15 @@ export function CreateReguPage({ onBack, onSuccess }: CreateReguPageProps) {
     }
   };
 
-  const handleDone = () => {
+  const handleDone = async () => {
+    // Refresh user data one more time before navigating
+    try {
+      await refreshUser();
+      console.log('✅ User refreshed before navigating');
+    } catch (error) {
+      console.error('❌ Failed to refresh user before navigate:', error);
+    }
+    
     if (onSuccess) {
       onSuccess();
     } else if (onBack) {

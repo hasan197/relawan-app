@@ -151,6 +151,12 @@ export const deleteUser = mutation({
 export const getAllRegus = query({
   args: { token: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    // Validate user - allow admin, superadmin, and pembimbing
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) {
+      throw new Error("Unauthenticated");
+    }
+    
     const regus = await ctx.db.query("regus").collect();
 
     // Enrich with member count and pembimbing info
@@ -180,11 +186,16 @@ export const getAllRegus = query({
         const totalDonations = donations.reduce((sum, amount) => sum + amount, 0);
 
         return {
-          ...regu,
+          id: regu._id,
+          name: regu.name,
+          pembimbing_id: regu.pembimbingId,
           pembimbing_name: pembimbing?.fullName || null,
           member_count: members.length,
           total_donations: totalDonations,
           target: regu.targetAmount || 60000000,
+          description: regu.description,
+          join_code: regu.joinCode,
+          created_at: new Date(regu.createdAt).toISOString(),
         };
       })
     );
