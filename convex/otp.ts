@@ -18,7 +18,7 @@ export const sendOtpMessage = internalAction({
       toPhone = "+62" + toPhone;
     }
 
-    const body = `OTP aplikasi Relawan Zakat:\n\ ${args.otp} \n\nJangan share ke orang lain.`;
+    const body = `Kode OTP: ${args.otp} , untuk aplikasi Relawan Zakat.\n\nJangan share ke orang lain.`;
 
     if (provider === "ultramsg") {
       await sendUltramsg(toPhone, body);
