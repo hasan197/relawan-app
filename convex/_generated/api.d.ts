@@ -17,6 +17,7 @@ import type * as clearData from "../clearData.js";
 import type * as database from "../database.js";
 import type * as donations from "../donations.js";
 import type * as donationsAdmin from "../donationsAdmin.js";
+import type * as http from "../http.js";
 import type * as jwtUtils from "../jwtUtils.js";
 import type * as lib_backblazeB2 from "../lib/backblazeB2.js";
 import type * as listUsers from "../listUsers.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   database: typeof database;
   donations: typeof donations;
   donationsAdmin: typeof donationsAdmin;
+  http: typeof http;
   jwtUtils: typeof jwtUtils;
   "lib/backblazeB2": typeof lib_backblazeB2;
   listUsers: typeof listUsers;
