@@ -831,11 +831,32 @@ app.post('/make-server-f689ca3f/donations/upload-bukti', async (c) => {
       return c.json({ error: `Failed to create signed URL: ${urlError.message}` }, 500);
     }
 
+    const buktiUrl = signedUrl?.signedUrl;
+
+    // Update donation with bukti_transfer_url
+    const allDonations = await kv.getByPrefix('donation:');
+    const donationEntry = allDonations.find((d: any) => d.id === donationId);
+    
+    if (donationEntry && donationEntry.relawan_id) {
+      const updatedDonation = {
+        ...donationEntry,
+        bukti_transfer_url: buktiUrl,
+        updated_at: new Date().toISOString()
+      };
+      
+      const donationKey = `donation:${donationEntry.relawan_id}:${donationId}`;
+      await kv.set(donationKey, updatedDonation);
+      console.log('✅ Donation updated with bukti_transfer_url:', donationId);
+    } else {
+      console.warn('⚠️ Could not find donation to update:', donationId);
+    }
+
     return c.json({
       success: true,
       message: 'Bukti transfer berhasil diupload',
+      url: buktiUrl,
       data: {
-        url: signedUrl?.signedUrl,
+        url: buktiUrl,
         path: data.path
       }
     });

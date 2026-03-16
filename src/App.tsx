@@ -27,6 +27,7 @@ import { ImportKontakPage } from './pages/ImportKontakPage';
 import { ReminderFollowUpPage } from './pages/ReminderFollowUpPage';
 import { UcapanTerimaKasihPage } from './pages/UcapanTerimaKasihPage';
 import { RiwayatAktivitasPage } from './pages/RiwayatAktivitasPage';
+import { RiwayatDonasiPage } from './pages/RiwayatDonasiPage';
 import { MateriPromosiPage } from './pages/MateriPromosiPage';
 import { ChatReguPageWithBackend } from './pages/ChatReguPageWithBackend';
 import { PengaturanPage } from './pages/PengaturanPage';
@@ -96,6 +97,7 @@ type Page =
   | 'reminder-follow-up'
   | 'ucapan-terima-kasih'
   | 'riwayat-aktivitas'
+  | 'riwayat-donasi'
   | 'materi-promosi'
   | 'chat-regu'
   | 'pengaturan'
@@ -393,6 +395,9 @@ function AppContent() {
 
       case 'riwayat-aktivitas':
         return <RiwayatAktivitasPage onBack={handleBackNavigation} />;
+
+      case 'riwayat-donasi':
+        return <RiwayatDonasiPage onBack={handleBackNavigation} />;
 
       case 'materi-promosi':
         return <MateriPromosiPage onBack={handleBackNavigation} />;

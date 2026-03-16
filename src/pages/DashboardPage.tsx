@@ -20,6 +20,7 @@ import {
   Award,
   Settings,
   ChevronRight,
+  Receipt,
 } from "lucide-react";
 import {
   formatCurrency,
@@ -234,7 +235,7 @@ export function DashboardPage({
         <ServerStatusBanner error={muzakkiError || donationsError} />
       </div>
 
-      {/* Quick Menu - 8 Shortcuts */}
+      {/* Quick Menu - Shortcuts */}
       <div className="mt-4 px-4">
         <h3 className="text-gray-900 mb-3">Menu Cepat</h3>
         <div className="grid grid-cols-4 gap-3">
@@ -257,9 +258,16 @@ export function DashboardPage({
           />
           <QuickMenuItem
             icon={<FileText className="h-5 w-5" />}
-            label="Generator"
+            label="Lapor Donasi"
             onClick={() =>
               handleQuickMenuClick("generator-resi")
+            }
+          />
+          <QuickMenuItem
+            icon={<Receipt className="h-5 w-5" />}
+            label="Riwayat Donasi"
+            onClick={() =>
+              handleQuickMenuClick("riwayat-donasi")
             }
           />
           <QuickMenuItem

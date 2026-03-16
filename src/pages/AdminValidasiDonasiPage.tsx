@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, XCircle, Eye, Download, Search, Filter } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Eye, Download, Search, Filter, Receipt, Calendar, ExternalLink } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,7 +7,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { apiCall } from '../lib/supabase';
 import { useAppContext } from '../contexts/AppContext';
 import { formatCurrency, formatRelativeTime } from '../lib/utils';
@@ -27,11 +27,20 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'validated' | 'rejected'>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [showValidateDialog, setShowValidateDialog] = useState(false);
+  const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [validationAction, setValidationAction] = useState<'approve' | 'reject'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [validating, setValidating] = useState(false);
+  
+  // Bukti transfer preview modal
+  const [showBuktiModal, setShowBuktiModal] = useState(false);
+  const [buktiUrl, setBuktiUrl] = useState<string | null>(null);
+  const [loadingBukti, setLoadingBukti] = useState(false);
 
   useEffect(() => {
     fetchDonations();
@@ -39,7 +48,7 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
 
   useEffect(() => {
     filterDonations();
-  }, [donations, searchQuery, statusFilter]);
+  }, [donations, searchQuery, statusFilter, dateFilter, startDate, endDate]);
 
   const fetchDonations = async () => {
     try {
@@ -59,6 +68,7 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
           eventName: d.event_name,
           createdAt: new Date(d.created_at),
           type: d.type || 'incoming',
+          receiptNumber: d.receipt_number,
           status: d.status || 'pending',
           buktiTransferUrl: d.bukti_transfer_url,
           paymentMethod: d.payment_method,
@@ -95,6 +105,39 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
         d.relawanName?.toLowerCase().includes(query) ||
         d.category.toLowerCase().includes(query)
       );
+    }
+
+    // Filter by date
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (dateFilter === 'today') {
+      filtered = filtered.filter(d => {
+        const donationDate = new Date(d.createdAt);
+        return donationDate >= today;
+      });
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      filtered = filtered.filter(d => {
+        const donationDate = new Date(d.createdAt);
+        return donationDate >= weekAgo;
+      });
+    } else if (dateFilter === 'month') {
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      filtered = filtered.filter(d => {
+        const donationDate = new Date(d.createdAt);
+        return donationDate >= monthAgo;
+      });
+    } else if (dateFilter === 'custom' && startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(d => {
+        const donationDate = new Date(d.createdAt);
+        return donationDate >= start && donationDate <= end;
+      });
     }
 
     // Sort by date (newest first)
@@ -144,6 +187,87 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
     setValidationAction(action);
     setRejectionReason('');
     setShowValidateDialog(true);
+  };
+
+  const handleDownloadReceipt = (donation: Donation) => {
+    const receiptContent = `
+╔══════════════════════════════════════════════════════════╗
+║                    RESI DONASI                           ║
+║                  ZISWAF Manager                          ║
+╚══════════════════════════════════════════════════════════╝
+
+No. Resi         : ${donation.receiptNumber || donation.id}
+Tanggal          : ${new Date(donation.createdAt).toLocaleDateString('id-ID', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+})}
+
+────────────────────────────────────────────────────────────
+Nama Donatur     : ${donation.donorName}
+Nominal          : ${formatCurrency(donation.amount)}
+Kategori         : ${donation.category.charAt(0).toUpperCase() + donation.category.slice(1)}
+Metode Bayar     : ${donation.paymentMethod === 'tunai' ? 'Tunai' : donation.paymentMethod === 'transfer' ? 'Transfer Bank' : donation.paymentMethod === 'qris' ? 'QRIS' : 'Lainnya'}
+Relawan          : ${donation.relawanName || '-'}
+────────────────────────────────────────────────────────────
+
+Status           : ${donation.status === 'validated' ? '✓ Tervalidasi' : donation.status === 'pending' ? '⏳ Menunggu Validasi' : '✗ Ditolak'}
+
+${donation.notes ? `Catatan          : ${donation.notes}` : ''}
+
+╔══════════════════════════════════════════════════════════╗
+║         Jazakumullah khairan katsiran                    ║
+║   Semoga menjadi amal jariyah yang berkah                ║
+╚══════════════════════════════════════════════════════════╝
+
+ZISWAF Manager
+Platform Manajemen Relawan Zakat Digital
+    `.trim();
+
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resi-${donation.receiptNumber || donation.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success('Resi berhasil diunduh!');
+  };
+
+  const handleViewReceipt = (donation: Donation) => {
+    setSelectedDonation(donation);
+    setShowReceiptDialog(true);
+  };
+
+  const openBuktiModal = async (donation: Donation) => {
+    setLoadingBukti(true);
+    setShowBuktiModal(true);
+    setBuktiUrl(null);
+    
+    try {
+      const url = donation.buktiTransferUrl;
+      if (url?.startsWith('http')) {
+        setBuktiUrl(url);
+      } else if (url) {
+        const result = await apiCall('/storage-url', {
+          method: 'POST',
+          body: JSON.stringify({ storageId: url })
+        });
+        if (result.url) {
+          setBuktiUrl(result.url);
+        } else {
+          toast.error('Gagal mendapatkan URL bukti transfer');
+          setShowBuktiModal(false);
+        }
+      }
+    } catch (e) {
+      toast.error('Gagal membuka bukti transfer');
+      setShowBuktiModal(false);
+    } finally {
+      setLoadingBukti(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -240,19 +364,60 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
           />
         </div>
 
-        {/* Status Filter */}
-        <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-          <SelectTrigger className="h-10">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Semua Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Status</SelectItem>
-            <SelectItem value="pending">Menunggu</SelectItem>
-            <SelectItem value="validated">Tervalidasi</SelectItem>
-            <SelectItem value="rejected">Ditolak</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Status Filter */}
+          <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+            <SelectTrigger className="h-10">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="pending">Menunggu</SelectItem>
+              <SelectItem value="validated">Tervalidasi</SelectItem>
+              <SelectItem value="rejected">Ditolak</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Date Filter */}
+          <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+            <SelectTrigger className="h-10">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Tanggal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Tanggal</SelectItem>
+              <SelectItem value="today">Hari Ini</SelectItem>
+              <SelectItem value="week">7 Hari Terakhir</SelectItem>
+              <SelectItem value="month">30 Hari Terakhir</SelectItem>
+              <SelectItem value="custom">Pilih Tanggal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Custom Date Range */}
+        {dateFilter === 'custom' && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Dari</label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Sampai</label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="h-10"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Donations List */}
@@ -320,16 +485,25 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleViewReceipt(donation)}
+                >
+                  <Receipt className="h-4 w-4 mr-1" />
+                  Resi
+                </Button>
                 {donation.buktiTransferUrl && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => window.open(donation.buktiTransferUrl, '_blank')}
+                    onClick={() => openBuktiModal(donation)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
-                    Lihat Bukti
+                    Bukti
                   </Button>
                 )}
                 
@@ -431,6 +605,117 @@ export function AdminValidasiDonasiPage({ onBack, onNavigate }: AdminValidasiDon
             >
               {validating ? 'Memproses...' : validationAction === 'approve' ? 'Validasi' : 'Tolak'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Dialog */}
+      <Dialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Resi Donasi
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedDonation && (
+            <div className="space-y-4">
+              <div className="bg-gradient-to-br from-primary-50 to-white p-4 rounded-lg border">
+                <div className="text-center mb-4">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 rounded-full mb-2">
+                    <Receipt className="h-6 w-6 text-primary-600" />
+                  </div>
+                  <p className="font-mono text-sm text-gray-600">
+                    {selectedDonation.receiptNumber || selectedDonation.id}
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Tanggal</span>
+                    <span className="font-medium">
+                      {new Date(selectedDonation.createdAt).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Donatur</span>
+                    <span className="font-medium">{selectedDonation.donorName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Nominal</span>
+                    <span className="font-bold text-primary-600">{formatCurrency(selectedDonation.amount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Kategori</span>
+                    <span className="font-medium capitalize">{selectedDonation.category}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Metode</span>
+                    <span className="font-medium">
+                      {selectedDonation.paymentMethod === 'tunai' ? 'Tunai' : 
+                       selectedDonation.paymentMethod === 'transfer' ? 'Transfer Bank' : 
+                       selectedDonation.paymentMethod === 'qris' ? 'QRIS' : 'Lainnya'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Relawan</span>
+                    <span className="font-medium">{selectedDonation.relawanName || '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Status</span>
+                    {getStatusBadge(selectedDonation.status)}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                className="w-full bg-primary-600 hover:bg-primary-700"
+                onClick={() => handleDownloadReceipt(selectedDonation)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Resi
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bukti Transfer Preview Modal */}
+      <Dialog open={showBuktiModal} onOpenChange={setShowBuktiModal}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-[95vw] h-[90vh] flex flex-col p-4">
+          <DialogHeader>
+            <DialogTitle>Bukti Transfer</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 flex items-center justify-center overflow-auto min-h-0">
+            {loadingBukti ? (
+              <LoadingSpinner />
+            ) : buktiUrl ? (
+              <img 
+                src={buktiUrl} 
+                alt="Bukti Transfer" 
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            ) : (
+              <div className="text-gray-500">Gagal memuat bukti transfer</div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowBuktiModal(false)} className="w-full sm:w-auto">
+              Tutup
+            </Button>
+            {buktiUrl && (
+              <Button onClick={() => window.open(buktiUrl, '_blank')} className="w-full sm:w-auto">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Buka di Tab Baru
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

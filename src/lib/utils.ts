@@ -14,13 +14,14 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatRelativeTime(date: Date): string {
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
+export function formatRelativeTime(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
     return 'Tanggal tidak valid';
   }
   
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
+  const diffInMs = now.getTime() - dateObj.getTime();
   const diffInMinutes = Math.floor(diffInMs / 60000);
   const diffInHours = Math.floor(diffInMs / 3600000);
   const diffInDays = Math.floor(diffInMs / 86400000);
@@ -34,7 +35,7 @@ export function formatRelativeTime(date: Date): string {
   } else if (diffInDays < 7) {
     return `${diffInDays} hari lalu`;
   } else {
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    return dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   }
 }
 

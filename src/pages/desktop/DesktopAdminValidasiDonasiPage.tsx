@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, Search, Filter, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Search, Filter, FileText, ExternalLink } from 'lucide-react';
 import { DesktopTopbar } from '../../components/desktop/DesktopTopbar';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -32,6 +32,11 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
   const [validationAction, setValidationAction] = useState<'approve' | 'reject'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [validating, setValidating] = useState(false);
+  
+  // Bukti transfer preview modal
+  const [showBuktiModal, setShowBuktiModal] = useState(false);
+  const [buktiUrl, setBuktiUrl] = useState<string | null>(null);
+  const [loadingBukti, setLoadingBukti] = useState(false);
 
   useEffect(() => {
     fetchDonations();
@@ -165,6 +170,35 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
         {category.charAt(0).toUpperCase() + category.slice(1)}
       </Badge>
     );
+  };
+
+  const openBuktiModal = async (donation: Donation) => {
+    setLoadingBukti(true);
+    setShowBuktiModal(true);
+    setBuktiUrl(null);
+    
+    try {
+      const url = donation.buktiTransferUrl;
+      if (url?.startsWith('http')) {
+        setBuktiUrl(url);
+      } else if (url) {
+        const result = await apiCall('/storage-url', {
+          method: 'POST',
+          body: JSON.stringify({ storageId: url })
+        });
+        if (result.url) {
+          setBuktiUrl(result.url);
+        } else {
+          toast.error('Gagal mendapatkan URL bukti transfer');
+          setShowBuktiModal(false);
+        }
+      }
+    } catch (e) {
+      toast.error('Gagal membuka bukti transfer');
+      setShowBuktiModal(false);
+    } finally {
+      setLoadingBukti(false);
+    }
   };
 
   const stats = {
@@ -335,7 +369,7 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(donation.buktiTransferUrl, '_blank')}
+                            onClick={() => openBuktiModal(donation)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -446,6 +480,41 @@ export function DesktopAdminValidasiDonasiPage({ onNavigate }: DesktopAdminValid
             >
               {validating ? 'Memproses...' : validationAction === 'approve' ? 'Validasi' : 'Tolak'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bukti Transfer Preview Modal */}
+      <Dialog open={showBuktiModal} onOpenChange={setShowBuktiModal}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-[95vw] h-[90vh] flex flex-col p-4">
+          <DialogHeader>
+            <DialogTitle>Bukti Transfer</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 flex items-center justify-center overflow-auto min-h-0">
+            {loadingBukti ? (
+              <LoadingSpinner />
+            ) : buktiUrl ? (
+              <img 
+                src={buktiUrl} 
+                alt="Bukti Transfer" 
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            ) : (
+              <div className="text-gray-500">Gagal memuat bukti transfer</div>
+            )}
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowBuktiModal(false)}>
+              Tutup
+            </Button>
+            {buktiUrl && (
+              <Button onClick={() => window.open(buktiUrl, '_blank')}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Buka di Tab Baru
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

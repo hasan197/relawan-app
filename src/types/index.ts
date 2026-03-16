@@ -34,6 +34,7 @@ export interface Donation {
   eventName?: string;
   createdAt: Date;
   type: 'incoming' | 'outgoing';
+  receiptNumber?: string;
   
   // Validation fields
   status: DonationStatus;

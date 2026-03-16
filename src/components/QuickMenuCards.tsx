@@ -1,4 +1,3 @@
-import { Card } from './ui/card';
 import { 
   Users, 
   MessageSquare, 
@@ -7,7 +6,7 @@ import {
   FileText,
   TrendingUp,
   Upload,
-  Calendar
+  Receipt
 } from 'lucide-react';
 
 const quickMenus = [
@@ -37,11 +36,19 @@ const quickMenus = [
   },
   { 
     id: 'generator-resi', 
-    name: 'Generator Resi', 
+    name: 'Lapor Donasi', 
     icon: FileText, 
     color: 'from-orange-400 to-orange-500',
     bgColor: 'bg-orange-50',
     iconColor: 'text-orange-600'
+  },
+  { 
+    id: 'riwayat-donasi', 
+    name: 'Riwayat Donasi', 
+    icon: Receipt, 
+    color: 'from-teal-400 to-teal-500',
+    bgColor: 'bg-teal-50',
+    iconColor: 'text-teal-600'
   },
   { 
     id: 'ucapan-terima-kasih', 
@@ -53,7 +60,7 @@ const quickMenus = [
   },
   { 
     id: 'riwayat-aktivitas', 
-    name: 'Riwayat', 
+    name: 'Aktivitas', 
     icon: TrendingUp, 
     color: 'from-cyan-400 to-cyan-500',
     bgColor: 'bg-cyan-50',
@@ -66,14 +73,6 @@ const quickMenus = [
     color: 'from-indigo-400 to-indigo-500',
     bgColor: 'bg-indigo-50',
     iconColor: 'text-indigo-600'
-  },
-  { 
-    id: 'reminder-follow-up', 
-    name: 'Reminder', 
-    icon: Calendar, 
-    color: 'from-yellow-400 to-yellow-500',
-    bgColor: 'bg-yellow-50',
-    iconColor: 'text-yellow-600'
   },
 ];
 

@@ -598,15 +598,17 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
 
                 // Map frontend fields to Convex schema
                 // Frontend might send either muzakki_id or muzakkiId
+                // donor_id is optional - new donors don't need it
                 const donorId = body.muzakki_id || body.muzakkiId;
-                if (!donorId) {
-                    throw new Error('Donor ID (muzakki_id) is required');
-                }
                 
-                const convexBody = {
+                const convexBody: any = {
                     ...body,
-                    donor_id: donorId, // Map muzakki_id/muzakkiId to donor_id
                 };
+                
+                // Only add donor_id if provided (for existing muzakki)
+                if (donorId) {
+                    convexBody.donor_id = donorId;
+                }
                 
                 // Remove old field names to avoid duplicate fields
                 delete convexBody.muzakki_id;
@@ -892,6 +894,17 @@ export async function routeToConvex(endpoint: string, options: RequestInit = {})
                 message: body.message,
             }));
             return { data: result };
+        }
+
+        // --- STORAGE URL ---
+        // Route: POST /storage-url
+        if (pathParts[0] === 'storage-url' && method === 'POST') {
+            const body = JSON.parse(options.body as string);
+            // @ts-ignore
+            const result = await client.query(api.uploads.getStorageUrl, withAuth({
+                storageId: body.storageId,
+            }));
+            return result;
         }
 
         // Fallback: endpoint not mapped

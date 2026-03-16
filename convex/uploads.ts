@@ -3,6 +3,27 @@ import { mutation, query } from "./_generated/server";
 import { getUserFromToken } from "./auth";
 
 /**
+ * Get storage URL from storageId
+ */
+export const getStorageUrl = query({
+  args: {
+    storageId: v.string(),
+    token: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Unauthenticated");
+    
+    try {
+      const url = await ctx.storage.getUrl(args.storageId as any);
+      return { success: true, url };
+    } catch (error) {
+      return { success: false, error: "Failed to get URL" };
+    }
+  },
+});
+
+/**
  * Generate upload information for file upload to Backblaze B2
  */
 export const generateUploadUrl = mutation({

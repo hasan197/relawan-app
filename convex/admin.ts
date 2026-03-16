@@ -50,10 +50,11 @@ export const createUser = mutation({
     if (!identity || identity.role !== "admin" && identity.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
+    const { token, ...userData } = args;
     // Check if phone already exists
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+      .withIndex("by_phone", (q) => q.eq("phone", userData.phone))
       .first();
 
     if (existingUser) {
@@ -61,12 +62,12 @@ export const createUser = mutation({
     }
 
     const userId = await ctx.db.insert("users", {
-      fullName: args.fullName,
-      phone: args.phone,
-      email: args.email || `${args.phone}@ziswaf.app`,
+      fullName: userData.fullName,
+      phone: userData.phone,
+      email: userData.email || `${userData.phone}@ziswaf.app`,
       city: "Jakarta", // Default city
-      role: args.role,
-      regu_id: args.regu_id,
+      role: userData.role,
+      regu_id: userData.regu_id,
       createdAt: Date.now(),
     });
 
@@ -91,7 +92,7 @@ export const updateUser = mutation({
     if (!user || user.role !== "admin" && user.role !== "superadmin") {
       throw new Error("Unauthorized: Admin access required");
     }
-    const { userId, ...updates } = args;
+    const { userId, token, ...updates } = args;
 
     // Check if phone already exists (if updating phone)
     if (updates.phone) {
