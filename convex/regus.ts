@@ -237,6 +237,140 @@ export const addMember = mutation({
     },
 });
 
+export const getByMember = query({
+    args: { userId: v.id("users"), token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        const member = await ctx.db.get(args.userId);
+        if (!member?.regu_id) return [];
+
+        const r = await ctx.db.get(member.regu_id);
+        if (!r) return [];
+
+        const pembimbing = await ctx.db.get(r.pembimbingId);
+
+        const members = await ctx.db
+            .query("users")
+            .withIndex("by_regu", (q) => q.eq("regu_id", r._id))
+            .collect();
+
+        let totalDonations = 0;
+        for (const m of members) {
+            const donations = await ctx.db
+                .query("donations")
+                .withIndex("by_relawan", (q) => q.eq("relawanId", m._id))
+                .collect();
+            totalDonations += donations
+                .filter(d => !d.type || d.type === 'incoming')
+                .reduce((sum, d) => sum + d.amount, 0);
+        }
+
+        const allRegus = await ctx.db.query("regus").collect();
+        const reguStats = await Promise.all(allRegus.map(async (regu) => {
+            const reguMembers = await ctx.db
+                .query("users")
+                .withIndex("by_regu", (q) => q.eq("regu_id", regu._id))
+                .collect();
+            let reguTotal = 0;
+            for (const m of reguMembers) {
+                const d = await ctx.db
+                    .query("donations")
+                    .withIndex("by_relawan", (q) => q.eq("relawanId", m._id))
+                    .collect();
+                reguTotal += d.filter(x => !x.type || x.type === 'incoming').reduce((sum, x) => sum + x.amount, 0);
+            }
+            return { id: regu._id, total: reguTotal };
+        }));
+        reguStats.sort((a, b) => b.total - a.total);
+        const rank = reguStats.findIndex(s => s.id === r._id) + 1;
+        const achievements = Math.floor(totalDonations / 10000000);
+
+        return [{
+            id: r._id,
+            name: r.name,
+            pembimbing_id: r.pembimbingId,
+            pembimbing_name: pembimbing?.fullName || 'Belum ada pembimbing',
+            description: r.description,
+            join_code: r.joinCode,
+            member_count: members.length,
+            total_donations: totalDonations,
+            target_amount: r.targetAmount || 60000000,
+            rank: rank,
+            achievements: achievements,
+            created_at: new Date(r.createdAt).toISOString(),
+        }];
+    },
+});
+
+export const getByPembimbing = query({
+    args: { pembimbingId: v.id("users"), token: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const user = await getUserFromToken(ctx, args.token);
+        if (!user) throw new Error("Unauthenticated");
+
+        const regus = await ctx.db
+            .query("regus")
+            .withIndex("by_pembimbing", (q) => q.eq("pembimbingId", args.pembimbingId))
+            .collect();
+
+        const enrichedRegus = await Promise.all(regus.map(async (r) => {
+            const members = await ctx.db
+                .query("users")
+                .withIndex("by_regu", (q) => q.eq("regu_id", r._id))
+                .collect();
+
+            let totalDonations = 0;
+            for (const m of members) {
+                const donations = await ctx.db
+                    .query("donations")
+                    .withIndex("by_relawan", (q) => q.eq("relawanId", m._id))
+                    .collect();
+                totalDonations += donations
+                    .filter(d => !d.type || d.type === 'incoming')
+                    .reduce((sum, d) => sum + d.amount, 0);
+            }
+
+            const allRegus = await ctx.db.query("regus").collect();
+            const reguStats = await Promise.all(allRegus.map(async (regu) => {
+                const reguMembers = await ctx.db
+                    .query("users")
+                    .withIndex("by_regu", (q) => q.eq("regu_id", regu._id))
+                    .collect();
+                let reguTotal = 0;
+                for (const m of reguMembers) {
+                    const d = await ctx.db
+                        .query("donations")
+                        .withIndex("by_relawan", (q) => q.eq("relawanId", m._id))
+                        .collect();
+                    reguTotal += d.filter(x => !x.type || x.type === 'incoming').reduce((sum, x) => sum + x.amount, 0);
+                }
+                return { id: regu._id, total: reguTotal };
+            }));
+            reguStats.sort((a, b) => b.total - a.total);
+            const rank = reguStats.findIndex(s => s.id === r._id) + 1;
+            const achievements = Math.floor(totalDonations / 10000000);
+
+            return {
+                id: r._id,
+                name: r.name,
+                pembimbing_id: r.pembimbingId,
+                description: r.description,
+                join_code: r.joinCode,
+                member_count: members.length,
+                total_donations: totalDonations,
+                target_amount: r.targetAmount || 60000000,
+                rank: rank,
+                achievements: achievements,
+                created_at: new Date(r.createdAt).toISOString(),
+            };
+        }));
+
+        return enrichedRegus;
+    },
+});
+
 export const create = mutation({
     args: {
         name: v.string(),
